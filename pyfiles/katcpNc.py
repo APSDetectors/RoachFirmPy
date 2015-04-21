@@ -151,18 +151,28 @@ def katCallBack():
     roach2.callback_counter= roach2.callback_counter+1
 
 
-def trigScope(trigin, inpt):
-
-    if trigin!=-1:
-        we_in = 0
-        inputsel = inpt + trigin*16  + we_in*64;
-        roach2.write_int("roachscope_inputsel",inputsel);
+#trigin from 0,1,2,3 to trig on those inputs.
+#trig in -1 to ignore trig.
+#inpt is 0,1,2,3,4,5,6,7
+def trigScope(trigin=-1, inpt=0):
+    
+    if trigin ==-1:
+        ig_tr = 1
+	trigin = 0
+    else:
+        ig_tr = 0
+	
+   
+    we_in = 0
+    inputsel = inpt + trigin*16  + we_in*64;
+    roach2.write_int("roachscope_inputsel",inputsel);
 
     print "Trigger roachscope"
     #clear trace
     roach2.write('roachscope_snapshot_bram','\0'*4096)
+  
     ig_we = 1
-    ig_tr = 0
+  
     ctrl = ig_we*4 + ig_tr*2;
 
     roach2.write_int('roachscope_snapshot_ctrl',ctrl)
@@ -180,19 +190,54 @@ def trigScope(trigin, inpt):
     print "END Trigger Roachscope"
 
 
-def plotScope(pllen = 2048,is_usebits = 0, bits = '',isprint = False):
+def plotScope(pllen = 2048,is_usebits = False, bits = '15:11;10:10;9:9;8:8',isprint = False):
     binstr = roach2.read('roachscope_snapshot_bram',4096)
+    shorts = struct.unpack('>2048h',binstr)
+    figure(1)
+    clf()
 
     if isprint:
         print binstr
         print len(binstr)
-    shorts = struct.unpack('2048H',binstr)
+	
+    if is_usebits==False:
+	plot(shorts[:pllen])
 
-    figure(1)
-    clf()
-    plot(shorts[:pllen])
-
-
+    else:
+        bitwidths=bits.split(';')
+	stbit = 15
+	smax = 0
+	graphnum = 0.0
+	for k in range(len(bitwidths)):
+	    couple = bitwidths[k].split(':')
+	    stbit=int(couple[0])
+	    edbit=int(couple[1])
+	    print '%d %d'%(stbit,edbit)
+	    width = 1 + stbit - edbit
+	    y=numpy.array([0.0]*pllen)
+	    if width>0:
+	        mask = (1<<width) - 1
+		
+		for i in range(pllen):
+		    sval = shorts[i]
+		   
+		    
+		    datash = sval>>edbit
+		    datash = datash & mask
+		    datash = double(datash)
+		    
+		    factor = double((1<<width));
+		    
+		    if len(bitwidths)<2:
+		        factor = 1.0
+			
+		    y[i] = (2.0*graphnum) + (datash/factor)
+		    
+	  	plot(y)
+		graphnum = graphnum+1.0
+		stbit = stbit - width
+    
+    
 
 class katcpNc:
 
@@ -595,7 +640,7 @@ class katcpNc:
         binaryData = ''
         for i in range(0, len(data1)):
             if channel==0:
-                x = struct.pack('>HHHHHHHH',
+                x = struct.pack('>hhhhhhhh',
                     data1[i],
                     0,
                     0,
@@ -606,7 +651,7 @@ class katcpNc:
                     0)
 
             elif channel==1:
-                x = struct.pack('>HHHHHHHH',
+                x = struct.pack('>hhhhhhhh',
                     0,
                     data1[i],
                     0,
@@ -617,7 +662,7 @@ class katcpNc:
                     0)
 
             elif channel==2:
-                x = struct.pack('>HHHHHHHH',
+                x = struct.pack('>hhhhhhhh',
                     0,
                     0,
                     data1[i],
@@ -628,7 +673,7 @@ class katcpNc:
                     0)
 
             elif channel==3:
-                x = struct.pack('>HHHHHHHH',
+                x = struct.pack('>hhhhhhhh',
                     0,
                     0,
                     0,
@@ -640,7 +685,7 @@ class katcpNc:
 
 
             elif channel==4:
-                x = struct.pack('>HHHHHHHH',
+                x = struct.pack('>hhhhhhhh',
                     0,
                     0,
                     0,
@@ -651,7 +696,7 @@ class katcpNc:
                     0)
 
             elif channel==5:
-                x = struct.pack('>HHHHHHHH',
+                x = struct.pack('>hhhhhhhh',
                     0,
                     0,
                     0,
@@ -662,7 +707,7 @@ class katcpNc:
                     0)
 
             elif channel==6:
-                x = struct.pack('>HHHHHHHH',
+                x = struct.pack('>hhhhhhhh',
                     0,
                     0,
                     0,
@@ -673,7 +718,7 @@ class katcpNc:
                     0)
 
             elif channel==7:
-                x = struct.pack('>HHHHHHHH',
+                x = struct.pack('>hhhhhhhh',
                     0,
                     0,
                     0,
