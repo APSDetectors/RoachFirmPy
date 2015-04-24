@@ -1,0 +1,9 @@
+run
+-ifmt MIXED
+-top testclk_exdes
+-p xc6vsx475t-ff1759-1
+-ifn xst.prj
+-ofn testclk_exdes
+-keep_hierarchy soft 
+-equivalent_register_removal no 
+-max_fanout 65535
