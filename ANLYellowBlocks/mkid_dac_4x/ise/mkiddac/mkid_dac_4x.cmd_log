@@ -1,0 +1,1 @@
+vhdtdtfi -lang verilog -prj mkiddac -o /home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/mkid_dac_4x.tfi -lib work /home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac//mkid_dac_4x.v -module mkid_dac_4x -template /local/Xilinx/14.6/ISE_DS/ISE//data/tfi.tft -deleteonerror 

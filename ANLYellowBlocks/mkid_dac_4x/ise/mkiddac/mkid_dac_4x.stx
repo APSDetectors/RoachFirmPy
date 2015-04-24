@@ -1,0 +1,64 @@
+Release 14.6 - xst P.68d (lin64)
+Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+--> 
+Parameter TMPDIR set to /home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/xst/projnav.tmp
+
+
+Total REAL time to Xst completion: 0.00 secs
+Total CPU time to Xst completion: 0.05 secs
+ 
+--> 
+Parameter xsthdpdir set to /home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/xst
+
+
+Total REAL time to Xst completion: 0.00 secs
+Total CPU time to Xst completion: 0.05 secs
+ 
+--> 
+Reading design: mkid_dac_4x.prj
+
+TABLE OF CONTENTS
+  1) Synthesis Options Summary
+  2) HDL Parsing
+  3) HDL Elaboration
+  4) HDL Synthesis
+       4.1) HDL Synthesis Report
+  5) Advanced HDL Synthesis
+       5.1) Advanced HDL Synthesis Report
+  6) Low Level Synthesis
+  7) Partition Report
+  8) Design Summary
+       8.1) Primitive and Black Box Usage
+       8.2) Device utilization summary
+       8.3) Partition Resource Summary
+       8.4) Timing Report
+            8.4.1) Clock Information
+            8.4.2) Asynchronous Control Signals Information
+            8.4.3) Timing Summary
+            8.4.4) Timing Details
+            8.4.5) Cross Clock Domains Report
+
+
+=========================================================================
+*                          HDL Parsing                                  *
+=========================================================================
+Analyzing Verilog file "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/mkid_dac_4x.v" into library work
+Parsing module <mkid_dac_4x>.
+WARNING:HDLCompiler:751 - "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/mkid_dac_4x.v" Line 113: Redeclaration of ansi port dac_clk_out is not allowed
+WARNING:HDLCompiler:751 - "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/mkid_dac_4x.v" Line 114: Redeclaration of ansi port dac_clk90_out is not allowed
+WARNING:HDLCompiler:751 - "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/mkid_dac_4x.v" Line 115: Redeclaration of ansi port dac_clk180_out is not allowed
+WARNING:HDLCompiler:751 - "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/mkid_dac_4x.v" Line 116: Redeclaration of ansi port dac_clk270_out is not allowed
+
+
+Total REAL time to Xst completion: 3.00 secs
+Total CPU time to Xst completion: 3.16 secs
+ 
+--> 
+
+
+Total memory usage is 416488 kilobytes
+
+Number of errors   :    0 (   0 filtered)
+Number of warnings :    4 (   0 filtered)
+Number of infos    :    0 (   0 filtered)
+

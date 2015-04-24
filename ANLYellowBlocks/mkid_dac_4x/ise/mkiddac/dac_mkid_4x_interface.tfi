@@ -1,0 +1,48 @@
+
+
+
+// Instantiate the module
+dac_mkid_4x_interface instance_name (
+    .dac_clk_p(dac_clk_p), 
+    .dac_clk_n(dac_clk_n), 
+    .dac_smpl_clk_i_p(dac_smpl_clk_i_p), 
+    .dac_smpl_clk_i_n(dac_smpl_clk_i_n), 
+    .dac_smpl_clk_q_p(dac_smpl_clk_q_p), 
+    .dac_smpl_clk_q_n(dac_smpl_clk_q_n), 
+    .dac_sync_i_p(dac_sync_i_p), 
+    .dac_sync_i_n(dac_sync_i_n), 
+    .dac_sync_q_p(dac_sync_q_p), 
+    .dac_sync_q_n(dac_sync_q_n), 
+    .dac_data_i_p(dac_data_i_p), 
+    .dac_data_i_n(dac_data_i_n), 
+    .dac_data_q_p(dac_data_q_p), 
+    .dac_data_q_n(dac_data_q_n), 
+    .dac_not_sdenb_i(dac_not_sdenb_i), 
+    .dac_not_sdenb_q(dac_not_sdenb_q), 
+    .dac_sclk(dac_sclk), 
+    .dac_sdi(dac_sdi), 
+    .dac_not_reset(dac_not_reset), 
+    .fpga_clk(fpga_clk), 
+    .dac_clk_out(dac_clk_out), 
+    .dac_clk90_out(dac_clk90_out), 
+    .dac_clk180_out(dac_clk180_out), 
+    .dac_clk270_out(dac_clk270_out), 
+    .dac_dcm_locked(dac_dcm_locked), 
+    .user_data_i0(user_data_i0), 
+    .user_data_i1(user_data_i1), 
+    .user_data_i2(user_data_i2), 
+    .user_data_i3(user_data_i3), 
+    .user_data_q0(user_data_q0), 
+    .user_data_q1(user_data_q1), 
+    .user_data_q2(user_data_q2), 
+    .user_data_q3(user_data_q3), 
+    .user_sync_i(user_sync_i), 
+    .user_sync_q(user_sync_q), 
+    .not_sdenb_i(not_sdenb_i), 
+    .not_sdenb_q(not_sdenb_q), 
+    .sclk(sclk), 
+    .sdi(sdi), 
+    .not_reset(not_reset)
+    );
+
+
