@@ -568,9 +568,11 @@ endgenerate
 //this MMCM is generated of on the yellow block ROACH MMSE, if we select dac clk. to drive fabric in yellow 
 // ROACH MMSE block then dac_clk out will be the fpga fabric clock. phased vbersion will be used too. 
 
+// (FVCO = 1000*CLKFBOUT_MULT_F/(CLKIN1_PERIOD*DIVCLK_DIVIDE))
+
   MMCM_BASE #(
       .BANDWIDTH("OPTIMIZED"),   // Jitter programming ("HIGH","LOW","OPTIMIZED")
-      .CLKFBOUT_MULT_F(4.0),     // Multiply value for all CLKOUT (5.0-64.0).
+      .CLKFBOUT_MULT_F(8.0),     // Multiply value for all CLKOUT (5.0-64.0).
       .CLKFBOUT_PHASE(0.0),      // Phase offset in degrees of CLKFB (0.00-360.00).
       .CLKIN1_PERIOD(3.906),       // 256MHz Input clock period in ns to ps resolution (i.e. 33.333 is 30 MHz).
       .CLKOUT0_DIVIDE_F(8.0),    // Divide amount for CLKOUT0 (1.000-128.000).
@@ -583,11 +585,11 @@ endgenerate
       .CLKOUT5_DUTY_CYCLE(0.5),
       .CLKOUT6_DUTY_CYCLE(0.5),
       // CLKOUT0_PHASE - CLKOUT6_PHASE: Phase offset for each CLKOUT (-360.000-360.000).
-      .CLKOUT0_PHASE(0.0),
+      .CLKOUT0_PHASE(0.0),//128MHz
       .CLKOUT1_PHASE(90.0),
       .CLKOUT2_PHASE(180.0),
       .CLKOUT3_PHASE(270.0),
-      .CLKOUT4_PHASE(0.0),
+      .CLKOUT4_PHASE(0.0),//256MHz
       .CLKOUT5_PHASE(0.0),
       .CLKOUT6_PHASE(0.0),
       // CLKOUT1_DIVIDE - CLKOUT6_DIVIDE: Divide amount for each CLKOUT (1-128)
@@ -595,11 +597,11 @@ endgenerate
       .CLKOUT2_DIVIDE(8),
       .CLKOUT3_DIVIDE(8),
       .CLKOUT4_DIVIDE(4),//these must be 256MHz
-      .CLKOUT5_DIVIDE(1),
-      .CLKOUT6_DIVIDE(1),
+      .CLKOUT5_DIVIDE(8),
+      .CLKOUT6_DIVIDE(8),
       .CLKOUT4_CASCADE("FALSE"), // Cascase CLKOUT4 counter with CLKOUT6 (TRUE/FALSE)
       .CLOCK_HOLD("FALSE"),      // Hold VCO Frequency (TRUE/FALSE)
-      .DIVCLK_DIVIDE(1),         // Master division value (1-80)
+      .DIVCLK_DIVIDE(2),         // Master division value (1-80)
       .REF_JITTER1(0.0),         // Reference input jitter in UI (0.000-0.999).
       .STARTUP_WAIT("FALSE")     // Not supported. Must be set to FALSE.
    )

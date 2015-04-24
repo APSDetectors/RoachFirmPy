@@ -9,3 +9,4 @@ xst -intstyle ise -ifn "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/da
 xst -intstyle ise -ifn "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/dac_mkid_4x_interface.xst" -ofn "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/dac_mkid_4x_interface.syr" 
 xst -intstyle ise -ifn "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/dac_mkid_4x_interface.xst" -ofn "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/dac_mkid_4x_interface.syr" 
 xst -intstyle ise -ifn "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/dac_mkid_4x_interface.xst" -ofn "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/dac_mkid_4x_interface.syr" 
+xst -intstyle ise -ifn "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/dac_mkid_4x_interface.xst" -ofn "/home/oxygen26/TMADDEN/xilinxProjects/mkiddac/mkiddac/dac_mkid_4x_interface.syr" 
