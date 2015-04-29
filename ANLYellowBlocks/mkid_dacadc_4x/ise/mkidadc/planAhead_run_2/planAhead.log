@@ -1,0 +1,26 @@
+#-----------------------------------------------------------
+# PlanAhead v14.6 (64-bit)
+# Build 269223 by xbuild on Wed Jun  5 11:07:37 MDT 2013
+# Start of session at: Wed Apr 29 14:06:47 2015
+# Process ID: 121903
+# Log file: /home/oxygen26/TMADDEN/xilinxProjects/mkidadc/planAhead_run_2/planAhead.log
+# Journal file: /home/oxygen26/TMADDEN/xilinxProjects/mkidadc/planAhead_run_2/planAhead.jou
+#-----------------------------------------------------------
+INFO: [Common 17-78] Attempting to get a license: PlanAhead
+INFO: [Common 17-290] Got license for PlanAhead
+INFO: [Device 21-36] Loading parts and site information from /local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/arch.xml
+Parsing RTL primitives file [/local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/xilinx/rtl/prims/rtl_prims.xml]
+Finished parsing RTL primitives file [/local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/xilinx/rtl/prims/rtl_prims.xml]
+start_gui
+source /home/oxygen26/TMADDEN/xilinxProjects/mkidadc/pa.fromHdl.tcl
+# create_project -name mkidadc -dir "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/planAhead_run_2" -part xc6vsx475tff1759-1
+ERROR: [Common 17-53] User Exception: Project already exists on disk, please use '-force' option to overwrite: 
+     /home/oxygen26/TMADDEN/xilinxProjects/mkidadc/planAhead_run_2/mkidadc.ppr
+     /home/oxygen26/TMADDEN/xilinxProjects/mkidadc/planAhead_run_2/mkidadc.data
+
+    while executing
+"create_project -name mkidadc -dir "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/planAhead_run_2" -part xc6vsx475tff1759-1"
+    (file "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/pa.fromHdl.tcl" line 4)
+exit
+INFO: [Common 17-206] Exiting PlanAhead at Wed Apr 29 14:07:04 2015...
+INFO: [Common 17-83] Releasing license: PlanAhead

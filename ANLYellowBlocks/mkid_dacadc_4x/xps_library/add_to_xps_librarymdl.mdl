@@ -6,7 +6,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.1"
+    ComputedModelVersion    "1.2"
     NumModelReferences	    0
     NumTestPointedSignals   0
   }
@@ -30,7 +30,7 @@ Model {
       $ObjectID		      2
       $ClassName	      "Simulink.WindowInfo"
       IsActive		      [1]
-      Location		      [96.0, 75.0, 808.0, 529.0]
+      Location		      [2143.0, 127.0, 816.0, 558.0]
       Object {
 	$PropName		"ModelBrowserInfo"
 	$ObjectID		3
@@ -54,9 +54,9 @@ Model {
 	IsActive		[1]
 	ViewObjType		"SimulinkTopLevel"
 	LoadSaveID		"0"
-	Extents			[569.0, 352.0]
-	ZoomFactor		[0.5]
-	Offset			[-483.0, -119.00000000000011]
+	Extents			[577.0, 381.0]
+	ZoomFactor		[1.0]
+	Offset			[0.0, 72.0]
       }
     }
   }
@@ -66,9 +66,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "tmadden"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Fri Apr 24 15:51:31 2015"
-  RTWModifiedTimeStamp	  351791437
-  ModelVersionFormat	  "1.%<AutoIncrement:1>"
+  LastModifiedDate	  "Wed Apr 29 15:49:06 2015"
+  RTWModifiedTimeStamp	  352223344
+  ModelVersionFormat	  "1.%<AutoIncrement:2>"
   ConfigurationManager	  "None"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -106,7 +106,7 @@ Model {
     $ObjectID		    6
     $ClassName		    "Simulink.SimulationData.ModelLoggingInfo"
     model_		    "add_to_xps_librarymdl"
-    overrideMode_	    [0U]
+    overrideMode_	    [0.0]
     Array {
       Type		      "Cell"
       Dimension		      1
@@ -741,7 +741,7 @@ Model {
   }
   System {
     Name		    "add_to_xps_librarymdl"
-    Location		    [96, 75, 904, 604]
+    Location		    [2143, 127, 2959, 685]
     Open		    on
     ModelBrowserVisibility  on
     ModelBrowserWidth	    200
@@ -753,22 +753,35 @@ Model {
     TiledPaperMargins	    [0.500000, 0.500000, 0.500000, 0.500000]
     TiledPageScale	    1
     ShowPageBoundaries	    off
-    ZoomFactor		    "50"
+    ZoomFactor		    "100"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "1"
+    SIDHighWatermark	    "3"
+    Block {
+      BlockType		      Reference
+      Name		      "adc_mkid_4x_r2"
+      SID		      "2"
+      Tag		      "xps:adc_mkid_4x_r2"
+      Ports		      [0, 9]
+      Position		      [20, 117, 125, 363]
+      ZOrder		      4
+      BackgroundColor	      "[1.000000, 1.000000, 0.000000]"
+      LibraryVersion	      "1.524"
+      SourceBlock	      "xps_library/ADCs/adc_mkid_4x_r2"
+      SourceType	      "MKID ADC Interface Block"
+      adc_clk_rate	      "540"
+    }
     Block {
       BlockType		      Reference
       Name		      "dac_mkid_4x_r2"
-      SID		      "1"
+      SID		      "3"
       Tag		      "xps:dac_mkid_4x_r2"
       Ports		      [13]
-      Position		      [170, 17, 340, 423]
-      ZOrder		      2
+      Position		      [290, 17, 460, 423]
+      ZOrder		      5
       BackgroundColor	      "[1.000000, 1.000000, 0.000000]"
-      LibraryVersion	      "1.522"
+      LibraryVersion	      "1.524"
       SourceBlock	      "xps_library/DACs/dac_mkid_4x_r2"
       SourceType	      ""
-      dac_brd		      "0"
       dac_clk_rate	      "540"
       sample_period	      "1"
     }

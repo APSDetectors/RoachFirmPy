@@ -1,0 +1,10 @@
+#-----------------------------------------------------------
+# PlanAhead v14.6 (64-bit)
+# Build 269223 by xbuild on Wed Jun  5 11:07:37 MDT 2013
+# Start of session at: Wed Apr 29 14:06:47 2015
+# Process ID: 121903
+# Log file: /home/oxygen26/TMADDEN/xilinxProjects/mkidadc/planAhead_run_2/planAhead.log
+# Journal file: /home/oxygen26/TMADDEN/xilinxProjects/mkidadc/planAhead_run_2/planAhead.jou
+#-----------------------------------------------------------
+start_gui
+source /home/oxygen26/TMADDEN/xilinxProjects/mkidadc/pa.fromHdl.tcl

@@ -1,0 +1,106 @@
+
+****** PlanAhead v14.6 (64-bit)
+  **** Build 269223 by xbuild on Wed Jun  5 11:07:37 MDT 2013
+    ** Copyright 1986-1999, 2001-2012 Xilinx, Inc. All Rights Reserved.
+
+INFO: [Common 17-78] Attempting to get a license: PlanAhead
+INFO: [Common 17-290] Got license for PlanAhead
+INFO: [Device 21-36] Loading parts and site information from /local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/arch.xml
+Parsing RTL primitives file [/local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/xilinx/rtl/prims/rtl_prims.xml]
+Finished parsing RTL primitives file [/local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/xilinx/rtl/prims/rtl_prims.xml]
+start_gui
+source /home/oxygen26/TMADDEN/xilinxProjects/mkidadc/pa.fromHdl.tcl
+# create_project -name mkidadc -dir "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/planAhead_run_2" -part xc6vsx475tff1759-1
+# set_param project.pinAheadLayout yes
+# set srcset [get_property srcset [current_run -impl]]
+# set_property target_constrs_file "adc_mkid_4x_interface.ucf" [current_fileset -constrset]
+Adding file '/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.ucf' to fileset 'constrs_1'
+# set hdlfile [add_files [list {adc_mkid_4x_interface.v}]]
+# set_property file_type Verilog $hdlfile
+# set_property library work $hdlfile
+# set_property top adc_mkid_4x_interface $srcset
+# add_files [list {adc_mkid_4x_interface.ucf}] -fileset [get_property constrset [current_run]]
+# open_rtl_design -part xc6vsx475tff1759-1
+Using Verific elaboration
+Parsing VHDL file "/local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/xilinx/rtl/lib/synplify/synattr.vhd" into library synplify
+Analyzing Verilog file "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" into library work
+Loading clock regions from /local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/xilinx/virtex6/virtex6sxt/xc6vsx475t/ClockRegion.xml
+Loading clock buffers from /local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/xilinx/virtex6/virtex6sxt/xc6vsx475t/ClockBuffers.xml
+Loading clock placement rules from /local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/xilinx/virtex6/ClockPlacerRules.xml
+Loading clock capable ios from /local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/xilinx/virtex6/ClockCapableIOBs.xml
+Loading package pin functions from /local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/xilinx/virtex6/PinFunctions.xml...
+Loading package from /local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/xilinx/virtex6/virtex6sxt/xc6vsx475t/ff1759/Package.xml
+Loading io standards from /local/Xilinx/14.6/ISE_DS/PlanAhead/data/./parts/xilinx/virtex6/IOStandards.xml
+Loading device configuration modes from /local/Xilinx/14.6/ISE_DS/PlanAhead/data/parts/xilinx/virtex6/ConfigModes.xml
+Loading list of drcs for the architecture : /local/Xilinx/14.6/ISE_DS/PlanAhead/data/./parts/xilinx/virtex6/drc.xml
+CRITICAL WARNING: [Shape Builder 18-119] Failed to create BUFDS-blocked-IOB shape for instance IBUFDS_inst_user_sync. Found overlapping terminals in the shape.
+Parsing UCF File [/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.ucf]
+Finished Parsing UCF File [/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.ucf]
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Phase 0 | Netlist Checksum: ff1bd226
+open_rtl_design: Time (s): cpu = 00:00:26 ; elapsed = 00:00:13 . Memory (MB): peak = 3128.176 ; gain = 367.793
+update_compile_order -fileset sim_1
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+set_property package_pin "" [get_ports [list  {DQ_p[7]}]]
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+startgroup
+set_property package_pin Y30 [get_ports {DQ_p[6]}]
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+endgroup
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+startgroup
+set_property package_pin W35 [get_ports {DQ_p[9]}]
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+endgroup
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+startgroup
+set_property package_pin Y30 [get_ports {DQ_p[6]}]
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+endgroup
+set_property is_loc_fixed false [get_ports [list  {DQ_p[9]}]]
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+set_property package_pin "" [get_ports [list  {DQ_p[9]}]]
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+startgroup
+set_property package_pin W37 [get_ports {DQ_p[11]}]
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+endgroup
+startgroup
+set_property package_pin AA32 [get_ports {DQ_p[6]}]
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+endgroup
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+startgroup
+set_property package_pin AA32 [get_ports {DQ_p[6]}]
+set_property package_pin Y32 [get_ports {DQ_n[6]}]
+endgroup
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+INFO: [Power 33-160] Power Analysis is not supported for 6-series devices.
+exit
+ERROR: [Common 17-39] 'stop_gui' failed due to earlier errors.
+INFO: [Common 17-206] Exiting PlanAhead at Wed Apr 29 14:34:26 2015...
+INFO: [Common 17-83] Releasing license: PlanAhead

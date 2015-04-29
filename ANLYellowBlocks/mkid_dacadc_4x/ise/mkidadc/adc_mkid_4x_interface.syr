@@ -1,0 +1,439 @@
+Release 14.6 - xst P.68d (lin64)
+Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+--> 
+Parameter TMPDIR set to xst/projnav.tmp
+
+
+Total REAL time to Xst completion: 0.00 secs
+Total CPU time to Xst completion: 0.04 secs
+ 
+--> 
+Parameter xsthdpdir set to xst
+
+
+Total REAL time to Xst completion: 0.00 secs
+Total CPU time to Xst completion: 0.04 secs
+ 
+--> 
+Reading design: adc_mkid_4x_interface.prj
+
+TABLE OF CONTENTS
+  1) Synthesis Options Summary
+  2) HDL Parsing
+  3) HDL Elaboration
+  4) HDL Synthesis
+       4.1) HDL Synthesis Report
+  5) Advanced HDL Synthesis
+       5.1) Advanced HDL Synthesis Report
+  6) Low Level Synthesis
+  7) Partition Report
+  8) Design Summary
+       8.1) Primitive and Black Box Usage
+       8.2) Device utilization summary
+       8.3) Partition Resource Summary
+       8.4) Timing Report
+            8.4.1) Clock Information
+            8.4.2) Asynchronous Control Signals Information
+            8.4.3) Timing Summary
+            8.4.4) Timing Details
+            8.4.5) Cross Clock Domains Report
+
+
+=========================================================================
+*                      Synthesis Options Summary                        *
+=========================================================================
+---- Source Parameters
+Input File Name                    : "adc_mkid_4x_interface.prj"
+Ignore Synthesis Constraint File   : NO
+
+---- Target Parameters
+Output File Name                   : "adc_mkid_4x_interface"
+Output Format                      : NGC
+Target Device                      : xc6vsx475t-1-ff1759
+
+---- Source Options
+Top Module Name                    : adc_mkid_4x_interface
+Automatic FSM Extraction           : YES
+FSM Encoding Algorithm             : Auto
+Safe Implementation                : No
+FSM Style                          : LUT
+RAM Extraction                     : Yes
+RAM Style                          : Auto
+ROM Extraction                     : Yes
+Shift Register Extraction          : YES
+ROM Style                          : Auto
+Resource Sharing                   : YES
+Asynchronous To Synchronous        : NO
+Shift Register Minimum Size        : 2
+Use DSP Block                      : Auto
+Automatic Register Balancing       : No
+
+---- Target Options
+LUT Combining                      : Auto
+Reduce Control Sets                : Auto
+Add IO Buffers                     : YES
+Global Maximum Fanout              : 100000
+Add Generic Clock Buffer(BUFG)     : 32
+Register Duplication               : YES
+Optimize Instantiated Primitives   : NO
+Use Clock Enable                   : Auto
+Use Synchronous Set                : Auto
+Use Synchronous Reset              : Auto
+Pack IO Registers into IOBs        : Auto
+Equivalent register Removal        : YES
+
+---- General Options
+Optimization Goal                  : Speed
+Optimization Effort                : 1
+Power Reduction                    : NO
+Keep Hierarchy                     : No
+Netlist Hierarchy                  : As_Optimized
+RTL Output                         : Yes
+Global Optimization                : AllClockNets
+Read Cores                         : YES
+Write Timing Constraints           : NO
+Cross Clock Analysis               : NO
+Hierarchy Separator                : /
+Bus Delimiter                      : <>
+Case Specifier                     : Maintain
+Slice Utilization Ratio            : 100
+BRAM Utilization Ratio             : 100
+DSP48 Utilization Ratio            : 100
+Auto BRAM Packing                  : NO
+Slice Utilization Ratio Delta      : 5
+
+=========================================================================
+
+
+=========================================================================
+*                          HDL Parsing                                  *
+=========================================================================
+Analyzing Verilog file "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" into library work
+Parsing module <adc_mkid_4x_interface>.
+
+=========================================================================
+*                            HDL Elaboration                            *
+=========================================================================
+
+Elaborating module <adc_mkid_4x_interface>.
+
+Elaborating module <IBUFDS(IOSTANDARD="LVDS_25")>.
+
+Elaborating module <ISERDESE1(DATA_RATE="DDR",DATA_WIDTH=4,DYN_CLKDIV_INV_EN="FALSE",DYN_CLK_INV_EN="FALSE",INIT_Q1=1'b0,INIT_Q2=1'b0,INIT_Q3=1'b0,INIT_Q4=1'b0,INTERFACE_TYPE="NETWORKING",IOBDELAY="NONE",NUM_CE=1,OFB_USED="FALSE",SERDES_MODE="MASTER",SRVAL_Q1=1'b0,SRVAL_Q2=1'b0,SRVAL_Q3=1'b0,SRVAL_Q4=1'b0)>.
+
+Elaborating module <IBUFGDS(IOSTANDARD="LVDS_25")>.
+
+Elaborating module <FIFO_DUALCLOCK_MACRO(ALMOST_EMPTY_OFFSET=9'b010000000,ALMOST_FULL_OFFSET=9'b010000000,DATA_WIDTH=48,DEVICE="VIRTEX6",FIFO_SIZE="36Kb",FIRST_WORD_FALL_THROUGH="FALSE")>.
+
+Elaborating module <FIFO36E1(ALMOST_EMPTY_OFFSET=9'b010000000,ALMOST_FULL_OFFSET=9'b010000000,DATA_WIDTH=72,DO_REG=1,EN_SYN="FALSE",FIFO_MODE="FIFO36_72",FIRST_WORD_FALL_THROUGH="FALSE",INIT=72'b0,SIM_DEVICE="VIRTEX6",SRVAL=72'b0)>.
+
+Elaborating module <BUFG>.
+
+Elaborating module <MMCM_BASE(BANDWIDTH="OPTIMIZED",CLKFBOUT_MULT_F=8.0,CLKFBOUT_PHASE=0.0,CLKIN1_PERIOD=3.906,CLKOUT0_DIVIDE_F=4.0,CLKOUT0_DUTY_CYCLE=0.5,CLKOUT1_DUTY_CYCLE=0.5,CLKOUT2_DUTY_CYCLE=0.5,CLKOUT3_DUTY_CYCLE=0.5,CLKOUT4_DUTY_CYCLE=0.5,CLKOUT5_DUTY_CYCLE=0.5,CLKOUT6_DUTY_CYCLE=0.5,CLKOUT0_PHASE=0.0,CLKOUT1_PHASE=90.0,CLKOUT2_PHASE=180.0,CLKOUT3_PHASE=270.0,CLKOUT4_PHASE=0.0,CLKOUT5_PHASE=0.0,CLKOUT6_PHASE=0.0,CLKOUT1_DIVIDE=8,CLKOUT2_DIVIDE=8,CLKOUT3_DIVIDE=8,CLKOUT4_DIVIDE=4,CLKOUT5_DIVIDE=1,CLKOUT6_DIVIDE=1,CLKOUT4_CASCADE="FALSE",CLOCK_HOLD="FALSE",DIVCLK_DIVIDE=2,REF_JITTER1=0.0,STARTUP_WAIT="FALSE")>.
+WARNING:HDLCompiler:634 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" Line 241: Net <ISERDES_NODELAY_inst_i_generate[0].OFB> does not have a driver.
+WARNING:HDLCompiler:634 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" Line 324: Net <ISERDES_NODELAY_inst_q_generate[0].OFB> does not have a driver.
+
+=========================================================================
+*                           HDL Synthesis                               *
+=========================================================================
+
+Synthesizing Unit <adc_mkid_4x_interface>.
+    Related source file is "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v".
+        OUTPUT_CLK = 0
+WARNING:Xst:647 - Input <DRDY_Q_p> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <DRDY_Q_n> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 396: Output port <RDCOUNT> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_Q> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 396: Output port <WRCOUNT> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_Q> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 396: Output port <ALMOSTEMPTY> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_Q> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 396: Output port <ALMOSTFULL> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_Q> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 396: Output port <EMPTY> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_Q> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 396: Output port <FULL> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_Q> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 396: Output port <RDERR> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_Q> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 396: Output port <WRERR> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_Q> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 423: Output port <RDCOUNT> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_I> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 423: Output port <WRCOUNT> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_I> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 423: Output port <ALMOSTEMPTY> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_I> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 423: Output port <ALMOSTFULL> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_I> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 423: Output port <EMPTY> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_I> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 423: Output port <FULL> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_I> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 423: Output port <RDERR> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_I> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/oxygen26/TMADDEN/xilinxProjects/mkidadc/adc_mkid_4x_interface.v" line 423: Output port <WRERR> of the instance <ADC_FIFO_Q_generate.ADC_FIFO_I> is unconnected or connected to loadless signal.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_i_generate[0].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_i_generate[1].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_i_generate[2].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_i_generate[3].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_i_generate[4].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_i_generate[5].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_i_generate[6].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_i_generate[7].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_i_generate[8].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_i_generate[9].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_i_generate[10].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_i_generate[11].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_q_generate[0].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_q_generate[1].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_q_generate[2].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_q_generate[3].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_q_generate[4].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_q_generate[5].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_q_generate[6].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_q_generate[7].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_q_generate[8].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_q_generate[9].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_q_generate[10].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <ISERDES_NODELAY_inst_q_generate[11].OFB> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+    Found 12-bit register for signal <recapture_data_q1>.
+    Found 12-bit register for signal <recapture_data_q2>.
+    Found 12-bit register for signal <recapture_data_q3>.
+    Found 12-bit register for signal <recapture_data_i0>.
+    Found 12-bit register for signal <recapture_data_i1>.
+    Found 12-bit register for signal <recapture_data_i2>.
+    Found 12-bit register for signal <recapture_data_i3>.
+    Found 12-bit register for signal <recapture_data_q0>.
+    Summary:
+	inferred  96 D-type flip-flop(s).
+Unit <adc_mkid_4x_interface> synthesized.
+
+Synthesizing Unit <FIFO_DUALCLOCK_MACRO>.
+    Related source file is "/build/xfndry10/P.68d/rtf/devlib/verilog/src/unimacro/FIFO_DUALCLOCK_MACRO.v".
+        ALMOST_EMPTY_OFFSET = 9'b010000000
+        ALMOST_FULL_OFFSET = 9'b010000000
+        DATA_WIDTH = 48
+        DEVICE = "VIRTEX6"
+        FIFO_SIZE = "36Kb"
+        FIRST_WORD_FALL_THROUGH = "FALSE"
+        INIT = 72'b000000000000000000000000000000000000000000000000000000000000000000000000
+        SRVAL = 72'b000000000000000000000000000000000000000000000000000000000000000000000000
+        SIM_MODE = "SAFE"
+    Summary:
+	no macro.
+Unit <FIFO_DUALCLOCK_MACRO> synthesized.
+
+=========================================================================
+HDL Synthesis Report
+
+Macro Statistics
+# Registers                                            : 2
+ 48-bit register                                       : 2
+
+=========================================================================
+
+=========================================================================
+*                       Advanced HDL Synthesis                          *
+=========================================================================
+
+
+=========================================================================
+Advanced HDL Synthesis Report
+
+Macro Statistics
+# Registers                                            : 96
+ Flip-Flops                                            : 96
+
+=========================================================================
+
+=========================================================================
+*                         Low Level Synthesis                           *
+=========================================================================
+INFO:Xst:1901 - Instance CLK_DCM in unit adc_mkid_4x_interface of type MMCM_BASE has been replaced by MMCM_ADV
+
+Optimizing unit <adc_mkid_4x_interface> ...
+
+Mapping all equations...
+Building and optimizing final netlist ...
+Found area constraint ratio of 100 (+ 5) on block adc_mkid_4x_interface, actual ratio is 0.
+
+Final Macro Processing ...
+
+=========================================================================
+Final Register Report
+
+Macro Statistics
+# Registers                                            : 96
+ Flip-Flops                                            : 96
+
+=========================================================================
+
+=========================================================================
+*                           Partition Report                            *
+=========================================================================
+
+Partition Implementation Status
+-------------------------------
+
+  No Partitions were found in this design.
+
+-------------------------------
+
+=========================================================================
+*                            Design Summary                             *
+=========================================================================
+
+Top Level Output File Name         : adc_mkid_4x_interface.ngc
+
+Primitive and Black Box Usage:
+------------------------------
+# BELS                             : 3
+#      GND                         : 1
+#      INV                         : 1
+#      VCC                         : 1
+# FlipFlops/Latches                : 96
+#      FD                          : 96
+# RAMS                             : 2
+#      FIFO36E1                    : 2
+# Clock Buffers                    : 7
+#      BUFG                        : 6
+#      BUFGP                       : 1
+# IO Buffers                       : 124
+#      IBUFDS                      : 24
+#      IBUFGDS                     : 2
+#      OBUF                        : 98
+# Others                           : 25
+#      ISERDESE1                   : 24
+#      MMCM_ADV                    : 1
+
+Device utilization summary:
+---------------------------
+
+Selected Device : 6vsx475tff1759-1 
+
+
+Slice Logic Utilization: 
+ Number of Slice Registers:              96  out of  595200     0%  
+ Number of Slice LUTs:                    1  out of  297600     0%  
+    Number used as Logic:                 1  out of  297600     0%  
+
+Slice Logic Distribution: 
+ Number of LUT Flip Flop pairs used:     97
+   Number with an unused Flip Flop:       1  out of     97     1%  
+   Number with an unused LUT:            96  out of     97    98%  
+   Number of fully used LUT-FF pairs:     0  out of     97     0%  
+   Number of unique control sets:         1
+
+IO Utilization: 
+ Number of IOs:                         157
+ Number of bonded IOBs:                 151  out of    840    17%  
+
+Specific Feature Utilization:
+ Number of Block RAM/FIFO:                2  out of   1064     0%  
+    Number using FIFO only:               2
+ Number of BUFG/BUFGCTRLs:                7  out of     32    21%  
+
+---------------------------
+Partition Resource Summary:
+---------------------------
+
+  No Partitions were found in this design.
+
+---------------------------
+
+
+=========================================================================
+Timing Report
+
+NOTE: THESE TIMING NUMBERS ARE ONLY A SYNTHESIS ESTIMATE.
+      FOR ACCURATE TIMING INFORMATION PLEASE REFER TO THE TRACE REPORT
+      GENERATED AFTER PLACE-and-ROUTE.
+
+Clock Information:
+------------------
+-----------------------------------+------------------------+-------+
+Clock Signal                       | Clock buffer(FF name)  | Load  |
+-----------------------------------+------------------------+-------+
+DRDY_I_p                           | MMCM_ADV:CLKOUT0       | 98    |
+fpga_clk                           | BUFGP                  | 2     |
+-----------------------------------+------------------------+-------+
+
+Asynchronous Control Signals Information:
+----------------------------------------
+No asynchronous control signals found in this design
+
+Timing Summary:
+---------------
+Speed Grade: -1
+
+   Minimum period: No path found
+   Minimum input arrival time before clock: 0.410ns
+   Maximum output required time after clock: 1.144ns
+   Maximum combinational path delay: 0.405ns
+
+Timing Details:
+---------------
+All values displayed in nanoseconds (ns)
+
+=========================================================================
+Timing constraint: Default OFFSET IN BEFORE for Clock 'DRDY_I_p'
+  Total number of paths / destination ports: 96 / 96
+-------------------------------------------------------------------------
+Offset:              0.410ns (Levels of Logic = 0)
+  Source:            ISERDES_NODELAY_inst_q_generate[0].ISERDES_NODELAY_inst_q:Q4 (PAD)
+  Destination:       recapture_data_q0_0 (FF)
+  Destination Clock: DRDY_I_p rising
+
+  Data Path: ISERDES_NODELAY_inst_q_generate[0].ISERDES_NODELAY_inst_q:Q4 to recapture_data_q0_0
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+    ISERDESE1:Q4           1   0.000   0.399  ISERDES_NODELAY_inst_q_generate[0].ISERDES_NODELAY_inst_q (data_serdes_q0<0>)
+     FD:D                      0.011          recapture_data_q0_0
+    ----------------------------------------
+    Total                      0.410ns (0.011ns logic, 0.399ns route)
+                                       (2.7% logic, 97.3% route)
+
+=========================================================================
+Timing constraint: Default OFFSET OUT AFTER for Clock 'fpga_clk'
+  Total number of paths / destination ports: 96 / 96
+-------------------------------------------------------------------------
+Offset:              1.144ns (Levels of Logic = 1)
+  Source:            ADC_FIFO_Q_generate.ADC_FIFO_I/fifo_36_bl_1.fifo_36_bl_1 (UNKNOWN)
+  Destination:       user_data_i0<11> (PAD)
+  Source Clock:      fpga_clk rising
+
+  Data Path: ADC_FIFO_Q_generate.ADC_FIFO_I/fifo_36_bl_1.fifo_36_bl_1 to user_data_i0<11>
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     FIFO36E1:RDCLK->DO11    1   0.742   0.399  ADC_FIFO_Q_generate.ADC_FIFO_I/fifo_36_bl_1.fifo_36_bl_1 (user_data_i0_11_OBUF)
+     OBUF:I->O                 0.003          user_data_i0_11_OBUF (user_data_i0<11>)
+    ----------------------------------------
+    Total                      1.144ns (0.745ns logic, 0.399ns route)
+                                       (65.1% logic, 34.9% route)
+
+=========================================================================
+Timing constraint: Default path analysis
+  Total number of paths / destination ports: 50 / 25
+-------------------------------------------------------------------------
+Delay:               0.405ns (Levels of Logic = 2)
+  Source:            ADC_ext_in_p (PAD)
+  Destination:       user_sync (PAD)
+
+  Data Path: ADC_ext_in_p to user_sync
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     IBUFGDS:I->O          1   0.003   0.399  IBUFDS_inst_user_sync (user_sync_OBUF)
+     OBUF:I->O                 0.003          user_sync_OBUF (user_sync)
+    ----------------------------------------
+    Total                      0.405ns (0.006ns logic, 0.399ns route)
+                                       (1.5% logic, 98.5% route)
+
+=========================================================================
+
+Cross Clock Domains Report:
+--------------------------
+
+=========================================================================
+
+
+Total REAL time to Xst completion: 5.00 secs
+Total CPU time to Xst completion: 4.95 secs
+ 
+--> 
+
+
+Total memory usage is 506724 kilobytes
+
+Number of errors   :    0 (   0 filtered)
+Number of warnings :   28 (   0 filtered)
+Number of infos    :   17 (   0 filtered)
+
