@@ -67,3 +67,29 @@ ON ROACH2 HARDWARE AS OF THE TIME OF THIS COMMIT.
 
 
 
+
+To install the adc block, the procedure is the same as for dac.
+
+Included are two pdf files that are schematics of what is in the dac and adc blocks, generated from ISE. For dac, there are 2 schematics, depending on the clock selection. There should be 2 files for adc, as well, but one is included anyway.
+
+
+The ods files are pinouts for each block. The block was checked against schematics. The adc block in particular needed work on the pinout. 
+
+hwroutes.ods- map from matlab pinout table, to net name on the schematic.
+dac_mkid_4x_pins.ods- pinouts for dac and adc blocks.
+
+
+
+When building the MATLAB system know that the dac section will be called dac0, and only 
+dac0 clock can be used, or sys clock. Not dac1 clock!
+
+The adc part of the board is called adc1, so only adc1 or sys clock can be used. There is
+no adc0 clock. These numbers (dac0, adc1) are based on the fact that the dac is on ZDOK0 connector, and adc is on ZDOK1. 
+
+As of this commit, running the fpga off of adc1 clk does not meet timing constraints. running off dac0 or sys clock runs OK. Not fixed yet.
+
+
+
+
+
+
