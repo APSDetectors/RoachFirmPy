@@ -1,6 +1,13 @@
 
 """
 
+
+docs at
+https://github.com/ska-sa/katcp_devel/tree/master/tcpborphserver3
+
+see bottom of page for more docs
+
+
 execfile("katcpNc.py")
 
 
@@ -142,7 +149,7 @@ def katCallBack():
 
     if roach2.callback_counter in roach2.when_callback:
 
-        trigScope(-1,-1)
+        pass
 
 
     else:
@@ -151,92 +158,6 @@ def katCallBack():
     roach2.callback_counter= roach2.callback_counter+1
 
 
-#trigin from 0,1,2,3 to trig on those inputs.
-#trig in -1 to ignore trig.
-#inpt is 0,1,2,3,4,5,6,7
-def trigScope(trigin=-1, inpt=0):
-    
-    if trigin ==-1:
-        ig_tr = 1
-	trigin = 0
-    else:
-        ig_tr = 0
-	
-   
-    we_in = 0
-    inputsel = inpt + trigin*16  + we_in*64;
-    roach2.write_int("roachscope_inputsel",inputsel);
-
-    print "Trigger roachscope"
-    #clear trace
-    roach2.write('roachscope_snapshot_bram','\0'*4096)
-  
-    ig_we = 1
-  
-    ctrl = ig_we*4 + ig_tr*2;
-
-    roach2.write_int('roachscope_snapshot_ctrl',ctrl)
-
-
-    stat = roach2.read_int('roachscope_snapshot_status')
-    print 'stat = %x'%stat
-
-    ctrl+=1;
-    roach2.write_int('roachscope_snapshot_ctrl',ctrl)
-    time.sleep(0.01)
-
-    stat = roach2.read_int('roachscope_snapshot_status')
-    print 'stat = %x'%stat
-    print "END Trigger Roachscope"
-
-
-def plotScope(pllen = 2048,is_usebits = False, bits = '15:11;10:10;9:9;8:8',isprint = False):
-    binstr = roach2.read('roachscope_snapshot_bram',4096)
-    shorts = struct.unpack('>2048h',binstr)
-    figure(1)
-    clf()
-
-    if isprint:
-        print binstr
-        print len(binstr)
-	
-    if is_usebits==False:
-	plot(shorts[:pllen])
-
-    else:
-        bitwidths=bits.split(';')
-	stbit = 15
-	smax = 0
-	graphnum = 0.0
-	for k in range(len(bitwidths)):
-	    couple = bitwidths[k].split(':')
-	    stbit=int(couple[0])
-	    edbit=int(couple[1])
-	    print '%d %d'%(stbit,edbit)
-	    width = 1 + stbit - edbit
-	    y=numpy.array([0.0]*pllen)
-	    if width>0:
-	        mask = (1<<width) - 1
-		
-		for i in range(pllen):
-		    sval = shorts[i]
-		   
-		    
-		    datash = sval>>edbit
-		    datash = datash & mask
-		    datash = double(datash)
-		    
-		    factor = double((1<<width));
-		    
-		    if len(bitwidths)<2:
-		        factor = 1.0
-			
-		    y[i] = (2.0*graphnum) + (datash/factor)
-		    
-	  	plot(y)
-		graphnum = graphnum+1.0
-		stbit = stbit - width
-    
     
 
 class katcpNc:
@@ -480,40 +401,40 @@ class katcpNc:
 	
         self.listReg()
 	
-    def write_int(self,regname, data):
+    def write_int(self,regname, data,offset=0):
     
     	
         if regname not in self.reglist:
             print "Unknown register %s"%regname
             return
 
-    	self.Out_pipe.write("?wordwrite %s 0 0x%x\n"%(regname,data));
+    	self.Out_pipe.write("?wordwrite %s %d 0x%x\n"%(regname,offset,data));
 	self.Out_pipe.flush()
 	line=self.In_pipe.readline()
-        print 'write_int %s %x'%(regname, data)
-	print line
+        #print 'write_int %s %x'%(regname, data)
+	#print line
 	
 	
-    def read_int(self,regname):
+    def read_int(self,regname,offset=0):
     	
         if regname not in self.reglist:
             print "Unknown register %s"%regname
             return(0)
 
-	self.Out_pipe.write("?wordread %s 0\n"%(regname));
+	self.Out_pipe.write("?wordread %s %d\n"%(regname,offset));
 	self.Out_pipe.flush()
 	
 	line=self.In_pipe.readline()
 	
 	vals=line.split()[2]
 	val=int(vals,16)
-        print 'read_int %s %x'%(regname, val)
+        #print 'read_int %s %x'%(regname, val)
 	return(val)
 	
 	
 
 
-    def write(self,regname,data):
+    def write(self,regname,data,offset=0):
         #data is binary string, shoudl line up as ints
 
         if regname not in self.reglist:
@@ -521,7 +442,7 @@ class katcpNc:
             return
 
         data2=self.insertEsc(data)
-        self.Out_pipe.write( '?write %s 0 %s\n'%(regname,data2))
+        self.Out_pipe.write( '?write %s %d %s\n'%(regname,offset,data2))
 
 
         self.Out_pipe.flush()
@@ -537,14 +458,17 @@ class katcpNc:
 
 
 
-    def read(self,regname,count):
+
+
+
+    def read(self,regname,count,offset = 0):
 
 
         if regname not in self.reglist:
             print "Unknown register %s"%regname
             return('\n')
 
-        self.Out_pipe.write( '?read %s 0 %d\n'%(regname,count))
+        self.Out_pipe.write( '?read %s %d %d\n'%(regname,offset,count))
 
 
         self.Out_pipe.flush()
@@ -592,520 +516,6 @@ class katcpNc:
 	print line
 	
 
-    def singleFreqLUT(self,f, iq, sampleRate, size, phase, amplitude):
-        """ Returns data points for the DAC look-up table.
-
-            @param f                List of desired freqs, e.g., 12.34e6 if resolution = 1e4.
-            @param sampleRate       Sample rate of DAC.
-            @param resolution       Example: 1e4 for resolution of 10 kHz.
-            @param phase            Constant phase offset between -pi and pi.
-            """
-
-
-
-        #data = []
-
-
-
-        phaserad=numpy.pi * phase / 180.0;
-        phaseterm= phaserad + 2*math.pi*(f/sampleRate)*numpy.arange(size)
-
-
-        #make test pulse.it is inserted in random part of the waveform.
-        #calc where pulse will be in the wave
-
-
-
-
-        if iq == 'I':
-            data=numpy.round(amplitude * numpy.cos(phaseterm))
-                #data.append(int(amplitude*math.sin(2*math.pi*f*t)))
-        else:
-            sign = 1.0;
-
-
-            data=numpy.round(sign*amplitude * numpy.sin(phaseterm))
-
-
-        return data
-
-
-
-
-    def convertToBinary128_2(self,data1,channel):
-        """ Converts two successive data points to 16-bit binary and concatenates to one 32-bit word.
-
-            @param data             Decimal data to be converted  for FPGA.
-            """
-        binaryData = ''
-        for i in range(0, len(data1)):
-            if channel==0:
-                x = struct.pack('>hhhhhhhh',
-                    data1[i],
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0)
-
-            elif channel==1:
-                x = struct.pack('>hhhhhhhh',
-                    0,
-                    data1[i],
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0)
-
-            elif channel==2:
-                x = struct.pack('>hhhhhhhh',
-                    0,
-                    0,
-                    data1[i],
-                    0,
-                    0,
-                    0,
-                    0,
-                    0)
-
-            elif channel==3:
-                x = struct.pack('>hhhhhhhh',
-                    0,
-                    0,
-                    0,
-                    data1[i],
-                    0,
-                    0,
-                    0,
-                    0)
-
-
-            elif channel==4:
-                x = struct.pack('>hhhhhhhh',
-                    0,
-                    0,
-                    0,
-                    0,
-                    data1[i],
-                    0,
-                    0,
-                    0)
-
-            elif channel==5:
-                x = struct.pack('>hhhhhhhh',
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    data1[i],
-                    0,
-                    0)
-
-            elif channel==6:
-                x = struct.pack('>hhhhhhhh',
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    data1[i],
-                    0)
-
-            elif channel==7:
-                x = struct.pack('>hhhhhhhh',
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    data1[i])
-
-
-
-            binaryData = binaryData + x
-
-        return binaryData
-
-
-    def convert128To256(self,datastr128):
-
-
-        lenbytes = len(datastr128);
-        lenword128 = lenbytes / 16;
-        lenword256 = lenword128/2;
-
-
-        stra=''
-        strb=''
-
-        cnt_128 = 0
-
-        for cnt_256 in range(lenword256):
-            stra = stra + datastr128[cnt_128:(cnt_128+16)]
-            cnt_128 = cnt_128 + 16
-            strb = strb + datastr128[cnt_128:(cnt_128+16)]
-            cnt_128 = cnt_128 + 16
-
-        return((stra,strb))
-
-
-
-
-    def convertToBinary128(self,data1, data2):
-        """ Converts two successive data points to 16-bit binary and concatenates to one 32-bit word.
-
-            @param data             Decimal data to be converted  for FPGA.
-            """
-        binaryData = ''
-        for i in range(0, len(data1)/4):
-            x = struct.pack('>hhhhhhhh', data1[4*i+3], data1[4*i+2], data1[4*i+1], data1[4*i+0],data2[4*i+3], data2[4*i+2], data2[4*i+1], data2[4*i+0])
-            binaryData = binaryData + x
-
-        return binaryData
-
-
-    def streamDram(self,dramname):
-        control_reg='%s_control'%dramname
-        lutsize_reg = '%s_LUTSize'%dramname
-        offs_addr_reg = '%s_offsAddr'%dramname
-        buffmem = '%s_drambuff128'%dramname
-
-        startdac_bit = 2
-        sync_bit =3
-        load_addr_bit = 0
-        write_bit = 1
-        rst_dram_bit = 4
-        ctrl = 0;
-
-        ctrl = (self.rd_toggle<<5) + (self.wr_toggle<<7);
-        self.write_int(control_reg, ctrl)
-
-        ctrl = ctrl + (1<<sync_bit);
-
-        self.write_int(control_reg, ctrl)
-
-        ctrl = ctrl - (1<<sync_bit);
-        self.write_int(control_reg, ctrl)
-
-        ctrl = ctrl + (1<<startdac_bit);
-
-        self.write_int(control_reg, ctrl)
-
-
-    #bindata is bin string, mult of 128 bits long.
-    #dramname is prename...
-    def writeDram_v0(self,dramname,bindata_ab):
-
-
-        (bindata , bindata_b) = self.convert128To256(bindata_ab)
-
-        control_reg='%s_control'%dramname
-        lutsize_reg = '%s_LUTSize'%dramname
-        offs_addr_reg = '%s_offsAddr'%dramname
-        buffmem0 = '%s_drambuff128_0'%dramname
-        buffmem1 = '%s_drambuff128_1'%dramname
-
-        startdac_bit = 2
-        sync_bit =3
-        load_addr_bit = 0
-        write_bit = 1
-        rst_dram_bit = 4
-
-
-        datalen=len(bindata)
-        datalen_word=datalen/16
-
-        print 'nbytes %d lutsizewords %d'%(datalen, datalen_word)
-        #
-        #set address speeds of bram and dram
-        #
-        control = (self.rd_toggle<<5) + (self.wr_toggle<<7);
-
-        self.write_int(control_reg, control);
-
-        #
-        #pulse sync in bit
-        #
-        control = control + (1<<sync_bit)
-        self.write_int(control_reg, control)
-
-        control = control - (1<<sync_bit)
-        self.write_int(control_reg, control);
-
-
-
-        offaddr = 0
-        dataptr = 0
-
-        #address size iof te buff bram. it is 128 addresses, at 288 bits, or 16 bytes per address
-        buffsize_word = 128
-        #the dram addr incs by 8 for each 128bit word (or 144 bit word)
-        addrinc = buffsize_word*8
-        #bufsize in bytes
-        buffsize = buffsize_word*16
-
-        #lut size must be datalen_word, or the number of 288 size workds in mem.
-        # the 8 is because the dram addr must inc by 8, as lower 3 bits are not used.
-        #we add fudge factor because we want the mem to count farther when we are wrting it
-        #or else the state machine may overwrite the 1st word... fudge of 16 words
-        fudge = 8*16;
-        lutsize = 8*datalen_word + fudge
-        self.write_int(lutsize_reg, lutsize);
-        while dataptr<datalen:
-            #
-            #set control to all bits 0 except the rd and wer toggles.
-            #
-            control = (self.rd_toggle<<7) + (self.wr_toggle<<5);
-            self.write_int(control_reg, control)
-            #
-            #pulse sync in bit
-            #
-            control = control + (1<<sync_bit)
-            self.write_int(control_reg, control)
-
-            control = control - (1<<sync_bit)
-            self.write_int(control_reg, control);
-
-            #get 128 * 16 bytes of data for on bram size of data.
-            datawr=bindata[(dataptr):(dataptr+buffsize)]
-            datawr_b=bindata_b[(dataptr):(dataptr+buffsize)]
-
-
-            #
-            # write dram start addr for this bloc and load the address
-            #
-
-            self.write_int(offs_addr_reg, offaddr);
-
-            control =  control  + (1<<load_addr_bit)
-            self.write_int(control_reg, control);
-
-            control = control  - (1<<load_addr_bit)
-            self.write_int(control_reg, control);
-
-
-            #
-            # write data to brams
-            #
-            self.write(buffmem0,datawr);
-            self.write(buffmem1,datawr_b)
-            print "write %d bytes: %s"%(len(datawr),datawr[:64])
-
-            #
-            #put dram/bram in write to dram mode
-            #
-            control =control + (1<<write_bit)
-            self.write_int(control_reg, control);
-
-
-            #
-            # start dac which will do the block write to dram
-            #
-            control = control + (1<<startdac_bit)
-            self.write_int(control_reg, control);
-
-            #wait for dram to write
-            time.sleep(0.01)
-
-            #
-            # turn off start dac to stop sm.turn off write mode
-            #
-            control = control - ( (1<<startdac_bit)  +  (1<<write_bit)  )
-            self.write_int(control_reg, control);
-
-            #
-            #inc mem ptrs to get next block of data, and next block address in dram
-            #
-
-            #inc ptr into the raw data to send to next bram size block
-            dataptr= dataptr + buffsize
-            #inc the dram mem
-            offaddr = offaddr + addrinc
-
-            if 'dbg_kat_callback' in self.dbgflags:
-                print 'calling katCallBack'
-                katCallBack()
-
-
-        #lut size must be datalen_word, or the number of 288 size workds in mem.
-        # the 8 is because the dram addr must inc by 8, as lower 3 bits are not used.
-        # we sub 8 because instead of 256*8 we want 255*8. ordinal numbers..
-        lutsize = 8*datalen_word-8
-        self.write_int(lutsize_reg, lutsize);
-
-
-
-    #bindata is bin string, mult of 128 bits long.
-    #dramname is prename...
-    def writeDram(self,dramname,bindata_ab):
-
-
-        (bindata , bindata_b) = self.convert128To256(bindata_ab)
-
-        control_reg='%s_control'%dramname
-        lutsize_reg = '%s_LUTSize'%dramname
-        offs_addr_reg = '%s_offsAddr'%dramname
-        bramsize_reg = '%s_bramsize'%dramname
-        buffmem0 = '%s_drambuff128_0'%dramname
-        buffmem1 = '%s_drambuff128_1'%dramname
-
-        startdac_bit = 2
-        sync_bit =3
-
-        write_bit = 1
-        rst_dram_bit = 4
-
-
-        datalen=len(bindata)
-        datalen_word=datalen/16
-
-        print 'nbytes %d lutsizewords %d'%(datalen, datalen_word)
-
-        #
-        #set bram size
-        #
-        self.write_int(bramsize_reg, 127);
-
-        #
-        #set address speeds of bram and dram
-        #
-        control = (self.rd_toggle<<7) + (self.wr_toggle<<5);
-
-        self.write_int(control_reg, control);
-
-        #
-        #pulse sync in bit
-        #
-        control = control + (1<<sync_bit)
-        self.write_int(control_reg, control)
-
-        control = control - (1<<sync_bit)
-        self.write_int(control_reg, control);
-
-
-
-        offaddr = 0
-        dataptr = 0
-
-        #address size iof te buff bram. it is 128 addresses, at 288 bits, or 16 bytes per address
-        buffsize_word = 128
-        #the dram addr incs by 8 for each 128bit word (or 144 bit word)
-        addrinc = buffsize_word*8
-        #bufsize in bytes
-        buffsize = buffsize_word*16
-
-        #lut size must be datalen_word, or the number of 288 size workds in mem.
-        # the 8 is because the dram addr must inc by 8, as lower 3 bits are not used.
-        #we add fudge factor because we want the mem to count farther when we are wrting it
-        #or else the state machine may overwrite the 1st word... fudge of 16 words
-        fudge = 8*16;
-        lutsize = 8*datalen_word + fudge
-        self.write_int(lutsize_reg, lutsize);
-        while dataptr<datalen:
-            #
-            #set control to all bits 0 except the rd and wer toggles.
-            #
-            control = (self.rd_toggle<<7) + (self.wr_toggle<<5);
-            self.write_int(control_reg, control)
-            #
-            #pulse sync in bit
-            #
-            control = control + (1<<sync_bit)
-            self.write_int(control_reg, control)
-
-            control = control - (1<<sync_bit)
-            self.write_int(control_reg, control);
-
-            #get 128 * 16 bytes of data for on bram size of data.
-            datawr=bindata[(dataptr):(dataptr+buffsize)]
-            datawr_b=bindata_b[(dataptr):(dataptr+buffsize)]
-
-
-            #
-            # write dram start addr for this bloc and load the address
-            #
-
-            self.write_int(offs_addr_reg, offaddr);
-
-
-
-            #
-            # write data to brams
-            #
-            self.write(buffmem0,datawr);
-            self.write(buffmem1,datawr_b)
-            print "write %d bytes: %s"%(len(datawr),datawr[:64])
-
-            #
-            #pulse dram/bram in write to dram mode
-            #
-            control =control + (1<<write_bit)
-            self.write_int(control_reg, control);
-
-            control =control - (1<<write_bit)
-            self.write_int(control_reg, control);
-
-
-
-            #wait for dram to write
-            time.sleep(0.01)
-
-
-
-            #
-            #inc mem ptrs to get next block of data, and next block address in dram
-            #
-
-            #inc ptr into the raw data to send to next bram size block
-            dataptr= dataptr + buffsize
-            #inc the dram mem
-            offaddr = offaddr + addrinc
-
-            if 'dbg_kat_callback' in self.dbgflags:
-                print 'calling katCallBack'
-                katCallBack()
-
-
-        #lut size must be datalen_word, or the number of 288 size workds in mem.
-        # the 8 is because the dram addr must inc by 8, as lower 3 bits are not used.
-        # we sub 8 because instead of 256*8 we want 255*8. ordinal numbers..
-        lutsize = 8*datalen_word-8
-        self.write_int(lutsize_reg, lutsize);
-
-
-
-
-    def dramTestData(self,dramname):
-
-
-
-        sig3=list('ABCDEFGHIJKLMNOP')
-
-        #convert the chars to ascii values in the list
-        sig2=[]
-        for ss in sig3:
-            ss=ord(ss)
-            sig2.append(ss)
-
-        #make it longer, 16*len(sig3) will be 256 items, or 128 256 bit workds
-        sig2=numpy.array(sig2*16*self.dram_test_nbuffers)
-
-        #make AA,BB,CC etc. into a 16 bit workd
-        sig = sig2*256
-        sig = sig + sig2
-
-        data =  self.convertToBinary128_2(sig,7)
-        self.writeDram(dramname,data)
-
-
 
     def reverseBits(self,data):
         data2=[]
@@ -1152,3 +562,186 @@ class katcpNc:
 	print line
 	
 	
+"""
+This is tcpborphserver, version 3. A server designed to control
+roach2s. It speaks katcp over port 7147. You should be able to
+connect to a roach2 and type ?help to see the list of commands. 
+
+tcpborphserver links in the mainloop of the katcp library which
+can and does implement commands which are not directly relevant 
+to users who simply wish to interact with the fpga. In addition
+tcpborphserver itself may contain commands which are still under
+development, and not guaranteed to be retained. 
+
+The following commands are implemented by tcpborphserver3:
+
+  ?listbof
+
+    Lists gateware image files stored on the roach
+
+  ?delbof filename
+
+    Removes a gateware image file 
+
+  ?progdev filename
+
+    Programs a gateware image already stored on the roach in
+    the image directory (paths not permitted)
+
+  ?upload port
+
+    Upload and program a local gateware image file to the roach. Send 
+    the local image to the tcp port on the roach, as specified. No
+    escaping of the image file required as it has its own stream, 
+    which should be closed when upload has completed. Still a bit 
+    experimental and subject to revision (there was an uploadbof command 
+    which was different). 
+
+    Example
+
+      ?upload 3000
+      !upload ok 3000
+
+    Then from a local terminal type
+
+      nc -w 2 -q 2 192.168.40.57 3000 < some-image.bof
+
+    Which will give you 
+
+      #fpga loaded
+      #fpga ready
+
+  ?fpgastatus
+
+    Checks if the fpga is programmed. Will return fail in case the
+    fpga is not programmed. In earlier versions this command was 
+    called ?status
+
+  ?listdev [size]
+    
+    Lists the register names provided by the currently programmed
+    gateware image. The optional "size" keyword will include a size
+    field in the output
+
+  ?register name position bit-offset length
+
+    Assign a name to an fpga memory location explicitly, instead
+    of having it set in the bof (gateware image) file. Experimental
+
+  ?wordwrite register word-offset word
+
+    Writes a 32bit word to the given register at the word-offset. The
+    word should be given as a hexadecimal value. Example
+
+    ?wordwrite sys_scratchpad 0 0x74657374
+
+  ?wordread register word-offset [word-count]
+
+    Reads a 32bit word from the given offset in the named register. 
+    The word offset is counted in words, not bytes. The value returned
+    is given in hexadecimal. Example
+
+    ?wordread sys_scratchpad 0 
+    !wordread ok 0x74657374
+
+  ?read register byte-offset count
+
+    Reads data from the given register. Reads start at the specified
+    byte-offset and attempt to read count bytes. Data is returned
+    in binary form (with escapes as per katcp specification). Not
+    all offsets and sizes are supported, as there are alignment 
+    alignment constraints. Example
+
+    ?read sys_scratchpad 0 4
+    !read ok test
+
+  ?write register byte-offset data
+
+    Write the given binary data to the position byte-offset to the
+    named register, subject to alignment constraints
+
+  ?chassis-led led-name state
+
+    Allows you to toggle an LED on the roach chassis. Example
+
+    ?chassis-led red on
+
+    Currently the only useful led name is "red" (there is a "green"
+    too, but it gets toggled automatically). chassis-start is not
+    needed during normal operation as it should happen automatically
+
+  ?tap-info
+
+    displays some freeform information about running tap instances
+
+  ?tap-stop register-name
+
+    Stop a running tap instance
+
+  ?tap-start tap-device register-name ip-address [port [mac]]
+
+    Start a tap instance with name tap-device, which opens an fpga
+    register at register-name to loop traffic to the kernel. The kernel
+    interface is given ip-address (netmask fixed to 255.255.255.0). Port
+    is a udp port on which gateware collects data
+
+The following commands are part of the katcp library, and with the exception
+of log-record and system-info also part of the katcp specification
+
+  ?client-list
+
+    Lists current connections to the server
+
+  ?version-list
+    
+    Display some version information
+
+  ?sensor-list 
+
+    Display available sensors
+
+  ?sensor-value sensor
+
+    Retrieve a sensor value (rather use sensor-sampling if you 
+    wish to see periodic data)
+
+  ?sensor-sampling sensor strategy parameter
+   
+    Example
+
+    ?sensor-sampling raw.temp.fpga event
+  
+  ?watchdog
+
+    No-op, used as a ping
+
+  ?log-level
+   
+    Sets the log level 
+
+    Example to enable lots of debug messages
+
+    ?log-level trace
+
+  ?help
+
+    List available, nonhidden commands
+
+  ?restart
+   
+    Reboot the roach
+
+  ?halt 
+
+    Turn off the roach
+
+  ?log-record [priority] message
+
+    Write a log message, goes to all client connections 
+
+  ?system-info
+
+    Prints some unstructed information about the system. 
+    Mostly useful to debug server internals
+
+"""
