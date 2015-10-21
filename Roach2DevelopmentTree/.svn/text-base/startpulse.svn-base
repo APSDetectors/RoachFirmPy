@@ -1,0 +1,74 @@
+#!/bin/bash
+bofpid=$(ssh root@192.168.0.67 ps -aux | grep bof | awk '{print $2}')
+echo "bof pid is $bofpid"
+#mkfifo /tmp/monpipe
+#rm mypipe
+#mkfifo mypipe
+#pkill -f nc
+#pkill -f sleep
+
+#sleep 999999999 > mypipe &
+#sleep 999999999 >/tmp/monpipe &
+#nc -l 7777 | tee /tmp/monpipe >/tmp/fullpipe &
+#xterm -e nc -l 7777 > mypipe  &
+
+
+if test "$1" == "list"
+then
+xterm -e "nc -l 7777 | bin2list" &
+xterm -e "ssh root@192.168.0.67 /root/startrpulse $bofpid $2" &
+
+
+fi
+
+
+
+if test "$1" == "hdf"
+then
+xterm -T "Ctrl C to save hdf" -e "nc -l 7777 | bin2hdf5 $2" &
+xterm -e "ssh root@192.168.0.67 /root/startrpulse $bofpid $3" &
+
+fi
+
+if test "$1" == "raw"
+then
+xterm -e "nc -l 7777 > $2" &
+xterm -e "ssh root@192.168.0.67 /root/startrpulse $bofpid $3" &
+
+fi
+
+
+
+if test "$1" == "hex"
+then
+xterm -e "nc -l 7777 | hexdump " &
+xterm -e "ssh root@192.168.0.67 /root/startrpulse $bofpid $2" &
+
+fi
+
+
+
+if test "$1" == "hexc"
+then
+xterm -e "nc -l 7777 | hexdump -C" &
+xterm -e "ssh root@192.168.0.67 /root/startrpulse $bofpid $2" &
+
+fi
+
+
+
+echo "Hit Ctrl C to close the xterms, or hdf data will be lost"
+sleep 1
+
+# ps -aux | grep nc
+# ps -aux | grep startrpulse
+# ps -aux | grep sleep
+
+#xterm -e ssh root@192.168.0.67 /root/startrpulse $bofpid &
+#xterm -e "ssh root@192.168.0.67 /root/startrpulse $bofpid $2" &
+#echo "ssh to roachbox, run the pulse sender"
+
+#( ssh root@192.168.0.67 /root/startrpulse $bofpid ) | bin2list
+#bin2list </tmp/fullpipe
+
+

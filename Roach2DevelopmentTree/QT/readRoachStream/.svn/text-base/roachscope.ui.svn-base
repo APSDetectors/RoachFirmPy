@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>roachScope</class>
+ <widget class="QMainWindow" name="roachScope">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>689</width>
+    <height>503</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>1</horstretch>
+    <verstretch>1</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="sizeIncrement">
+   <size>
+    <width>1</width>
+    <height>1</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>RoachScope</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>1</horstretch>
+     <verstretch>1</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="sizeIncrement">
+    <size>
+     <width>1</width>
+     <height>1</height>
+    </size>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="4" column="1">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>Input</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="2" colspan="2">
+     <widget class="QCheckBox" name="checkBox_scopeIgTrig">
+      <property name="text">
+       <string>igTrig</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="1">
+     <widget class="QLabel" name="label_3">
+      <property name="text">
+       <string>WE</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="3">
+     <widget class="QSpinBox" name="spinBox_scopeWeInput">
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>4</number>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="2" colspan="2">
+     <widget class="QCheckBox" name="checkBox_scopeCapture">
+      <property name="text">
+       <string>IgWe</string>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="1" colspan="3">
+     <widget class="QCheckBox" name="checkBox_zoomY">
+      <property name="text">
+       <string>zoom y</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1" colspan="3">
+     <widget class="QPushButton" name="pushButton_scopeTrig">
+      <property name="text">
+       <string>Trig</string>
+      </property>
+     </widget>
+    </item>
+    <item row="9" column="1" colspan="3">
+     <widget class="QCheckBox" name="checkBox_zoomX">
+      <property name="text">
+       <string>zoom x</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="2">
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string>trig</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0" rowspan="11">
+     <widget class="QCustomPlot" name="widget_QPlot" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>1</horstretch>
+        <verstretch>1</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="sizeIncrement">
+       <size>
+        <width>1</width>
+        <height>1</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="3">
+     <widget class="QSpinBox" name="spinBox_scopeTrigInput">
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>4</number>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="3">
+     <widget class="QSpinBox" name="spinBox_scopeInput">
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>8</number>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="1" colspan="3">
+     <widget class="QLineEdit" name="lineEdit_plotBits">
+      <property name="text">
+       <string>0:0;1:1;2:2;3:3;4:4;5:5;6:6;7:7;8:8;15:9</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="2" colspan="2">
+     <widget class="QCheckBox" name="checkBox_plotBits">
+      <property name="text">
+       <string>plotbits</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1" colspan="2">
+     <widget class="QPushButton" name="pushButton_scopeData">
+      <property name="text">
+       <string>cancel</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="3">
+     <widget class="QLabel" name="label_RedLight">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(16, 0, 0);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Box</enum>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>689</width>
+     <height>25</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QWidget</extends>
+   <header location="global">qcustomplot.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

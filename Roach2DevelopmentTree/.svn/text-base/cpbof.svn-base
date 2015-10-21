@@ -1,0 +1,5 @@
+ls -t ./qdrdac/bit_files/*.bof | head -1 | xargs -I%1 cp %1 bestBitFiles/.
+ls -t ./bestBitFiles/*.bof | head -1 
+ls -t ./bestBitFiles/*.bof | head -1 | xargs -I%1 svn add %1
+
+

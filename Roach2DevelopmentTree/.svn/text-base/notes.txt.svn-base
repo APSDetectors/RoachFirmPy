@@ -1,0 +1,231 @@
+ResData tabl
+
+
+make a plot that rememvers the zoom and offset factor
+
+plotRes button should plot ALL checked res or selected 
+
+Need to UNSEL:ECT the res on resdata tab
+
+
+
+Autosave the resdata file, fits etc...
+
+add noise traces or replace noise traces? how many to add? can we have longer
+traces?Can there be  a flag for pulse data?
+
+need iq velocity plot
+
+can we have FFT readout data based on iq vel freq? and not just fits or rough
+freq?
+
+
+implement that fft power spectrum of noise and make plots like nino at al. see
+the emil from nino
+
+
+multiplot for iq curcle noise cloud. reading out sev. resonators at once and
+plotting all the iq circles in real time.
+
+
+add a files tab?
+have ways to step through all the dump file waveforms
+ways to steo through all the resonatlrs stored...
+
+Add a way top add notes on the gui, that is added to the res and dump files.
+
+
+
+Add uncheck all button- DONE
+
+Need dialog to pick files for hdf.
+
+Add check all button- DONE
+
+rememver check settings- DONE
+
+need to rewrite over hdf files, - DONE, 
+
+pick servers for multiproc.
+
+Have to hit IF board controls after loading new FW.
+make so it is set correctly
+
+hittin if board switches when fft is running makes crashes... then we cannot run ffts, as thread stops...
+
+
+reaind all bins out is only 1/2 of bins. wierd stuff in plots.///
+also we have applyDelay error when we have more than ONE tone, and readout out all freqs.
+ffts
+
+Nice to plot fft in correct way, all bins... and rf in middle...
+
+
+the dump file is invalid if we swtich from fft to sweep FW. or vice versa
+
+need a separate dump file for ffts?
+
+clear dmp file on thescreen?
+
+some bettter way of tracking the iq index when we reload fw, the iqindex gets reset.
+
+global var for counting sweeps in gui? 
+
+iq_index for reading out files?
+
+iq index is useless unless we have lawrge datasets for all sweeps- only for old stype dump files.
+now we want to get ruid of it or it is only for reading out dump files.
+
+make iq index when reading new stype dunp file be an index into the keys(). in this way we can not worry about plot number.
+
+
+
+
+different code for doing dump file for netanaluzer and fft analuyzer. need to move the code from fft to netanaluzer as a
+super class code.
+
+
+no awy to set FFT sync time from gui
+
+
+
+make hdf dump file work for FFT analyuzer.--- DONE
+
+make multiproc work properly, so queue gets set up at right time, DONE
+and other proc can connect... DONE
+
+
+fix bug in fft sweeps:
+if we sweep many mkids at once, the nosie curcle gets messed up...
+some butg.
+if we sweep one at a time, it works...but not all the time. 1st resonator is always bad?
+
+
+Better plotting buttons....on RESdata ...
+
+Rememver the +/- settings on the res list.
+
+bug in del resonator code... not deleted everywhere...
+
+nelete traces from res.
+
+
+plot of iq velocity
+readout based on iqvel
+
+
+set num of noise traces to take.
+
+
+
+add/delete noise trace
+
+num of noise traces....
+
+pulse traces needed
+
+make hdf file save often as we take sweeps fits... overwrites hdf and saves
+backup files.
+
+
+Need puse server... C prog to read foga ram running on roach ppc. it buffers and
+sends tcp or udp data to linux box.
+
+
+phase time delay calc problems- we do calc of time delay- then we take sweeps and the phases are all wrong.
+
+
+phase correct on res sweep data? lin reg on phase, then add the slop to it.Tried
+this...DONE
+
+
+
+FFT measure the tiem delay
+source 100 tones
+take raw IQ and search for proper delays to min. the phase change...
+DONE
+
+
+Make FFT tab useful... it should be the data gathering tab
+pulse data file selection DONE
+select channels to read. DONE
+select thresholds etc.
+select all vs pulse event data.
+should uave useful default gatin
+PLots for apply circle fit and IvQ plots.///
+
+
+Need a plot of noise vers time, where we transrot the IQ data
+
+No way to stop the sweeping w/ fft FW- this is power sweep- keeps going for ever
+
+
+netanalyzer- use CORDIC block instead...
+
+debug tab
+read dump file
+write dump file
+set iqindex
+check to read from dump file instead of roach
+plots of raw data etc.. I raw, several plots Iraw, q raw, report of fa obhect...
+
+
+fix dump files so we find the 1st. last sweep number then set iq index to start when we open it
+
+
+
+
+Some way of finding and storing pulses  in noise data
+
+
+
+fits- in NON multiproc- plots come up wierd... 
+
+dump file- cannot read in data stored by fft analyzer. butgs...
+
+
+On all sweeps- there is a replot befire sweep is done. why?
+Alsothere is some wierd 1st plot... bad plot
+
+
+Check Res Fc not work on FFT plots
+
+
+Hopw to know FPGA state?
+there is code, but need a debugging tab
+
+
+soem problem on roach ssh to 
+
+
+make sweep tab useful - so the netanalyzer code works w/ ffts- so phse and amp
+not messed up.repeatable reloading of FW.
+FFT tab shoudl read pulses from mkids defined ina file.
+
+make use of IQ velocity.use that freq for center freq.
+
+
+need to be able t have longer DRAM waveforms- need a control for it... 
+def laneth longer...
+
+
+
+what is fftanalyzere.py?
+
+
+
+
+
+
+resbbb is a fit of all 5 res. do not know of dump file...
+
+
+
+resonator 1, do sweep.
+resdump_10...
+resbbb_2
+
+resdump 11- we do all resonators, 
+resbbb_3.h5 will be the fits of these res...
+
+

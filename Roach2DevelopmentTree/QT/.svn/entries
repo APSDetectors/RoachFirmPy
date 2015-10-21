@@ -1,0 +1,77 @@
+10
+
+dir
+2804
+https://subversion.xor.aps.anl.gov/detpool/ROACH/trunk/Roach2FWPython/QT
+https://subversion.xor.aps.anl.gov/detpool
+
+
+
+2015-10-21T18:52:01.094953Z
+2804
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+b68ab6fb-3108-62fe-f298-bffb3bbe96ba
+
+build-testEnet-Desktop-Debug
+dir
+
+readRoachStream
+dir
+
+qcustomplot-source
+dir
+
+testDDR
+dir
+
+testEnet
+dir
+
+QCustomPlot-source.tar
+file
+
+
+
+
+2015-10-21T19:05:17.142153Z
+5092606aaac2e751f87b434b5530ff00
+2015-10-08T13:43:11.555990Z
+2773
+tmadden
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1064960
+

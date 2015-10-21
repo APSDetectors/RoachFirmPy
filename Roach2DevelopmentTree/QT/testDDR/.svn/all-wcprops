@@ -1,0 +1,101 @@
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/detpool/!svn/ver/2803/ROACH/trunk/Roach2FWPython/QT/testDDR
+END
+udprcv.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/detpool/!svn/ver/2605/ROACH/trunk/Roach2FWPython/QT/testDDR/udprcv.cpp
+END
+guisettings.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/detpool/!svn/ver/2608/ROACH/trunk/Roach2FWPython/QT/testDDR/guisettings.cpp
+END
+settings.py
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/detpool/!svn/ver/2606/ROACH/trunk/Roach2FWPython/QT/testDDR/settings.py
+END
+mainwindow.ui
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/detpool/!svn/ver/2609/ROACH/trunk/Roach2FWPython/QT/testDDR/mainwindow.ui
+END
+udprcv.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/detpool/!svn/ver/2605/ROACH/trunk/Roach2FWPython/QT/testDDR/udprcv.h
+END
+testEnet.pro
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/detpool/!svn/ver/2614/ROACH/trunk/Roach2FWPython/QT/testDDR/testEnet.pro
+END
+guisettings.h
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/detpool/!svn/ver/2608/ROACH/trunk/Roach2FWPython/QT/testDDR/guisettings.h
+END
+mainwindow.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/detpool/!svn/ver/2609/ROACH/trunk/Roach2FWPython/QT/testDDR/mainwindow.cpp
+END
+roachscope.ui
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/detpool/!svn/ver/2614/ROACH/trunk/Roach2FWPython/QT/testDDR/roachscope.ui
+END
+mainwindow.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/detpool/!svn/ver/2607/ROACH/trunk/Roach2FWPython/QT/testDDR/mainwindow.h
+END
+roachsetup.py
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/detpool/!svn/ver/2616/ROACH/trunk/Roach2FWPython/QT/testDDR/roachsetup.py
+END
+main.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/detpool/!svn/ver/2605/ROACH/trunk/Roach2FWPython/QT/testDDR/main.cpp
+END
+testEnet.pro.user
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/detpool/!svn/ver/2803/ROACH/trunk/Roach2FWPython/QT/testDDR/testEnet.pro.user
+END
+roachscope.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/detpool/!svn/ver/2614/ROACH/trunk/Roach2FWPython/QT/testDDR/roachscope.cpp
+END
+roachscope.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/detpool/!svn/ver/2610/ROACH/trunk/Roach2FWPython/QT/testDDR/roachscope.h
+END
+debug.py
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/detpool/!svn/ver/2615/ROACH/trunk/Roach2FWPython/QT/testDDR/debug.py
+END

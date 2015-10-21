@@ -1,0 +1,12 @@
+/root/cleanup
+#make pipe to send data to
+mkfifo mypipe
+#connect sleep to pipe so we never get EOF
+sleep 999999999 > mypipe &
+#read the opipe with netcat. connect to roach linux box
+nc 192.168.0.202 7777 < mypipe &
+#run pulse reader output to pipe. $1 is 1st arg, and is proc id of 
+#roach FW
+./pulsereader $1 $2> mypipe
+
+
