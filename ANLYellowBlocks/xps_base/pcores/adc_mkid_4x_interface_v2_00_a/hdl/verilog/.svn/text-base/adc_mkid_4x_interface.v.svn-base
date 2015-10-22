@@ -575,7 +575,7 @@ IBUFGDS #(.IOSTANDARD("LVDS_25"))
       .CLKOUT2_PHASE(180.0),
       .CLKOUT3_PHASE(270.0),
       
-      .CLKOUT4_PHASE(0.0),
+      .CLKOUT4_PHASE(270.0),
       .CLKOUT5_PHASE(0.0),
       .CLKOUT6_PHASE(0.0),
       // CLKOUT1_DIVIDE - CLKOUT6_DIVIDE: Divide amount for each CLKOUT (1-128)
@@ -631,7 +631,7 @@ IBUFGDS #(.IOSTANDARD("LVDS_25"))
       //this is buff version of dcm)clk, at 128MHJz
       //this means that the clkdiv will be in phase with the original ADC drdy clk.
       // Feedback Clocks: 1-bit (each) input: Clock feedback ports
-      .CLKFBIN(clk_feedback_buf)      // 1-bit input: Feedback clock input
+      .CLKFBIN(clk_feedback)      // 1-bit input: Feedback clock input
    );
 
 

@@ -1,14 +1,14 @@
 10
 
 dir
-2687
+2796
 https://subversion.xor.aps.anl.gov/detpool/ROACH/trunk/Roach2FWPython/xps_base/pcores/adc_mkid_4x_interface_v2_00_a/hdl/verilog
 https://subversion.xor.aps.anl.gov/detpool
 
 
 
-2015-08-17T15:09:50.108713Z
-2687
+2015-08-17T21:39:10.119458Z
+2688
 tmadden
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2015-08-17T15:07:19.026915Z
-5b93a99dc5ffe67ef6ded1b7794169fb
-2015-08-17T15:09:50.108713Z
-2687
+2015-08-17T15:59:53.478679Z
+06135f05fca7f9ba8094810e894e2923
+2015-08-17T21:39:10.119458Z
+2688
 tmadden
 
 
@@ -58,5 +58,5 @@ tmadden
 
 
 
-20709
+20707
 
