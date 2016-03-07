@@ -17,7 +17,7 @@ public:
     explicit roachScope(guiSettings &gui, QWidget *parent = 0);
     ~roachScope();
     
-private slots:
+public slots:
 
 
     void on_pushButton_scopeTrig_clicked();
@@ -33,6 +33,8 @@ private slots:
     void on_checkBox_zoomX_clicked(bool checked);
 
     void on_checkBox_zoomY_clicked(bool checked);
+
+    void plotNow(QVector<double> x, QVector<double> y);
 
 private:
     Ui::roachScope *ui;

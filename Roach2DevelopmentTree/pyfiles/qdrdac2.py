@@ -51,6 +51,7 @@ execfile('dataExtract.py')
 roach2=katcpNc()
 roach2.startNc()
 
+
 """
 #turn off roach
 roach2.shutdown()
@@ -96,6 +97,30 @@ roach2.sendBof('/home/oxygen26/TMADDEN/ROACH2/projcts/bestBitFiles/qdrdac_2015_O
 #has fifo full couhnters
 roach2.sendBof('/home/oxygen26/TMADDEN/ROACH2/projcts/bestBitFiles/qdrdac_2015_Oct_21_0952.bof')
 
+
+#has all of above, but add multififo(4),2fsm, and out single event fifo, add out big fifo, 10gb enet, enet fsm
+#has fifo full couhnters. adds gb enet counters, adds extra zzzz at end of packets svn 2807
+roach2.sendBof('/home/oxygen26/TMADDEN/ROACH2/projcts/bestBitFiles/qdrdac_2015_Oct_26_1325.bof')
+
+
+#has all of above, but add multififo(4),2fsm, and out single event fifo, add out big fifo, 10gb enet, enet fsm
+#has fifo full couhnters. adds gb enet counters, adds extra zzzz at end of packets svn 2808
+#has packet number sent at top of packet
+roach2.sendBof('/home/oxygen26/TMADDEN/ROACH2/projcts/bestBitFiles/qdrdac_2015_Oct_27_1014.bof')
+
+
+#has all of above, but add multififo(4),2fsm, and out single event fifo, add out big fifo, 10gb enet, enet fsm
+#has fifo full couhnters. adds gb enet counters, adds extra zzzz at end of packets svn 2808
+#has packet number sent at top of packet- 1500 packet size
+roach2.sendBof('/home/oxygen26/TMADDEN/ROACH2/projcts/bestBitFiles/qdrdac_2015_Oct_27_1550.bof')
+
+
+
+#has all of above, but add multififo(4),2fsm, and out single event fifo, add out big fifo, 10gb enet, enet fsm
+#has fifo full couhnters. adds gb enet counters, adds extra zzzz at end of packets svn 2808
+#has packet number sent at top of packet- 1472 packet size- better timestamps- fixed datatype for 
+#mag.
+roach2.sendBof('/home/oxygen26/TMADDEN/ROACH2/projcts/bestBitFiles/qdrdac_2015_Oct_29_1643.bof')
 
 
 #call to read all reg vales on roach print on screen, return as list of tupels
@@ -195,6 +220,13 @@ qdr1.qdr_cal_check()
 # SRAM Generator
 #
 
+execfile('sramLut.py')
+
+sram = sramLut(roach2,'SRAM_LUT')
+
+#sram.setLutSize(1024*1024)
+
+
 sram.setLutFreqs(arange(10e6,100e6,10e6),5000)
 
 
@@ -206,9 +238,9 @@ sram.setLutFreqs(arange(10e6,250e6,10e6),0)
 
 sram.setLutFreqs([20e6, 30e6], 1500)
 
-sram.setLutFreqs([10e6], 10000)
+sram.setLutFreqs([10.001e6], 10000)
 
-sram.setLutFreqs([10e6], 1000)
+sram.setLutFreqs([10e6], 10000)
 
 sram.setLutFreqs([1e6], 32000)
 
@@ -280,66 +312,6 @@ def scoper():
 
 scoper()
 
-
-################################################################
-#pos sideband
-sram.Q_phase_offs=0.02 * -18.5
-sram.Q_amp_factor = -1.0
-sram.setLutFreqs(arange(10e6,200e6,10e6), 3000)
-
-
-
-####################################################################
-#neg sideband
-
-#LO at 3.5G
-#sram.Q_phase_offs=0.02 * 18.5
-#LO at 4.5G
-#sram.Q_phase_offs=0.02 * 10
-
-
-sram.Q_phase_offs=(pi/180) *0
-sram.Q_amp_factor = -1.0
-sram.Q_time_delay = 0
-sram.setLutFreqs(arange(10e6,200e6,10e6), 2000)
-
-sram.Q_phase_offs=(pi/180) *18
-sram.setLutFreqs(arange(10e6,200e6,10e6), 2000)
-
-
-a=scoper()
-
-
-#####################################
-# cal the 1st tone
-#
-
-
-sram.setLutFreqs([200e6], 20000)
-
-
-freq =  sram.frequency_list[0]
-pbin = 512.0*freq / sram.dac_clk
-nbin = 512 - pbin
-
-nph = angle(FF[nbin])
-namp = abs(FF[nbin])
-
-pph = angle(FF[pbin])
-pamp = abs(FF[pbin])
-
-
-#make a sine and cos to add to the wavetable to cancle pbin.
-cal_amp = sram.amplist[0] * pamp / namp
-cal_ph = pi + (pph - nph) - sram.lut_phase_list[0]
-
-
-sram.lut_i=sram.lut_i + sram.singleFreqLUT(freq, 'I', sram.dac_clk,sram.lut_length , cal_ph, cal_amp)
-sram.lut_q=sram.lut_q + sram.singleFreqLUT(freq, 'Q', sram.dac_clk,sram.lut_length , cal_ph, cal_amp)
-sram.lut_binaryIQ=sram.convertToBinary128(sram.lut_i,sram.lut_q)
-sram.writeSram(sram.lut_binaryIQ)
-sram.streamSram()
-        
 ########################################################################3
 #
 # FFT stuff
@@ -354,14 +326,18 @@ rfft.setLutSource(sram)
 
 
 
+sram.setLutFreqs(arange(10e6,100e6,5e6),3000)
+
 rfft.fftBinsFreqs()
 
 
 #rfft.fftBinsAll(which='High')
 
 
+#rfft.fftsynctime=1024
 
 rfft.fftsynctime=128
+rfft.roach_fft_shift=31
 rfft.progRoach()
 rfft.numFFTs(-1)
 rfft.trigFFT()
@@ -389,15 +365,23 @@ chanzer.writeRaw(1)
 
 chanzer.setLastReadChan(127)
 
-
-
 chanzer.readFifos(1)
 
 
+chanzer.clearFull()
 
-chanzer.checkFull()
+
+
+
+
+
+chanzer.readFifos(0)
+
+
 
 chanzer.clearFull()
+
+chanzer.checkFull()
 
 
 
@@ -581,6 +565,89 @@ roach2.infoEth()
 
 
 roach2.stopEth('xmit0')
+
+
+roach2.read_int('gbeofcount')
+
+
+
+#######################################################################3
+#
+#
+#
+
+#################################################################
+
+
+execfile('dataCapture.py')
+
+
+
+
+capture = dataCapture()
+
+
+capture.mapChannels(rfft)
+
+
+capture.clearEvents()
+
+capture.capture(True)
+time.sleep(10)
+capture.capture(False)
+
+
+
+fnum=100
+
+
+dfile = '/home/oxygen26/TMADDEN/ROACH2/datafiles/ttt_%d'%fnum
+fnum=fnum+1
+capture.saveEvents(dfile)
+
+
+capture.shut()
+
+capture.
+
+
+
+########################################################3
+#
+#
+########################################3
+
+
+
+
+execfile('dataExtract.py')
+
+
+
+dd=dataExtract()
+
+events = dd.readEvents(dfile)
+
+
+dd.lsevents()
+
+len(events[128]['stream_mag'])/1000000
+
+
+plotty(events)
+
+
+def plotty(events):
+    chans = events.keys()
+    fnum = 1
+    for cc in chans:
+        figure(fnum)
+        fnum = fnum+1
+        clf()
+        subplot(2,1,1)
+        plot(events[cc]['stream_mag'][:10000])
+        subplot(2,1,2)
+        plot(events[cc]['stream_phase'][:10000])
 
 
 

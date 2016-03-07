@@ -1,4 +1,4 @@
-function [fifo_rd_a, fifo_rd_b, mux_a, mux_b, tx_vld, tx_eof,stateout]=gbDataWrite(almost_empty_a, almost_empty_b,rst)
+function [fifo_rd_a, fifo_rd_b, mux_a, mux_b, tx_vld, tx_eof,stateout]=gbDataWrite(almost_empty_a, almost_empty_b,rst,clr_fifos)
 
 
 
@@ -12,38 +12,50 @@ idle=0;
 %write zzz's to the gb frame to denote start of data
 start_gb_frame=1;
 
+%write frame number as uint32's
+write_packet_number = 2;
+
 %write just fifo a, write yyyy's for fifo b
-write_fifo_a=2;
+write_fifo_a=3;
 
 %write just fifo b, wrhite yyy's in place of fifo a
-write_fifo_b = 3;
+write_fifo_b = 4;
 
 %write data from both fifos
-write_fifo_ab = 4;
+write_fifo_ab = 5;
 
 %write xxxx's for end of frame
-write_end_frame=5;
+write_end_frame=6;
 
+
+%write xxxx's for end of frame
+write_end_frame_b=7;
 
 %do nothing, but wait for interframe time
-gb_wait = 6;
+gb_wait = 8;
 
-nop7=7;
 
+clear_fifos=9;
+nop10=10;
+nop11=11;
+nop12=12;
+nop13=13;
+nop14=14;
+nop15=15;
 
 
 %
 % Registers
 %
 
-persistent state, state = xl_state(idle,{xlUnsigned, 3, 0});
+persistent state, state = xl_state(idle,{xlUnsigned, 4, 0});
 
 
 
 
 
 % counter that keeps track of num words to gb ente
-persistent word_count, word_count  = xl_state(0,{xlUnsigned, 8, 0});
+persistent word_count, word_count  = xl_state(0,{xlUnsigned, 12, 0});
 
 
 
@@ -69,8 +81,8 @@ if rst==true
   
   fifo_rd_a=false;
   fifo_rd_b=false;
-  mux_a=false; 
-  mux_b=false;
+  mux_a=0; 
+  mux_b=0;
   tx_vld=false;
   tx_eof=false;
   
@@ -90,22 +102,24 @@ switch state
     
     fifo_rd_a=false;
   fifo_rd_b=false;
-  mux_a=false; 
-  mux_b=false;
+  mux_a=0; 
+  mux_b=0;
   tx_vld=false;
   tx_eof=false;
   
  % almost_empty_a, almost_empty_b
   if  almost_empty_a || almost_empty_b
       state = start_gb_frame;
-
+  
+  elseif clr_fifos
+      state = clear_fifos
   else
       state= idle;
   end
   
   
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
+%write zzzzz's
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -115,8 +129,28 @@ switch state
    fifo_rd_a=false;
   fifo_rd_b=false;
   %write zzzz s
-  mux_a=false; 
-  mux_b=false;
+  mux_a=0; 
+  mux_b=0;
+  
+  tx_vld=true;
+  tx_eof=false;
+        
+ state=write_packet_number;
+  
+  
+  
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%wrate packet counter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+    case write_packet_number
+        
+   fifo_rd_a=false;
+  fifo_rd_b=false;
+  %write zzzz s
+  mux_a=1; 
+  mux_b=1;
   
   tx_vld=true;
   tx_eof=false;
@@ -133,9 +167,9 @@ switch state
       state = write_end_frame;
   end
   
-  
-  
-  
+
+
+ 
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -150,15 +184,15 @@ switch state
    fifo_rd_a=true;
   fifo_rd_b=true;
   %write data s
-  mux_a=true; 
-  mux_b=true;
+  mux_a=2; 
+  mux_b=2;
   
   tx_vld=true;
   tx_eof=false; 
          
    word_count = word_count + 1;
   
-  if word_count ==30
+  if word_count ==180
       state=write_end_frame;
   else
       state = write_fifo_ab;
@@ -181,15 +215,15 @@ switch state
    fifo_rd_a=true;
   fifo_rd_b=false;
   %write data s
-  mux_a=true; 
-  mux_b=false;
+  mux_a=2; 
+  mux_b=3;
   
   tx_vld=true;
   tx_eof=false; 
          
    word_count = word_count + 1;
   
-  if word_count ==30
+  if word_count ==180
       state=write_end_frame;
   else
       state = write_fifo_a;
@@ -214,15 +248,15 @@ switch state
    fifo_rd_a=false;
   fifo_rd_b=true;
   %write data s
-  mux_a=false; 
-  mux_b=true;
+  mux_a=3; 
+  mux_b=2;
   
   tx_vld=true;
   tx_eof=false; 
          
    word_count = word_count + 1;
   
-  if word_count ==30
+  if word_count ==180
       state=write_end_frame;
   else
       state = write_fifo_b;
@@ -245,8 +279,39 @@ switch state
    fifo_rd_a=false;
   fifo_rd_b=false;
   %write data s
-  mux_a=false; 
-  mux_b=false;
+  mux_a=0; 
+  mux_b=0;
+  
+  tx_vld=true;
+  tx_eof=false; 
+         
+   word_count = 0;
+  
+  
+      state=write_end_frame_b;
+  
+    
+  
+  
+  
+  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ 
+  
+        
+    case write_end_frame_b
+        
+       
+     
+   fifo_rd_a=false;
+  fifo_rd_b=false;
+  %write data s
+  mux_a=0; 
+  mux_b=0;
   
   tx_vld=true;
   tx_eof=true; 
@@ -257,9 +322,6 @@ switch state
       state=gb_wait;
   
     
-  
-  
-  
   
   
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -277,65 +339,169 @@ switch state
    fifo_rd_a=false;
   fifo_rd_b=false;
   %write data s
-  mux_a=false; 
-  mux_b=false;
+  mux_a=0; 
+  mux_b=0;
   
   tx_vld=false;
   tx_eof=false; 
          
    wait_count = wait_count + 1;
   
-  if wait_count < 32
+  if wait_count < 8
       state=gb_wait;
   else
       state = idle;
   end
   
   
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+ %
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+  
+      case clear_fifos 
+    
+ 
+    
+    fifo_rd_a=true;
+  fifo_rd_b=true;
+  mux_a=0; 
+  mux_b=0;
+  tx_vld=false;
+  tx_eof=false;
+  
 
-
-        
-    case nop7
-        
-       
-     
+ 
+  
+  if clr_fifos
+      state = clear_fifos
+  else
+      state= idle;
+  end
+  
+  
+  
+  
+ 
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+ %
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    case nop10
+         
    fifo_rd_a=false;
   fifo_rd_b=false;
   %write data s
-  mux_a=false; 
-  mux_b=false;
+  mux_a=0; 
+  mux_b=0;
   
   tx_vld=false;
   tx_eof=false; 
          
-  
+  state = idle;
  
-      state = idle;
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+ %
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+  
+    case nop11
+         
+   fifo_rd_a=false;
+  fifo_rd_b=false;
+  %write data s
+  mux_a=0; 
+  mux_b=0;
+  
+  tx_vld=false;
+  tx_eof=false; 
+         
+  state = idle;
+  
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+ %
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+    case nop12
+         
+   fifo_rd_a=false;
+  fifo_rd_b=false;
+  %write data s
+  mux_a=0; 
+  mux_b=0;
+  
+  tx_vld=false;
+  tx_eof=false; 
+         
+  state = idle;
+  
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+ %
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+    case nop13
+         
+   fifo_rd_a=false;
+  fifo_rd_b=false;
+  %write data s
+  mux_a=0; 
+  mux_b=0;
+  
+  tx_vld=false;
+  tx_eof=false; 
+         
+  state = idle;
+  
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+ %
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+    case nop14
+         
+   fifo_rd_a=false;
+  fifo_rd_b=false;
+  %write data s
+  mux_a=0; 
+  mux_b=0;
+  
+  tx_vld=false;
+  tx_eof=false; 
+         
+  state = idle;
+  
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+ %
+ %%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+    case nop15
+        
+  
+   fifo_rd_a=false;
+  fifo_rd_b=false;
+  %write data s
+  mux_a=0; 
+  mux_b=0;
+  
+  tx_vld=false;
+  tx_eof=false; 
+         
+  state = idle;
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
      otherwise
-   
-              
-       
-     
+  
    fifo_rd_a=false;
   fifo_rd_b=false;
   %write data s
-  mux_a=false; 
-  mux_b=false;
+  mux_a=0; 
+  mux_b=0;
   
   tx_vld=false;
   tx_eof=false; 
          
-  
- 
-      state = idle;
+  state = idle;
  
  
 

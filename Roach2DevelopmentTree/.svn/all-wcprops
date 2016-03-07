@@ -1,25 +1,13 @@
 K 25
 svn:wc:ra_dav:version-url
 V 49
-/detpool/!svn/ver/2804/ROACH/trunk/Roach2FWPython
-END
-testddrc.slx
-K 25
-svn:wc:ra_dav:version-url
-V 62
-/detpool/!svn/ver/2616/ROACH/trunk/Roach2FWPython/testddrc.slx
+/detpool/!svn/ver/2978/ROACH/trunk/Roach2FWPython
 END
 qdrcontrol.m
 K 25
 svn:wc:ra_dav:version-url
 V 62
 /detpool/!svn/ver/2626/ROACH/trunk/Roach2FWPython/qdrcontrol.m
-END
-qdrdacsave.slx
-K 25
-svn:wc:ra_dav:version-url
-V 64
-/detpool/!svn/ver/2773/ROACH/trunk/Roach2FWPython/qdrdacsave.slx
 END
 startrpulse
 K 25
@@ -51,17 +39,17 @@ svn:wc:ra_dav:version-url
 V 57
 /detpool/!svn/ver/2595/ROACH/trunk/Roach2FWPython/runFits
 END
+pfbfft_coresim.slx
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/detpool/!svn/ver/2874/ROACH/trunk/Roach2FWPython/pfbfft_coresim.slx
+END
 savepy.py
 K 25
 svn:wc:ra_dav:version-url
 V 59
 /detpool/!svn/ver/2615/ROACH/trunk/Roach2FWPython/savepy.py
-END
-tengbddr.slx
-K 25
-svn:wc:ra_dav:version-url
-V 62
-/detpool/!svn/ver/2615/ROACH/trunk/Roach2FWPython/tengbddr.slx
 END
 pfbfft_core.vhd
 K 25
@@ -93,17 +81,17 @@ svn:wc:ra_dav:version-url
 V 66
 /detpool/!svn/ver/2773/ROACH/trunk/Roach2FWPython/pfb_fft_core.tar
 END
+fccdsimulator.slx
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/detpool/!svn/ver/2842/ROACH/trunk/Roach2FWPython/fccdsimulator.slx
+END
 ddrcontrol.m
 K 25
 svn:wc:ra_dav:version-url
 V 62
 /detpool/!svn/ver/2616/ROACH/trunk/Roach2FWPython/ddrcontrol.m
-END
-idealpulse.jpg
-K 25
-svn:wc:ra_dav:version-url
-V 64
-/detpool/!svn/ver/2595/ROACH/trunk/Roach2FWPython/idealpulse.jpg
 END
 startpulse
 K 25
@@ -111,29 +99,11 @@ svn:wc:ra_dav:version-url
 V 60
 /detpool/!svn/ver/2595/ROACH/trunk/Roach2FWPython/startpulse
 END
-tengbtestb.slx
+idealpulse.jpg
 K 25
 svn:wc:ra_dav:version-url
 V 64
-/detpool/!svn/ver/2602/ROACH/trunk/Roach2FWPython/tengbtestb.slx
-END
-lutmodscr.m
-K 25
-svn:wc:ra_dav:version-url
-V 61
-/detpool/!svn/ver/2621/ROACH/trunk/Roach2FWPython/lutmodscr.m
-END
-SysgenFeatureReport.htm
-K 25
-svn:wc:ra_dav:version-url
-V 73
-/detpool/!svn/ver/2690/ROACH/trunk/Roach2FWPython/SysgenFeatureReport.htm
-END
-bin2list.c
-K 25
-svn:wc:ra_dav:version-url
-V 60
-/detpool/!svn/ver/2595/ROACH/trunk/Roach2FWPython/bin2list.c
+/detpool/!svn/ver/2595/ROACH/trunk/Roach2FWPython/idealpulse.jpg
 END
 ddrcontrolb.m
 K 25
@@ -141,11 +111,35 @@ svn:wc:ra_dav:version-url
 V 63
 /detpool/!svn/ver/2773/ROACH/trunk/Roach2FWPython/ddrcontrolb.m
 END
-tengbtestc.slx
+bin2list.c
 K 25
 svn:wc:ra_dav:version-url
-V 64
-/detpool/!svn/ver/2604/ROACH/trunk/Roach2FWPython/tengbtestc.slx
+V 60
+/detpool/!svn/ver/2595/ROACH/trunk/Roach2FWPython/bin2list.c
+END
+SysgenFeatureReport.htm
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/detpool/!svn/ver/2690/ROACH/trunk/Roach2FWPython/SysgenFeatureReport.htm
+END
+lutmodscr.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/detpool/!svn/ver/2621/ROACH/trunk/Roach2FWPython/lutmodscr.m
+END
+analyzeqdrdacdata.m
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/detpool/!svn/ver/2881/ROACH/trunk/Roach2FWPython/analyzeqdrdacdata.m
+END
+fft_core_config.m
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/detpool/!svn/ver/2881/ROACH/trunk/Roach2FWPython/fft_core_config.m
 END
 mpfit.pyc
 K 25
@@ -159,29 +153,35 @@ svn:wc:ra_dav:version-url
 V 62
 /detpool/!svn/ver/2595/ROACH/trunk/Roach2FWPython/startrpulse2
 END
+maddenlibrary.slx
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/detpool/!svn/ver/2967/ROACH/trunk/Roach2FWPython/maddenlibrary.slx
+END
 bin2hdf5.c
 K 25
 svn:wc:ra_dav:version-url
 V 60
 /detpool/!svn/ver/2796/ROACH/trunk/Roach2FWPython/bin2hdf5.c
 END
-maddenlibrary.slx
-K 25
-svn:wc:ra_dav:version-url
-V 67
-/detpool/!svn/ver/2773/ROACH/trunk/Roach2FWPython/maddenlibrary.slx
-END
-pfbfft_core.slx
-K 25
-svn:wc:ra_dav:version-url
-V 65
-/detpool/!svn/ver/2773/ROACH/trunk/Roach2FWPython/pfbfft_core.slx
-END
 UserManual.pdf
 K 25
 svn:wc:ra_dav:version-url
 V 64
 /detpool/!svn/ver/2595/ROACH/trunk/Roach2FWPython/UserManual.pdf
+END
+pfbfft_core.slx
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/detpool/!svn/ver/2872/ROACH/trunk/Roach2FWPython/pfbfft_core.slx
+END
+maddogLibrary.slx
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/detpool/!svn/ver/2967/ROACH/trunk/Roach2FWPython/maddogLibrary.slx
 END
 .loglogin
 K 25
@@ -193,13 +193,13 @@ gbDataWrite.m
 K 25
 svn:wc:ra_dav:version-url
 V 63
-/detpool/!svn/ver/2797/ROACH/trunk/Roach2FWPython/gbDataWrite.m
+/detpool/!svn/ver/2859/ROACH/trunk/Roach2FWPython/gbDataWrite.m
 END
 cpbof
 K 25
 svn:wc:ra_dav:version-url
 V 55
-/detpool/!svn/ver/2682/ROACH/trunk/Roach2FWPython/cpbof
+/detpool/!svn/ver/2872/ROACH/trunk/Roach2FWPython/cpbof
 END
 quadfifo.m
 K 25
@@ -213,47 +213,35 @@ svn:wc:ra_dav:version-url
 V 64
 /detpool/!svn/ver/2595/ROACH/trunk/Roach2FWPython/simresults.mat
 END
-qdrtest.slx
-K 25
-svn:wc:ra_dav:version-url
-V 61
-/detpool/!svn/ver/2682/ROACH/trunk/Roach2FWPython/qdrtest.slx
-END
-quadnotch.slx
-K 25
-svn:wc:ra_dav:version-url
-V 63
-/detpool/!svn/ver/2623/ROACH/trunk/Roach2FWPython/quadnotch.slx
-END
 pulsereader.c
 K 25
 svn:wc:ra_dav:version-url
 V 63
 /detpool/!svn/ver/2595/ROACH/trunk/Roach2FWPython/pulsereader.c
 END
-qdrtestb.slx
+fft_core.slx
 K 25
 svn:wc:ra_dav:version-url
 V 62
-/detpool/!svn/ver/2626/ROACH/trunk/Roach2FWPython/qdrtestb.slx
+/detpool/!svn/ver/2878/ROACH/trunk/Roach2FWPython/fft_core.slx
 END
 fifoFSMPh2.m
 K 25
 svn:wc:ra_dav:version-url
 V 62
-/detpool/!svn/ver/2775/ROACH/trunk/Roach2FWPython/fifoFSMPh2.m
+/detpool/!svn/ver/2816/ROACH/trunk/Roach2FWPython/fifoFSMPh2.m
+END
+fifoFSMPh3.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/detpool/!svn/ver/2977/ROACH/trunk/Roach2FWPython/fifoFSMPh3.m
 END
 if_board.m
 K 25
 svn:wc:ra_dav:version-url
 V 60
 /detpool/!svn/ver/2773/ROACH/trunk/Roach2FWPython/if_board.m
-END
-tengbddrb.slx
-K 25
-svn:wc:ra_dav:version-url
-V 63
-/detpool/!svn/ver/2620/ROACH/trunk/Roach2FWPython/tengbddrb.slx
 END
 UserManual.odt
 K 25
@@ -267,29 +255,11 @@ svn:wc:ra_dav:version-url
 V 64
 /detpool/!svn/ver/2775/ROACH/trunk/Roach2FWPython/eventsaveFSM.m
 END
-tengbddrc.slx
-K 25
-svn:wc:ra_dav:version-url
-V 63
-/detpool/!svn/ver/2624/ROACH/trunk/Roach2FWPython/tengbddrc.slx
-END
 qdrdac.slx
 K 25
 svn:wc:ra_dav:version-url
 V 60
-/detpool/!svn/ver/2803/ROACH/trunk/Roach2FWPython/qdrdac.slx
-END
-networkanalyzer.slx
-K 25
-svn:wc:ra_dav:version-url
-V 69
-/detpool/!svn/ver/2595/ROACH/trunk/Roach2FWPython/networkanalyzer.slx
-END
-tengbtest.slx
-K 25
-svn:wc:ra_dav:version-url
-V 63
-/detpool/!svn/ver/2602/ROACH/trunk/Roach2FWPython/tengbtest.slx
+/detpool/!svn/ver/2976/ROACH/trunk/Roach2FWPython/qdrdac.slx
 END
 notes.txt
 K 25
@@ -297,23 +267,17 @@ svn:wc:ra_dav:version-url
 V 59
 /detpool/!svn/ver/2595/ROACH/trunk/Roach2FWPython/notes.txt
 END
-notchtester.slx
-K 25
-svn:wc:ra_dav:version-url
-V 65
-/detpool/!svn/ver/2630/ROACH/trunk/Roach2FWPython/notchtester.slx
-END
 m2py.mat
 K 25
 svn:wc:ra_dav:version-url
 V 58
 /detpool/!svn/ver/2595/ROACH/trunk/Roach2FWPython/m2py.mat
 END
-lutmod.slx
+fluxrampdemodulation.slx
 K 25
 svn:wc:ra_dav:version-url
-V 60
-/detpool/!svn/ver/2621/ROACH/trunk/Roach2FWPython/lutmod.slx
+V 74
+/detpool/!svn/ver/2967/ROACH/trunk/Roach2FWPython/fluxrampdemodulation.slx
 END
 madbuffer.c
 K 25

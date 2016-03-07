@@ -260,6 +260,8 @@ class Qdr():
         """
         cal = False
         out_step = 0
+        print "Calibrating QDR"
+        
         while (not cal) and (out_step < 32):
             # reset all the in delays to zero, and the out delays to this iteration.
             in_delays = [0 for bit in range(36)]
@@ -282,7 +284,8 @@ class Qdr():
             return True
         else:
             if fail_hard:
-                raise RuntimeError('QDR %s calibration failed.' % self.name)
+                print('QDR calibration failed.')
+                return False
             else:
                 return False
 

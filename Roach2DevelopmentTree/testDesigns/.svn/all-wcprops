@@ -1,0 +1,137 @@
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/detpool/!svn/ver/2976/ROACH/trunk/Roach2FWPython/testDesigns
+END
+testddrc.slx
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/testddrc.slx
+END
+fsmtest.slx
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/detpool/!svn/ver/2976/ROACH/trunk/Roach2FWPython/testDesigns/fsmtest.slx
+END
+fftfsmtest.slx
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/fftfsmtest.slx
+END
+quadnotch.slx
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/quadnotch.slx
+END
+qdrtest.slx
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/qdrtest.slx
+END
+pulsetraintest.slx
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/pulsetraintest.slx
+END
+qdrtestb.slx
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/qdrtestb.slx
+END
+tengbddr.slx
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/tengbddr.slx
+END
+tengbddrb.slx
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/tengbddrb.slx
+END
+tengbddrc.slx
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/tengbddrc.slx
+END
+sinesimulator.slx
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/sinesimulator.slx
+END
+gbfsmtest.slx
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/gbfsmtest.slx
+END
+networkanalyzer.slx
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/networkanalyzer.slx
+END
+tengbtest.slx
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/tengbtest.slx
+END
+madfft.slx
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/madfft.slx
+END
+tengbtestb.slx
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/tengbtestb.slx
+END
+notchtester.slx
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/notchtester.slx
+END
+tengbtestc.slx
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/tengbtestc.slx
+END
+madfftb.slx
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/madfftb.slx
+END
+cordictest.slx
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/cordictest.slx
+END
+madfftc.slx
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/madfftc.slx
+END
+lutmod.slx
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/detpool/!svn/ver/2975/ROACH/trunk/Roach2FWPython/testDesigns/lutmod.slx
+END

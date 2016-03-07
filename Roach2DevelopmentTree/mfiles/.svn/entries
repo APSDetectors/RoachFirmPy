@@ -1,14 +1,14 @@
 10
 
 dir
-2804
+2978
 https://subversion.xor.aps.anl.gov/detpool/ROACH/trunk/Roach2FWPython/mfiles
 https://subversion.xor.aps.anl.gov/detpool
 
 
 
-2015-03-26T16:26:21.317890Z
-2597
+2016-03-02T20:35:35.919487Z
+2967
 tmadden
 
 
@@ -25,40 +25,6 @@ tmadden
 
 
 b68ab6fb-3108-62fe-f298-bffb3bbe96ba
-
-pulsedetsimvals.m
-file
-
-
-
-
-2015-10-21T19:07:09.512750Z
-e36922743080718e3b53f610a0de0b50
-2015-03-26T16:26:21.317890Z
-2597
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1032
 
 fit_circle2.m
 file
@@ -93,6 +59,40 @@ has-props
 
 
 1313
+
+read_binfiles.m
+file
+
+
+
+
+2016-03-07T21:10:55.340967Z
+b4b718ed90fc908ecc0fe3c5ee380a2d
+2016-03-02T20:35:35.919487Z
+2967
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1088
 
 HDF_readIQ.m
 file
@@ -162,40 +162,6 @@ tmadden
 
 513
 
-py2m.m
-file
-
-
-
-
-2015-10-21T19:07:09.618757Z
-d032c4c39c78a403d230ff4405d01bd3
-2015-03-26T16:26:21.317890Z
-2597
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-5441653
-
 makephasedata.m
 file
 
@@ -264,40 +230,6 @@ tmadden
 
 15404
 
-mainFSM.m
-file
-
-
-
-
-2015-10-21T19:07:09.654752Z
-42175e3d74671816cfd32cc2235933b3
-2015-03-26T16:26:21.317890Z
-2597
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-22723
-
 toTwoComp.m
 file
 
@@ -331,40 +263,6 @@ tmadden
 
 
 196
-
-HDF_getSetting.m
-file
-
-
-
-
-2015-10-21T19:07:09.689748Z
-6526fcb73422d6e37b760b7a566788e5
-2015-03-26T16:26:21.317890Z
-2597
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1508
 
 HDFR_Info.m
 file
@@ -400,40 +298,6 @@ tmadden
 
 5442
 
-pls.m
-file
-
-
-
-
-2015-10-21T19:07:09.672752Z
-1dc4af13bcae8e47090070644547de07
-2015-03-26T16:26:21.317890Z
-2597
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-742
-
 funwithresonators.m
 file
 
@@ -467,40 +331,6 @@ tmadden
 
 
 759
-
-eventsaveFSM.m
-file
-
-
-
-
-2015-10-21T19:07:09.715748Z
-d48b5b9724b6a299f30a837f36020bf3
-2015-03-26T16:26:21.317890Z
-2597
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1554
 
 phtest.m
 file
@@ -536,14 +366,14 @@ tmadden
 
 1103
 
-makeiq.m
+phaseaccumsimvals.m
 file
 
 
 
 
-2015-10-21T19:07:09.733749Z
-a96c967ffd1a8a3b22716adcf2f5fe64
+2015-10-21T19:07:09.749748Z
+97c049495e009188297945a61190cfe4
 2015-03-26T16:26:21.317890Z
 2597
 tmadden
@@ -568,7 +398,7 @@ tmadden
 
 
 
-2375
+2002
 
 HDFR_readIQ.m
 file
@@ -604,40 +434,6 @@ tmadden
 
 1003
 
-phaseaccumsimvals.m
-file
-
-
-
-
-2015-10-21T19:07:09.749748Z
-97c049495e009188297945a61190cfe4
-2015-03-26T16:26:21.317890Z
-2597
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-2002
-
 iq.m
 file
 
@@ -671,6 +467,346 @@ tmadden
 
 
 1400
+
+plotrawwave.m
+file
+
+
+
+
+2015-10-21T19:07:09.782748Z
+c54068d4a9c6b4aa3f981419519c3704
+2015-03-26T16:26:21.317890Z
+2597
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+108
+
+HDFR_List.m
+file
+
+
+
+
+2015-10-21T19:07:09.814747Z
+0e6eba1aa44df3ed179dbcf8eeec5316
+2015-03-26T16:26:21.317890Z
+2597
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+618
+
+matlabhdf.m
+file
+
+
+
+
+2015-10-21T19:07:09.849748Z
+794439805a84c6e552624eacdadf1fcf
+2015-03-26T16:26:21.317890Z
+2597
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+949
+
+pulsedetsimvals.m
+file
+
+
+
+
+2015-10-21T19:07:09.512750Z
+e36922743080718e3b53f610a0de0b50
+2015-03-26T16:26:21.317890Z
+2597
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1032
+
+py2m.m
+file
+
+
+
+
+2015-10-21T19:07:09.618757Z
+d032c4c39c78a403d230ff4405d01bd3
+2015-03-26T16:26:21.317890Z
+2597
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5441653
+
+mainFSM.m
+file
+
+
+
+
+2015-10-21T19:07:09.654752Z
+42175e3d74671816cfd32cc2235933b3
+2015-03-26T16:26:21.317890Z
+2597
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+22723
+
+HDF_getSetting.m
+file
+
+
+
+
+2015-10-21T19:07:09.689748Z
+6526fcb73422d6e37b760b7a566788e5
+2015-03-26T16:26:21.317890Z
+2597
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1508
+
+pls.m
+file
+
+
+
+
+2015-10-21T19:07:09.672752Z
+1dc4af13bcae8e47090070644547de07
+2015-03-26T16:26:21.317890Z
+2597
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+742
+
+eventsaveFSM.m
+file
+
+
+
+
+2015-10-21T19:07:09.715748Z
+d48b5b9724b6a299f30a837f36020bf3
+2015-03-26T16:26:21.317890Z
+2597
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1554
+
+makeiq.m
+file
+
+
+
+
+2015-10-21T19:07:09.733749Z
+a96c967ffd1a8a3b22716adcf2f5fe64
+2015-03-26T16:26:21.317890Z
+2597
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2375
 
 makepulses.m
 file
@@ -740,14 +876,14 @@ tmadden
 
 847
 
-plotrawwave.m
+HDF_ListSettings.m
 file
 
 
 
 
-2015-10-21T19:07:09.782748Z
-c54068d4a9c6b4aa3f981419519c3704
+2015-10-21T19:07:09.807746Z
+1d0f6c283545ad2fd94985c1b2f4ee20
 2015-03-26T16:26:21.317890Z
 2597
 tmadden
@@ -772,41 +908,7 @@ tmadden
 
 
 
-108
-
-getSetting.m
-file
-
-
-
-
-2015-10-21T19:07:09.791747Z
-54acbd7ce46cd759d78dbdab8bd1efee
-2015-03-26T16:26:21.317890Z
-2597
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-118
+377
 
 fft_simvals.m
 file
@@ -842,14 +944,14 @@ tmadden
 
 1146
 
-HDF_ListSettings.m
+getSetting.m
 file
 
 
 
 
-2015-10-21T19:07:09.807746Z
-1d0f6c283545ad2fd94985c1b2f4ee20
+2015-10-21T19:07:09.791747Z
+54acbd7ce46cd759d78dbdab8bd1efee
 2015-03-26T16:26:21.317890Z
 2597
 tmadden
@@ -874,41 +976,7 @@ tmadden
 
 
 
-377
-
-HDFR_List.m
-file
-
-
-
-
-2015-10-21T19:07:09.814747Z
-0e6eba1aa44df3ed179dbcf8eeec5316
-2015-03-26T16:26:21.317890Z
-2597
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-618
+118
 
 HDFR_getSetting.m
 file
@@ -977,40 +1045,6 @@ tmadden
 
 
 13925
-
-matlabhdf.m
-file
-
-
-
-
-2015-10-21T19:07:09.849748Z
-794439805a84c6e552624eacdadf1fcf
-2015-03-26T16:26:21.317890Z
-2597
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-949
 
 phaseincprog.m
 file

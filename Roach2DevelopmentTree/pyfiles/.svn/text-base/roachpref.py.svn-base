@@ -1,10 +1,8 @@
 
 
 print 'Read roachpref.py'
-
+"""
 self.textbox_devicename.setText('M206')
-self.textbox_HDF5Name.setText('devM206_sweep')
-self.textbox_HDF5Num.setText('10')
 
 
 self.checkbox_extClk.setCheckState(Qt.Checked)
@@ -22,3 +20,4 @@ self.combobox_fft_gain.setCurrentIndex(3)
 
 self.current_fw_index=1
 self.textbox_Python.setText('execfile(\'doit.py\')')
+"""

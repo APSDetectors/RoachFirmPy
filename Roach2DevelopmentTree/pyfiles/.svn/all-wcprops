@@ -1,7 +1,7 @@
 K 25
 svn:wc:ra_dav:version-url
 V 57
-/detpool/!svn/ver/2804/ROACH/trunk/Roach2FWPython/pyfiles
+/detpool/!svn/ver/2971/ROACH/trunk/Roach2FWPython/pyfiles
 END
 controlScripts.py
 K 25
@@ -25,7 +25,7 @@ roachFFT.py
 K 25
 svn:wc:ra_dav:version-url
 V 69
-/detpool/!svn/ver/2774/ROACH/trunk/Roach2FWPython/pyfiles/roachFFT.py
+/detpool/!svn/ver/2881/ROACH/trunk/Roach2FWPython/pyfiles/roachFFT.py
 END
 mkiddac.py
 K 25
@@ -67,13 +67,31 @@ dataExtract.py
 K 25
 svn:wc:ra_dav:version-url
 V 72
-/detpool/!svn/ver/2804/ROACH/trunk/Roach2FWPython/pyfiles/dataExtract.py
+/detpool/!svn/ver/2859/ROACH/trunk/Roach2FWPython/pyfiles/dataExtract.py
+END
+mkidMeasure.py
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/detpool/!svn/ver/2960/ROACH/trunk/Roach2FWPython/pyfiles/mkidMeasure.py
 END
 dramLut.py
 K 25
 svn:wc:ra_dav:version-url
 V 68
 /detpool/!svn/ver/2683/ROACH/trunk/Roach2FWPython/pyfiles/dramLut.py
+END
+fccdSimImage.py
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/detpool/!svn/ver/2842/ROACH/trunk/Roach2FWPython/pyfiles/fccdSimImage.py
+END
+resonator.py
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/detpool/!svn/ver/2960/ROACH/trunk/Roach2FWPython/pyfiles/resonator.py
 END
 ljh.py
 K 25
@@ -87,35 +105,41 @@ svn:wc:ra_dav:version-url
 V 66
 /detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/pyfiles/mpfit.py
 END
-fitters.py
-K 25
-svn:wc:ra_dav:version-url
-V 68
-/detpool/!svn/ver/2796/ROACH/trunk/Roach2FWPython/pyfiles/fitters.py
-END
 t_brdconfig.py
 K 25
 svn:wc:ra_dav:version-url
 V 72
 /detpool/!svn/ver/2682/ROACH/trunk/Roach2FWPython/pyfiles/t_brdconfig.py
 END
-natAnalGui.py
+fitters.py
 K 25
 svn:wc:ra_dav:version-url
-V 71
-/detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/pyfiles/natAnalGui.py
+V 68
+/detpool/!svn/ver/2960/ROACH/trunk/Roach2FWPython/pyfiles/fitters.py
+END
+phaseCorrect.py
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/detpool/!svn/ver/2872/ROACH/trunk/Roach2FWPython/pyfiles/phaseCorrect.py
 END
 katcpNc.py
 K 25
 svn:wc:ra_dav:version-url
 V 68
-/detpool/!svn/ver/2798/ROACH/trunk/Roach2FWPython/pyfiles/katcpNc.py
+/detpool/!svn/ver/2858/ROACH/trunk/Roach2FWPython/pyfiles/katcpNc.py
+END
+natAnalGui.py
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/detpool/!svn/ver/2960/ROACH/trunk/Roach2FWPython/pyfiles/natAnalGui.py
 END
 resView.py
 K 25
 svn:wc:ra_dav:version-url
 V 68
-/detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/pyfiles/resView.py
+/detpool/!svn/ver/2948/ROACH/trunk/Roach2FWPython/pyfiles/resView.py
 END
 fftAnalyzer.py
 K 25
@@ -123,11 +147,23 @@ svn:wc:ra_dav:version-url
 V 72
 /detpool/!svn/ver/2607/ROACH/trunk/Roach2FWPython/pyfiles/fftAnalyzer.py
 END
+anritsu.py
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/detpool/!svn/ver/2952/ROACH/trunk/Roach2FWPython/pyfiles/anritsu.py
+END
 sim.py
 K 25
 svn:wc:ra_dav:version-url
 V 64
 /detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/pyfiles/sim.py
+END
+fftAnalyzerR2.py
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/detpool/!svn/ver/2960/ROACH/trunk/Roach2FWPython/pyfiles/fftAnalyzerR2.py
 END
 fftAnalyzere.py
 K 25
@@ -141,17 +177,35 @@ svn:wc:ra_dav:version-url
 V 72
 /detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/pyfiles/netAnalyzer.py
 END
-qdrdac.py
+dataCapture.py
 K 25
 svn:wc:ra_dav:version-url
-V 67
-/detpool/!svn/ver/2777/ROACH/trunk/Roach2FWPython/pyfiles/qdrdac.py
+V 72
+/detpool/!svn/ver/2948/ROACH/trunk/Roach2FWPython/pyfiles/dataCapture.py
 END
 fftAnalyzeri.py
 K 25
 svn:wc:ra_dav:version-url
 V 73
 /detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/pyfiles/fftAnalyzeri.py
+END
+qdrdac.py
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/detpool/!svn/ver/2777/ROACH/trunk/Roach2FWPython/pyfiles/qdrdac.py
+END
+doit.py
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/detpool/!svn/ver/2951/ROACH/trunk/Roach2FWPython/pyfiles/doit.py
+END
+fccdtest.py
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/detpool/!svn/ver/2842/ROACH/trunk/Roach2FWPython/pyfiles/fccdtest.py
 END
 freqSweep.py
 K 25
@@ -163,19 +217,19 @@ if_board.py
 K 25
 svn:wc:ra_dav:version-url
 V 69
-/detpool/!svn/ver/2798/ROACH/trunk/Roach2FWPython/pyfiles/if_board.py
+/detpool/!svn/ver/2864/ROACH/trunk/Roach2FWPython/pyfiles/if_board.py
 END
 hdfSerdes.py
 K 25
 svn:wc:ra_dav:version-url
 V 70
-/detpool/!svn/ver/2796/ROACH/trunk/Roach2FWPython/pyfiles/hdfSerdes.py
+/detpool/!svn/ver/2954/ROACH/trunk/Roach2FWPython/pyfiles/hdfSerdes.py
 END
 roachpref.py
 K 25
 svn:wc:ra_dav:version-url
 V 70
-/detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/pyfiles/roachpref.py
+/detpool/!svn/ver/2948/ROACH/trunk/Roach2FWPython/pyfiles/roachpref.py
 END
 roachMatlab.py
 K 25
@@ -193,7 +247,7 @@ qdrdac2.py
 K 25
 svn:wc:ra_dav:version-url
 V 68
-/detpool/!svn/ver/2804/ROACH/trunk/Roach2FWPython/pyfiles/qdrdac2.py
+/detpool/!svn/ver/2832/ROACH/trunk/Roach2FWPython/pyfiles/qdrdac2.py
 END
 testdram.py
 K 25
@@ -201,17 +255,23 @@ svn:wc:ra_dav:version-url
 V 69
 /detpool/!svn/ver/2623/ROACH/trunk/Roach2FWPython/pyfiles/testdram.py
 END
+analysis.py
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/detpool/!svn/ver/2971/ROACH/trunk/Roach2FWPython/pyfiles/analysis.py
+END
 roachScope.py
 K 25
 svn:wc:ra_dav:version-url
 V 71
-/detpool/!svn/ver/2800/ROACH/trunk/Roach2FWPython/pyfiles/roachScope.py
+/detpool/!svn/ver/2880/ROACH/trunk/Roach2FWPython/pyfiles/roachScope.py
 END
 qdr.py
 K 25
 svn:wc:ra_dav:version-url
 V 64
-/detpool/!svn/ver/2629/ROACH/trunk/Roach2FWPython/pyfiles/qdr.py
+/detpool/!svn/ver/2948/ROACH/trunk/Roach2FWPython/pyfiles/qdr.py
 END
 debug.py
 K 25
@@ -223,11 +283,11 @@ calibration.py
 K 25
 svn:wc:ra_dav:version-url
 V 72
-/detpool/!svn/ver/2799/ROACH/trunk/Roach2FWPython/pyfiles/calibration.py
+/detpool/!svn/ver/2808/ROACH/trunk/Roach2FWPython/pyfiles/calibration.py
 END
 sramLut.py
 K 25
 svn:wc:ra_dav:version-url
 V 68
-/detpool/!svn/ver/2799/ROACH/trunk/Roach2FWPython/pyfiles/sramLut.py
+/detpool/!svn/ver/2971/ROACH/trunk/Roach2FWPython/pyfiles/sramLut.py
 END

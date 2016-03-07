@@ -72,13 +72,33 @@ void roachScope::on_poll_timer()
 {
 #if 0
     int stat = my_gui.roachReadInt("roachscope_snapshot_status");
-    printf("stat 0x%x\n",stat);
+    fprintf(stderr,"stat 0x%x\n",stat);
 
     if (stat==4096)
         on_pushButton_scopeData_clicked();
 
 #endif
 }
+
+// void roachScope::plotNow(QVector<double> x, QVector<double> y)
+ void roachScope::plotNow(QVector<double> x, QVector<double> y)
+ {
+
+
+     QCustomPlot *plot = ui->widget_QPlot;
+
+     plot->clearGraphs();
+     plot->addGraph();
+     plot->graph(0)->setData(x,y);
+     plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+
+     setZooming();
+
+
+     plot->replot();
+
+ }
+
 
 void roachScope::on_pushButton_scopeData_clicked()
 {

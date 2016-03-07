@@ -25,7 +25,7 @@ execfile('hdfSerdes.py')
 hdf=hdfSerdes()
 
 
-hdf.open('test.h5','w')
+hdf.open('R2_33res_test.h5','w')
 
 
 hdf.write(dd,'dd')
@@ -366,7 +366,11 @@ class hdfSerdes:
                 
                 k=k+1
 
-        elif type(mydata)==str:
+        elif type(mydata)==str or type(mydata)==unicode:
+        
+                if type(mydata)==unicode:
+                    mydata = str(mydata)
+                    
                 dims=[1]
                 ds = parent.create_dataset(dataname, dims, dtype='S%d'%len(mydata), maxshape=dims)
                 ds.attrs.create('timecreated',numpy.array(time.strftime('%m-%d-%Y %H:%M:%S')))
@@ -388,7 +392,7 @@ class hdfSerdes:
                ds[0]=mydata
                #print ds
 
-        elif type(mydata)==float:
+        elif type(mydata)==float or type(mydata)==numpy.float64:
 
                #print 'scalar'
                dims=[1]
@@ -445,3 +449,4 @@ class hdfSerdes:
 
 
 
+print "Loaded hdfSerdes.py"

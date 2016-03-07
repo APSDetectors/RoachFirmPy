@@ -7,51 +7,69 @@
 #include <QThread>
 
 #include <QDataStream>
-#include <QBuffer>
+#include <QQueue>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <arpa/inet.h>
 
+#include <QMutex>
+#include <QHash>
 
-#define USE_QTSOCKET
+#include "packetFifo.h"
+
+
+//#define UDP_SPINLOCK
+
 
 class udpRcv : public QObject
 {
     Q_OBJECT
 public:
-    explicit udpRcv(QObject *parent = 0,quint32 max_bytes_=10000000);
+    explicit udpRcv(
+            packetFifo *data_fifo_,
+            QObject *parent = 0,quint32 max_bytes_=10000000);
     
     int ipStrToInt(QString ip);
+
+
+    volatile int n_datagrams;
+    volatile int n_nomemory;
+
+    bool is_running;
+    volatile int n_packets;
+   volatile  int dgramlen;
+signals:
+
+//    void dataAvail();
+    void socketOpen();
+    void socketClose();
+
+
+public slots:
+    void readData(void);
 
 
     void initSocket(QString ip, unsigned short port);
 
     void closeSock(void);
 
-
-    QDataStream* getOutStream(void);
-
-
-
-signals:
-    void newData(QByteArray data,QHostAddress addr,quint16 port);
-    void bufferFull();
-
-public slots:
-    void readData(void);
-
 protected:
-    QBuffer raw_data;
+
     quint32 buffer_max_bytes;
 
-    volatile bool is_running;
 
-    QUdpSocket *mysock;
+    packetFifo *data_fifo;
 
 
-     QThread udpthread;
+    int mysock;
+
+    char bit_bucket[65536];
+
+
+
+
 
 };
 

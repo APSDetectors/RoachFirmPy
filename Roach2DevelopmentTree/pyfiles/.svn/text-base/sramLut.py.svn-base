@@ -40,7 +40,7 @@ sram.streamSram()
         
 
 """
-
+import numpy
 
 class sramLut:
 
@@ -119,6 +119,27 @@ class sramLut:
         
         self.maxiq = 0
         self.clipfactor=0.0;
+        
+        #
+        # for add test pulses to waveform
+        #
+        #len in samples
+        self.test_pulse_len=256
+        #in degrees
+        self.test_pulse_amp =20.0
+	
+        #true of false
+
+        self.is_test_pulse = False
+          
+        #
+        # FM modulation of the freq tones.
+        #
+        
+        #do we use FM?
+        self.is_mod_freq = False    
+        self.mod_amp= 0.1
+        self.mod_periods=4
     
     
     def plotLutIQF(self):
@@ -237,8 +258,39 @@ class sramLut:
 
 
 
-    
-    
+    def addPulse2Phase(self,phaseterm):
+
+
+        #make test pulse.it is inserted in random part of the waveform.
+        #calc where pulse will be in the wave
+
+        pulse_st=int(round(rand() * (len(phaseterm)- 2*self.test_pulse_len)))
+        pulse_ed = pulse_st+self.test_pulse_len
+
+        #now get a piece of the phase term
+        pulsephase = phaseterm[pulse_st:pulse_ed]
+        #now add a new phase term to it, a ramp
+        pulsephase = pulsephase + (pi*self.test_pulse_amp / 180.0 ) * (1.0/len(pulsephase))*arange(len(pulsephase))
+
+        #now put the ramp into the wave		
+        phaseterm[pulse_st:pulse_ed] = pulsephase
+        return(phaseterm)
+
+
+
+    def addModFreq2Phase(self,phaseterm):
+
+
+        #make test pulse.it is inserted in random part of the waveform.
+        #calc where pulse will be in the wave
+
+        modfreq = self.mod_amp*numpy.sin(\
+                (self.mod_periods*2*pi*numpy.arange(len(phaseterm))) / (len(phaseterm)) )
+        
+        phaseterm = phaseterm + modfreq
+        return(phaseterm)
+
+
 
     def singleFreqLUT(self,f, iq, sampleRate, size, phase, amplitude):
         """ Returns data points for the DAC look-up table.
@@ -260,6 +312,13 @@ class sramLut:
         phaseterm= phaserad + 2*math.pi*(f/sampleRate)*numpy.arange(size)
 
 
+        if self.is_test_pulse:
+            phaseterm = self.addPulse2Phase(phaseterm)
+        
+        
+        if self.is_mod_freq:
+            phaseterm = self.addModFreq2Phase(phaseterm)
+            
         #make test pulse.it is inserted in random part of the waveform.
         #calc where pulse will be in the wave
 
@@ -546,6 +605,33 @@ class sramLut:
             binaryData = binaryData + x
 
         return binaryData
+
+
+
+    def convertToBinary128_4(self,
+        data0,data1,data2,data3,
+        data4,data5,data6,data7):
+
+        """ Converts two successive data points to 16-bit binary and concatenates to one 32-bit word.
+
+            @param data             Decimal data to be converted  for FPGA.
+            """
+        binaryData = ''
+        for i in range(0, len(data0)):
+            x = struct.pack('>HHHHHHHH', 
+            data0[i], 
+            data1[i], 
+            data2[i], 
+            data3[i],
+            data4[i], 
+            data5[i], 
+            data6[i], 
+            data7[i])
+
+            binaryData = binaryData + x
+
+        return binaryData
+
 
     def stopSram(self):
         control_reg='%s_control'%self.fwname

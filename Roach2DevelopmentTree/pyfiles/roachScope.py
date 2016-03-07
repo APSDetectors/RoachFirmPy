@@ -114,15 +114,39 @@ class roachScope:
         self.is_octo=True;
 
 
-    def interleave(self,chans):
+    def interleave(self,chans=[0,1,2,3],intersize=1):
     
         self.plotdata = [0] * (len(chans) * len(self.multiplotdata[0]))
         
         nc = len(chans) 
         
+        #for thru each chan
         for k in range(nc):
-            self.plotdata[k::nc] =  self.multiplotdata[chans[k]]
+        
+            if intersize==1:
+                self.plotdata[k::nc] =  self.multiplotdata[chans[k]]
+    
+    
+            else:
+                ngroups =  len(self.multiplotdata[chans[k]])/ intersize  
+                for g in range(ngroups):
+                    st=k*intersize + g*nc*intersize
+                    ed = st + intersize
+                    self.plotdata[st:ed] = \
+                        self.multiplotdata[chans[k]][g*intersize: (g+1)*intersize] 
+                        
+                    
+
+    def concat(self,chans):
+    
+        self.plotdata = [] 
+        
+        nc = len(chans) 
+        
+        for k in range(nc):
+            self.plotdata =  self.plotdata + self.multiplotdata[chans[k]]
             
+
 
     def plotSpectrum(self,pllen = 2048,signbit = -1,replot=False,log='No'):
 
@@ -211,7 +235,17 @@ class roachScope:
         
         
         
-        
+    def readPlotO(self,chan):
+    
+
+
+        self.trigScope(-1,0)
+        self.readScopeOcto()
+        self.is_hold=False
+        clf()
+        plot(self.multiplotdata[chan])
+
+ 
         
     def plotScope(self,pllen = 2048,
         is_usebits = False, 

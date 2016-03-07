@@ -7,16 +7,23 @@
 #include "error.h"
 #include "errno.h"
 #include "string.h"
-udpRcv::udpRcv(QObject *parent, quint32 max_bytes_) :
-    QObject(parent),
-     udpthread(),
-     raw_data()
+udpRcv::udpRcv(
+        packetFifo *data_fifo_,
+        QObject *parent,quint32 max_bytes_ ) :
+    QObject(parent)
+
+
 
 {
   mysock=0;
   buffer_max_bytes=max_bytes_;
-}
 
+    data_fifo=data_fifo_;
+
+    dgramlen=0;
+
+
+}
 
 
 
@@ -40,43 +47,58 @@ void udpRcv::initSocket(QString ip, unsigned short port)
 
 
 
-    printf("using QT sockets\n");
-    mysock = new QUdpSocket();
+    if (mysock!=0)
+    {
+        fprintf(stderr,"socket alreayd open?\n");
+        return;
+    }
+    n_nomemory=0;
+    n_datagrams=0;
+    n_packets=0;
+    fprintf(stderr,"using posix sockets\n");
+
+    struct sockaddr_in servaddr,cliaddr;
+          socklen_t len;
+          char mesg[1000];
 
 
-    mysock->bind(QHostAddress(ip),port,QUdpSocket::DontShareAddress);
+       mysock=socket(AF_INET,SOCK_DGRAM,0);
+
+       bzero(&servaddr,sizeof(servaddr));
+       servaddr.sin_family = AF_INET;
+       servaddr.sin_addr.s_addr=ipStrToInt(ip);
 
 
-
-    printf("Made udp socket\n");
-    is_running=false;
-
-   raw_data.open(QIODevice::ReadWrite);
+       inet_aton(ip.toStdString().c_str(),(in_addr*) &servaddr.sin_addr.s_addr);
 
 
-        connect(mysock, SIGNAL(readyRead()),
-                this, SLOT(readData()));
+       servaddr.sin_port=htons(port);
 
 
+      // if (setsockopt(mysock, SOL_SOCKET, SO_BINDTODEVICE,"eth2",sizeof("eth2")) )
+      // {
+       //    ffprintf(stderr,stderr,"ERROR- %s\n",strerror(errno));
+      // }
+      // else
+      // {
+      //     ffprintf(stderr,stderr,"Prob bound to eth2\n");
+      // }
 
+       bind(mysock,(struct sockaddr *)&servaddr,sizeof(servaddr));
+
+
+       emit(socketOpen());
 }
 
 void udpRcv::closeSock()
 {
-    printf("Delete socket\n");
-
-    raw_data.close();
-
-    if (mysock==0)
-        return;
 
 
-    mysock->close();
-    delete mysock;
+    fprintf(stderr,"req socket close\n");
+
+is_running=false;
 
 
-
-    mysock=0;
 }
 
 
@@ -84,42 +106,52 @@ void udpRcv::readData(void)
 {
     struct sockaddr_in cliaddr;
        socklen_t len;
-       char mesg[1000];
+       char mesg[8192];
 
 
     if (mysock==0)
         return;
+
 is_running=true;
 
+int n;
+    data_fifo->clear();
 
-    while (mysock->hasPendingDatagrams()) {
-           QByteArray datagram;
-           datagram.resize(mysock->pendingDatagramSize());
-           QHostAddress sender;
-           quint16 senderPort;
+    while(is_running)
+    {
+       len = sizeof(cliaddr);
 
-           mysock->readDatagram(datagram.data(), datagram.size(),
-                                   &sender, &senderPort);
 
-           //for (int k =0; k<datagram.size();k++)
-           //    printf("%c",datagram.data()[k]);
+       unsigned char *datagram=data_fifo->getNewArray();
+       if (datagram)
+        {
 
-           //!!emit newData(datagram,sender, senderPort);
 
-           if (raw_data.size()<buffer_max_bytes)
-               raw_data.write(datagram);
-           else
-               emit bufferFull();
+            n = recvfrom(mysock,datagram,8192,0,(struct sockaddr *)&cliaddr,&len);
+
+
+               n_datagrams++;
+               n_packets++;
+                dgramlen = n;
+                             data_fifo->write(n);
+
+       }
+       else
+       {
+           n_nomemory++;
+        n_packets++;
+           n = recvfrom(mysock,bit_bucket,8192,0,(struct sockaddr *)&cliaddr,&len);
 
        }
 
 
-}
+
+    }
 
 
+ fprintf(stderr,"Delete socket\n");
+    close(mysock);
 
-QDataStream* udpRcv::getOutStream(void)
-{
-    QDataStream *s = new QDataStream(&raw_data);
-    return(s);
+    emit(socketClose());
+       mysock=0;
 }

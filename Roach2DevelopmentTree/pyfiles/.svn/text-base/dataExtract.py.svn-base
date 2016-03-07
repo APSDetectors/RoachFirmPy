@@ -8,73 +8,40 @@ import os
 #
 
 
-execfile('katcpNc.py')
-execfile('roachScope.py')
-execfile('sramLut.py')
-execfile('qdr.py')
-execfile('if_board.py')
-execfile('mkiddac.py')
-execfile('freqSweep.py')
-
-execfile('Channelizer.py')
-
-    # events is a dict.
-    #    events[channel] = { 
-    #		'bin':int_binnumber ,
-    #		'timestamps': [int_ts, int_ts, ....]
-    #		'is_pulse': [int_is_pulse, int_is_pulse, ...]
-    #		'stream': [  numpy.array([float_mag, float_mag, ....]) ,  numpy.array([float_phs, float_phs, ....]) ]
-    #
-
-
 
 execfile('dataExtract.py')
 
+dd=dataExtract(fa.sram,fa.rfft)
+
+fname = '/localc/temp/trigffts'
+
+dd.readEvents(fname)
+
+dd.plotChan3D(fignum=1,zlim=-1,stspec = 0, nspec=2000,ampphase='stream_mag')
 
 
-dd=dataExtract()
-
-fname = '/home/oxygen26/TMADDEN/ROACH2/datafiles/testdata5.bin'
-
-aa=dd.readBinFile(fname,blocksize = 1024*1024,foffset=0)
-
-ev=dd.extractEvents(aa)
+dd.plotChan3D(fignum=2,zlim=-1,stspec = 0, nspec=2000,ampphase='stream_phase')
 
 
-aa=dd.readBinFile(fname,blocksize = 1024*1024,foffset=1024*1024)
-
-ev=dd.extractEvents(aa,append=1)
-
+dd.plotEvents2D(fignum=5, chans=-1,data=-1,stevent = 20000, nevents=1000)
 
 
 
-aa=dd.readBinFile(fname,whichstream=1,blocksize=65536*10,foffset=0)
- 
-ev=dd.extractEvents(aa)
-       
+dd.lsevents(isplot = 2)
 
+clf();plot(dd.extractSpectrum(23432)[0])
 
-dd.lsevents()
+dd.extractBinSeries(10e6)
 
-dd.getEventFromStream(chan=60, index=0)
+dd.extractTimeSeries(10e6)
+
+dd.getEventFromStream(chan=128, index=23432)
 
 clf()
-
-plot(ev[0]['stream'][0])
-
-plot(ev[1]['stream'][0])
-
-plot(ev[2]['stream'][0])
-
-plot(ev[3]['stream'][0])
 
 ev.keys()
 
 ev[0].keys()
-
-#mags for chan0
-ev[0]['stream'][0]
-
 
 
 dd.waterfall()
@@ -82,18 +49,23 @@ dd.waterfall()
 
 dd.plotTimestamps()
 
+
+
 '''
 
 
 class dataExtract:
 
-    def __init__(self):
+    def __init__(self,sram_,rfft_):
     
-        self.fftLen = 512
-        self.dftLen = self.fftLen/4
+        self.rfft = rfft_
+        self.sram = sram_
+    
+        self.fftLen = self.rfft.fftLen
+        self.dftLen = self.rfft.dftLen
 	
-        self.dac_clk = 512e6
-        self.isneg_freq=1
+        self.dac_clk = self.rfft.dac_clk
+        self.isneg_freq=self.rfft.isneg_freq
 
         #
         #we get data in retuyrned memory in packets. we have two rams, for phase and mag
@@ -125,12 +97,15 @@ class dataExtract:
         self.iqdata=[ zeros(2048), zeros(2048)]
 	
     	#default channel to fft bin map
-        self.chan_to_bin={}
-       
+        self.chan_to_bin=self.rfft.chan_to_bin
         
         self.chan_to_srcfreq={}
+        for chan in self.chan_to_bin.keys():
+            self.chan_to_srcfreq[chan] = self.rfft.bin_to_srcfreq[self.chan_to_bin[chan][0]]
         
-        self.defaultChanMap()
+        
+        
+        #self.defaultChanMap()
     
     
     ####################################33
@@ -177,9 +152,41 @@ class dataExtract:
        
         return(numpy.array(block3))
         
+     
+    def readEvents(self,dirname):
+      
+        dirs=[ dirname+'_A'  , dirname+'_B']
+        events = {}    
+       
+        for d1 in dirs:
+            dirs2 = os.listdir(d1)   
+            
+            for d2 in dirs2:
+                dirx = d1 + '/' + d2
+                tokens=d2.split('_')
+                channel = int(tokens[1])
+                bin = int(tokens[3])
+                events[channel]={}
+                
+                files=os.listdir(dirx)   
+                for fn in files:
+                    fx = dirx + '/' + fn
+                    
+                    fp=open(fx,'rb')
+                    bdata = fp.read()
+                    fdata = struct.unpack('f'*(len(bdata)/4),bdata)
+                    events[channel][fn]=numpy.array(fdata)
+                    fp.close()
         
+        self.iqdata = events
+        return(events)
+                     
+                
         
+       
         
+           
+            
             
 
     ###########################################################################
@@ -311,8 +318,8 @@ class dataExtract:
         ts=events[chan]['timestamp'][index]
         st_=index*32
         ed_=st_+32
-        mag=events[chan]['stream'][0][st_:ed_]
-        phs=events[chan]['stream'][1][st_:ed_]    
+        mag=events[chan]['stream_mag'][st_:ed_]
+        phs=events[chan]['stream_phase'][st_:ed_]    
         is_pulse=events[chan]['is_pulse'][index]
         
         answer={ 'mag':mag,
@@ -346,6 +353,143 @@ class dataExtract:
         return(bdata)
 
 
+
+    ###########################################################################
+    #
+    #
+    ###########################################################################
+    
+    
+    def extractBinSeries(self,freq):
+
+        freq=self.sram.getLegalFreqs([freq])[0]
+        #recordlen=self.getRecordLen()
+
+        
+        
+        nspectra= self.getNumSpectra()
+        
+        #find which bin in fft this freq cooresponds to
+        whichbin=self.rfft.getBinFromFreq(freq)
+        print whichbin
+        
+    
+
+        aa=where(array(self.rfft.fft_bins_requested)==whichbin)[0]
+        if len(aa)==0:
+            print "dataextract.extractBinSeriesError- that freq not in  fft_bins_requested"
+            return
+
+       
+        chan=self.rfft.bin_to_chan[whichbin]
+        print chan
+
+        if self.iqdata.has_key(chan)==False:
+            print 'dataextract.extractBinSeries- ERROR - no data for that channel'
+            return
+
+     
+
+        sP=[self.iqdata[chan]['stream_mag'],  self.iqdata[chan]['stream_phase'] ]
+        sR=self.PolarToRect(sP)
+
+        #
+        #extract the bin we want and make into a array, R and I.
+        #
+
+    
+
+        return(sR)
+
+
+
+
+
+    def RectToPolar(self,data):
+    
+        mags = numpy.sqrt(data[0]*data[0] + data[1]*data[1])
+        phase=numpy.arctan2(data[1],data[0])
+        return([mags,phase])
+        
+    def PolarToRect(self,data):
+        mags=data[0]
+        phase=data[1]
+        re=mags*numpy.cos(phase)
+        im=mags*numpy.sin(phase)
+        return([re,im])
+    
+
+
+    ###########################################################################
+    #
+    #
+    ###########################################################################
+            
+        
+        
+    def getNumSpectra(self):
+        
+        
+        #famemlen-1 because of bug on last point in the memory.. fw bug
+        #for long spectra do not worry about last point... so dont do -1...
+        #if recordlen<200:
+         #    nspectra= int(floor((self.memLen-1) / recordlen))
+        #else:
+        
+        try:
+            bin=self.iqdata.keys()[0]
+            nspectra=len(self.iqdata[bin]['stream_mag'])
+        except: 
+            nspectra = 0
+        
+
+        return(nspectra)
+
+    ###########################################################################
+    #
+    #
+    ###########################################################################
+            
+        
+        
+        
+    def getNumSpectra2(self,chan):
+        
+        
+        #famemlen-1 because of bug on last point in the memory.. fw bug
+        #for long spectra do not worry about last point... so dont do -1...
+        #if recordlen<200:
+         #    nspectra= int(floor((self.memLen-1) / recordlen))
+        #else:
+        
+        
+        nspectra=len(self.iqdata[chan]['stream_mag'])
+        
+
+        return(nspectra)
+    
+
+
+
+#say we readback 20 bins. then we make time series of one of these bins.
+    #We supply freq, that is the freq in Hz we soured. If we are actually reading ot that bin,
+    #then we retrive all samples of that bin and return in polar coord
+    def extractTimeSeries(self,freq):
+
+        binIQ=self.extractBinSeries(freq)
+
+        #convert to polar, mag and phase
+        bP=self.RectToPolar(binIQ)
+
+        
+        #bP[0]= bP[0] - bP[0][0]
+        
+        return(bP)        
+
+
+
+
+
     ###########################################################################
     #
     #
@@ -354,28 +498,28 @@ class dataExtract:
     def extractSpectrum(self,spec_num):    
             
 
-        spectrum_P=zeros(self.fftLen)
-        spectrum_M=zeros(self.fftLen)
+        spectrum_P=zeros(self.rfft.fftLen)
+        spectrum_M=zeros(self.rfft.fftLen)
 
         #iqdata is no longer 2 arrauys, but a dict.
         #
         if 1==1:
             for chan in self.iqdata.keys():
                 binx=self.chan_to_bin[chan][0]
-                spectrum_P[binx]=self.iqdata[chan]['stream'][1][spec_num]
-                spectrum_M[binx]=self.iqdata[chan]['stream'][0][spec_num]
+                spectrum_P[binx]=self.iqdata[chan]['stream_phase'][spec_num]
+                spectrum_M[binx]=self.iqdata[chan]['stream_mag'][spec_num]
         else:
             print "fftAnalzeri.extractSpectrum--bad spec_num"
 
         #put in freq order. We have carrier or DC at bin fftLen/2. bins 0-fftLen/2 are
         #right of DC. bins fftLen/2 are reverszed order (they are negative freqs), and put on left of DC.
-        left=spectrum_P[(self.fftLen/2):]
-        right=spectrum_P[:(self.fftLen/2)]
+        left=spectrum_P[(self.rfft.fftLen/2):]
+        right=spectrum_P[:(self.rfft.fftLen/2)]
         spectrum_P=numpy.concatenate((left,right))
         
 
-        left=spectrum_M[(self.fftLen/2):]
-        right=spectrum_M[:(self.fftLen/2)]
+        left=spectrum_M[(self.rfft.fftLen/2):]
+        right=spectrum_M[:(self.rfft.fftLen/2)]
         spectrum_M=numpy.concatenate((left,right))
 
         
@@ -465,7 +609,7 @@ class dataExtract:
     # ampphase=1 to plot phase instead of amp. 0 for amps
     ############################################################################
 
-    def plotChan3D(self,fignum=1,zlim=-1,nspec=-1,ampphase=0):
+    def plotChan3D(self,fignum=1,zlim=-1,stspec = 0,nspec=-1,ampphase='stream_mag'):
         fig = figure(fignum)
         clf()
         ax = fig.gca(projection='3d')
@@ -474,17 +618,17 @@ class dataExtract:
         for chan in self.iqdata.keys():    
             try:
                 if nspec==-1:
-                    nspec=len(self.iqdata[chan]['stream'][ampphase])        
+                    nspec=len(self.iqdata[chan][ampphase])        
                 
                 
                 
-                z=self.iqdata[chan]['stream'][ampphase][:nspec]
+                z=self.iqdata[chan][ampphase][stspec:(stspec+nspec)]
                
                 
                 zranges.append(median(z))
                 y=arange(len(z))
-               
-                x = numpy.array( [ self.iqdata[chan]['bin']  ]*len(z) )
+                bin = self.chan_to_bin[chan]
+                x = numpy.array( [ bin  ]*len(z) )
                 ax.plot(x, y, z,label='zz')
             except:
                 print "bad chan?"
@@ -508,7 +652,7 @@ class dataExtract:
     #
     ############################################################################
 
-    def plotEvents2D(self,fignum=5, chans=-1,data=-1):
+    def plotEvents2D(self,fignum=5, chans=-1,data=-1,stevent=20000,nevents=100):
     
         if data ==-1: data = self.iqdata
         
@@ -518,21 +662,23 @@ class dataExtract:
         clf()
         pcolors = ['b','g','r','c','m','y','k']
         ccount = 0
+        
         for c in chans:
-            i=0        
-            for ts_ in data[c]['timestamp']:
-                try:
-                    #!!ts = e[3]
-                    evx=self.getEventFromStream(c,index=-1,ts=ts_,events=data)
-                    amp=evx['mag']
-                    phs=evx['phs']
-                    timevec=range(ts_,ts_+32)
-                    subplot(2,1,1)
-                    plot(timevec,amp,pcolors[ccount])
-                    subplot(2,1,2)
-                    plot(timevec,phs,pcolors[ccount])
-                except:
-                    print 'Exception in fftAnalyzeri.plotEvents2D'
+            i=0  
+            for evcnt in range(stevent,stevent+nevents):   
+            
+                ts_ = data[c]['timestamp'][evcnt]
+                #!!ts = e[3]
+                print ts_
+                evx=self.getEventFromStream(c,index=evcnt,events=data)
+                amp=evx['mag']
+                phs=evx['phs']
+                timevec=numpy.arange(ts_,ts_+32)
+                subplot(2,1,1)
+                plot(timevec,amp,pcolors[ccount])
+                subplot(2,1,2)
+                plot(timevec,phs,pcolors[ccount])
+
             
             ccount=(ccount+1)%(len(pcolors))
 
@@ -647,35 +793,32 @@ class dataExtract:
         for chan in ev.keys():
             print "\n\n-------------------------"
             print "channel %d"%(chan)
-            ph=0.0
-            if ev[chan].has_key('phase'):ph=ev[chan]['phase']
+           
+            
 
             sf=0
             if self.chan_to_srcfreq.has_key(chan): sf=self.chan_to_srcfreq[chan]
             
             try:    
-                print 'bin   %d  \nphase  %d  \nnumevents  %d  \nstreamlen  %d \nbinfreq %f \nsrcfreq %f\n'%\
+                print 'bin   %d  \nnumevents  %d  \nstreamlen  %d \nbinfreq %f \nsrcfreq %f\n'%\
                     (ev[chan]['bin'][0],
-                    ph,
                     len(ev[chan]['timestamp']),
-                    len(ev[0]['stream'][0]),
+                    len(ev[0]['stream_mag']),
                     self.getFreqFromBin(ev[chan]['bin'][0]),
                     sf)
 
             except:
               
-                print 'bin   %d  \nphase  %d  \nnumevents  %d  \nstreamlen  %d \nbinfreq %f \nsrcfreq %f\n'%\
-                   (ev[chan]['bin'],
-                    ph,
-                    len(ev[chan]['timestamp']),
-                    len(ev[chan]['stream'][0]),
-                    self.getFreqFromBin(ev[chan]['bin']),
-                    sf)
+                print 'ERROR\n\n'
 
             
             if isplot>0: 
                 figure(1000+chan)
-                for index in range(len(ev[chan]['timestamp'])):
+                
+                maxindex= len(ev[chan]['timestamp'])
+                if maxindex>100: maxindex=100
+                
+                for index in range( maxindex ):
                     evx=self.getEventFromStream(chan,index)
             
                     print "    timestamp %d  ispulse %d"%(
@@ -688,14 +831,14 @@ class dataExtract:
             if isplot>1:
                 figure(12)
                 subplot(2,1,1)
-                plot(ev[chan]['stream'][0])
+                plot(ev[chan]['stream_mag'][:10000])
         
                 subplot(2,1,2)
-                plot(ev[chan]['stream'][1])
+                plot(ev[chan]['stream_phase'][:10000])
 
-        print '\nsearches %d'%(self.searches)
-        print 'carryovers %d'%(self.carryovers)
-        print 'eventcount %d'%(self.eventcount)
+        #!!print '\nsearches %d'%(self.searches)
+        #!!print 'carryovers %d'%(self.carryovers)
+        #!!print 'eventcount %d'%(self.eventcount)
 
     ###########################################################################
     #
@@ -723,14 +866,14 @@ class dataExtract:
     def getFreqFromBin(self,bin):
 	
 
-        if self.isneg_freq==1:
-            whichbin = self.fftLen - bin
+        if self.rfft.isneg_freq==1:
+            whichbin = self.rfft.fftLen - bin
         else:
             whichbin=bin
 	    
 	    
 	    
-        freq=whichbin * (self.dac_clk / self.fftLen)
+        freq=whichbin * (self.rfft.dac_clk / self.rfft.fftLen)
 	    
         return(freq)
 	      

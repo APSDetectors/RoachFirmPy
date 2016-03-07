@@ -1,19 +1,37 @@
 K 25
 svn:wc:ra_dav:version-url
 V 68
-/detpool/!svn/ver/2804/ROACH/trunk/Roach2FWPython/QT/readRoachStream
+/detpool/!svn/ver/2967/ROACH/trunk/Roach2FWPython/QT/readRoachStream
+END
+pipereaderint.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/detpool/!svn/ver/2806/ROACH/trunk/Roach2FWPython/QT/readRoachStream/pipereaderint.h
+END
+packetParse.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/detpool/!svn/ver/2859/ROACH/trunk/Roach2FWPython/QT/readRoachStream/packetParse.cpp
 END
 udprcv.cpp
 K 25
 svn:wc:ra_dav:version-url
 V 79
-/detpool/!svn/ver/2804/ROACH/trunk/Roach2FWPython/QT/readRoachStream/udprcv.cpp
+/detpool/!svn/ver/2864/ROACH/trunk/Roach2FWPython/QT/readRoachStream/udprcv.cpp
+END
+argparse.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/detpool/!svn/ver/2854/ROACH/trunk/Roach2FWPython/QT/readRoachStream/argparse.cpp
 END
 guisettings.cpp
 K 25
 svn:wc:ra_dav:version-url
 V 84
-/detpool/!svn/ver/2803/ROACH/trunk/Roach2FWPython/QT/readRoachStream/guisettings.cpp
+/detpool/!svn/ver/2806/ROACH/trunk/Roach2FWPython/QT/readRoachStream/guisettings.cpp
 END
 settings.py
 K 25
@@ -25,25 +43,37 @@ mainwindow.ui
 K 25
 svn:wc:ra_dav:version-url
 V 82
-/detpool/!svn/ver/2803/ROACH/trunk/Roach2FWPython/QT/readRoachStream/mainwindow.ui
+/detpool/!svn/ver/2832/ROACH/trunk/Roach2FWPython/QT/readRoachStream/mainwindow.ui
+END
+packetParse.h
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/detpool/!svn/ver/2854/ROACH/trunk/Roach2FWPython/QT/readRoachStream/packetParse.h
 END
 udprcv.h
 K 25
 svn:wc:ra_dav:version-url
 V 77
-/detpool/!svn/ver/2804/ROACH/trunk/Roach2FWPython/QT/readRoachStream/udprcv.h
-END
-testEnet.pro
-K 25
-svn:wc:ra_dav:version-url
-V 81
-/detpool/!svn/ver/2804/ROACH/trunk/Roach2FWPython/QT/readRoachStream/testEnet.pro
+/detpool/!svn/ver/2832/ROACH/trunk/Roach2FWPython/QT/readRoachStream/udprcv.h
 END
 roachparser.cpp
 K 25
 svn:wc:ra_dav:version-url
 V 84
-/detpool/!svn/ver/2804/ROACH/trunk/Roach2FWPython/QT/readRoachStream/roachparser.cpp
+/detpool/!svn/ver/2864/ROACH/trunk/Roach2FWPython/QT/readRoachStream/roachparser.cpp
+END
+testEnet.pro
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/detpool/!svn/ver/2854/ROACH/trunk/Roach2FWPython/QT/readRoachStream/testEnet.pro
+END
+argparse.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/detpool/!svn/ver/2854/ROACH/trunk/Roach2FWPython/QT/readRoachStream/argparse.h
 END
 guisettings.h
 K 25
@@ -51,17 +81,53 @@ svn:wc:ra_dav:version-url
 V 82
 /detpool/!svn/ver/2803/ROACH/trunk/Roach2FWPython/QT/readRoachStream/guisettings.h
 END
+textcommander.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/detpool/!svn/ver/2854/ROACH/trunk/Roach2FWPython/QT/readRoachStream/textcommander.cpp
+END
+packetFifo.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/detpool/!svn/ver/2864/ROACH/trunk/Roach2FWPython/QT/readRoachStream/packetFifo.cpp
+END
 mainwindow.cpp
 K 25
 svn:wc:ra_dav:version-url
 V 83
-/detpool/!svn/ver/2804/ROACH/trunk/Roach2FWPython/QT/readRoachStream/mainwindow.cpp
+/detpool/!svn/ver/2960/ROACH/trunk/Roach2FWPython/QT/readRoachStream/mainwindow.cpp
 END
 roachparser.h
 K 25
 svn:wc:ra_dav:version-url
 V 82
-/detpool/!svn/ver/2804/ROACH/trunk/Roach2FWPython/QT/readRoachStream/roachparser.h
+/detpool/!svn/ver/2864/ROACH/trunk/Roach2FWPython/QT/readRoachStream/roachparser.h
+END
+dataqueue.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/detpool/!svn/ver/2864/ROACH/trunk/Roach2FWPython/QT/readRoachStream/dataqueue.cpp
+END
+textcommander.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/detpool/!svn/ver/2854/ROACH/trunk/Roach2FWPython/QT/readRoachStream/textcommander.h
+END
+packetFifo.h
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/detpool/!svn/ver/2864/ROACH/trunk/Roach2FWPython/QT/readRoachStream/packetFifo.h
+END
+mainwindow.h
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/detpool/!svn/ver/2832/ROACH/trunk/Roach2FWPython/QT/readRoachStream/mainwindow.h
 END
 roachscope.ui
 K 25
@@ -69,41 +135,47 @@ svn:wc:ra_dav:version-url
 V 82
 /detpool/!svn/ver/2803/ROACH/trunk/Roach2FWPython/QT/readRoachStream/roachscope.ui
 END
-mainwindow.h
-K 25
-svn:wc:ra_dav:version-url
-V 81
-/detpool/!svn/ver/2803/ROACH/trunk/Roach2FWPython/QT/readRoachStream/mainwindow.h
-END
 roachsetup.py
 K 25
 svn:wc:ra_dav:version-url
 V 82
 /detpool/!svn/ver/2803/ROACH/trunk/Roach2FWPython/QT/readRoachStream/roachsetup.py
 END
+dataqueue.h
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/detpool/!svn/ver/2864/ROACH/trunk/Roach2FWPython/QT/readRoachStream/dataqueue.h
+END
 main.cpp
 K 25
 svn:wc:ra_dav:version-url
 V 77
-/detpool/!svn/ver/2803/ROACH/trunk/Roach2FWPython/QT/readRoachStream/main.cpp
+/detpool/!svn/ver/2854/ROACH/trunk/Roach2FWPython/QT/readRoachStream/main.cpp
 END
 testEnet.pro.user
 K 25
 svn:wc:ra_dav:version-url
 V 86
-/detpool/!svn/ver/2803/ROACH/trunk/Roach2FWPython/QT/readRoachStream/testEnet.pro.user
+/detpool/!svn/ver/2967/ROACH/trunk/Roach2FWPython/QT/readRoachStream/testEnet.pro.user
 END
 roachscope.cpp
 K 25
 svn:wc:ra_dav:version-url
 V 83
-/detpool/!svn/ver/2803/ROACH/trunk/Roach2FWPython/QT/readRoachStream/roachscope.cpp
+/detpool/!svn/ver/2854/ROACH/trunk/Roach2FWPython/QT/readRoachStream/roachscope.cpp
 END
 roachscope.h
 K 25
 svn:wc:ra_dav:version-url
 V 81
-/detpool/!svn/ver/2803/ROACH/trunk/Roach2FWPython/QT/readRoachStream/roachscope.h
+/detpool/!svn/ver/2806/ROACH/trunk/Roach2FWPython/QT/readRoachStream/roachscope.h
+END
+pipereaderint.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/detpool/!svn/ver/2806/ROACH/trunk/Roach2FWPython/QT/readRoachStream/pipereaderint.cpp
 END
 debug.py
 K 25

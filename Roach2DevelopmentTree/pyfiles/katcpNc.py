@@ -105,6 +105,7 @@ import sys, os, random, math, array, fractions
 
 import time, struct, numpy
 
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def testwr(lx):

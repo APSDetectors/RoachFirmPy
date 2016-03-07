@@ -1,4 +1,4 @@
-function [fifo_rden, wr_coef_big_fifo,  write_data_sel,cur_chanout,fifo_overrun_cnt_out,stateout,clear_pulse,datapath_enable,save_event,delete_event,save_pulse_state,calc_mean,store_mean]=fifoFSM(dumpFifo,fifo_empty,half_full,quart_full, almost_full,rst,proc_busy,is_pulse,data_valid,last_channel,wr_raw_data,ram_pulse_state,is_calc_mean, flush_fifo)
+function [fifo_rden, wr_coef_big_fifo,  write_data_sel,cur_chanout,fifo_overrun_cnt_out,stateout,clear_pulse,datapath_enable,save_event,delete_event,save_pulse_state,calc_mean,store_mean,timestamp]=fifoFSM(dumpFifo,fifo_empty,half_full,quart_full, almost_full,rst,proc_busy,is_pulse,data_valid,last_channel,wr_raw_data,ram_pulse_state,is_calc_mean, flush_fifo)
 
 % 
 % staet machine for reading out fifos
@@ -128,6 +128,9 @@ persistent fifo_reread_cnt, fifo_reread_cnt= xl_state(0,{xlUnsigned, 8, 0});
 persistent is_found_pulse, is_found_pulse= xl_state(0,{xlUnsigned, 1, 0});
 
 
+persistent timestamp_cnt,timestamp_cnt  = xl_state(0,{xlUnsigned, 32, 0});
+
+timestamp=timestamp_cnt;
 
 cur_chanout=cur_channel;
 fifo_overrun_cnt_out = fifo_overrun_cnt;
@@ -142,7 +145,7 @@ stateout = state;
 if rst==true
   state=idle;
 
-  
+  timestamp_cnt=0;
   calc_mean=false;
   store_mean = false;
   
@@ -292,6 +295,9 @@ fifo_reread_cnt=1;
         cur_channel = cur_channel + 1;
     else
         cur_channel=0;
+        %we increase ts when we reset back to chan 0. so all read chans
+        %will have same on one iteration. it actually counts fsm iterations
+        timestamp_cnt=timestamp_cnt+1;
     end
     
  

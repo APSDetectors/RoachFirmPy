@@ -1,14 +1,14 @@
 10
 
 dir
-2804
+2978
 https://subversion.xor.aps.anl.gov/detpool/ROACH/trunk/Roach2FWPython/QT/testDDR
 https://subversion.xor.aps.anl.gov/detpool
 
 
 
-2015-10-21T15:32:28.249642Z
-2803
+2015-10-26T19:37:44.128817Z
+2806
 tmadden
 
 
@@ -298,40 +298,6 @@ tmadden
 
 8487
 
-roachscope.ui
-file
-
-
-
-
-2015-10-21T19:05:16.576160Z
-c723f243e7d7a3154ecae673a08e29ab
-2015-04-16T21:36:56.565455Z
-2614
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-5538
-
 mainwindow.h
 file
 
@@ -365,6 +331,40 @@ tmadden
 
 
 1731
+
+roachscope.ui
+file
+
+
+
+
+2015-10-21T19:05:16.576160Z
+c723f243e7d7a3154ecae673a08e29ab
+2015-04-16T21:36:56.565455Z
+2614
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5538
 
 roachsetup.py
 file
@@ -434,40 +434,6 @@ tmadden
 
 176
 
-testEnet.pro.user
-file
-
-
-
-
-2015-10-21T19:05:16.613152Z
-8a53d9391974b566810c2a4b808fe735
-2015-10-21T15:32:28.249642Z
-2803
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-18720
-
 roachscope.cpp
 file
 
@@ -501,6 +467,40 @@ tmadden
 
 
 5365
+
+testEnet.pro.user
+file
+
+
+
+
+2016-03-07T21:10:54.079983Z
+f45a3cd12afb81b74462109fbd7e2fbd
+2015-10-26T19:37:44.128817Z
+2806
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+18720
 
 roachscope.h
 file

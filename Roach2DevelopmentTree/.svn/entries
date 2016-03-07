@@ -1,14 +1,14 @@
 10
 
 dir
-2804
+2978
 https://subversion.xor.aps.anl.gov/detpool/ROACH/trunk/Roach2FWPython
 https://subversion.xor.aps.anl.gov/detpool
 
 
 
-2015-10-21T18:52:01.094953Z
-2804
+2016-03-07T21:00:25.895346Z
+2978
 tmadden
 has-props
 
@@ -25,40 +25,6 @@ has-props
 
 
 b68ab6fb-3108-62fe-f298-bffb3bbe96ba
-
-testddrc.slx
-file
-
-
-
-
-2015-10-21T19:07:13.212704Z
-972e224c884773b8fbee316499c7de1a
-2015-04-20T22:03:57.389628Z
-2616
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-27808
 
 qdrcontrol.m
 file
@@ -93,40 +59,6 @@ tmadden
 
 
 3659
-
-qdrdacsave.slx
-file
-
-
-
-
-2015-10-21T19:07:13.283706Z
-35d20352783d314c1b18249f0f817032
-2015-10-08T13:43:11.555990Z
-2773
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-991285
 
 QT
 dir
@@ -164,6 +96,9 @@ has-props
 
 
 322
+
+docs
+dir
 
 if_board_setup.slx
 file
@@ -301,16 +236,16 @@ has-props
 
 185
 
-tengbddr.slx
+pfbfft_coresim.slx
 file
 
 
 
 
-2015-10-21T19:07:13.455703Z
-bd048cb21d197e22ad09e9ac6eec1bb4
-2015-04-17T22:07:23.767184Z
-2615
+2016-03-07T21:11:19.806690Z
+15b610bd40eb0776c64f76b4da86c5b1
+2015-12-10T21:11:09.913328Z
+2874
 tmadden
 has-props
 
@@ -333,7 +268,7 @@ has-props
 
 
 
-178890
+1595948
 
 savepy.py
 file
@@ -437,6 +372,40 @@ tmadden
 
 722
 
+labnotes.docx
+file
+
+
+
+
+2015-10-21T19:07:13.505701Z
+8496394c0e8913bd34ad729d483ff83b
+2014-09-25T20:29:55.739350Z
+2320
+tmadden
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+12418
+
 pfb_fft_core.tar
 file
 
@@ -505,16 +474,19 @@ has-props
 
 1939197
 
-labnotes.docx
+xps_base
+dir
+
+fccdsimulator.slx
 file
 
 
 
 
-2015-10-21T19:07:13.505701Z
-8496394c0e8913bd34ad729d483ff83b
-2014-09-25T20:29:55.739350Z
-2320
+2016-03-07T21:11:19.825692Z
+d92b5e693337d6b1be51b9477aa0cbaf
+2015-11-12T22:53:53.857880Z
+2842
 tmadden
 has-props
 
@@ -537,10 +509,7 @@ has-props
 
 
 
-12418
-
-xps_base
-dir
+329015
 
 ddrcontrol.m
 file
@@ -576,40 +545,6 @@ tmadden
 
 6725
 
-idealpulse.jpg
-file
-
-
-
-
-2015-10-21T19:07:15.132686Z
-65d6059402e07f2b4e8eb2fb37bf0617
-2013-04-16T20:53:29.809735Z
-1697
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-16478
-
 startpulse
 file
 
@@ -644,16 +579,16 @@ tmadden
 
 1427
 
-tengbtestb.slx
+idealpulse.jpg
 file
 
 
 
 
-2015-10-21T19:07:15.103686Z
-8f47504dd6aef242806c142ea1729f6b
-2015-04-02T20:02:03.808623Z
-2602
+2015-10-21T19:07:15.132686Z
+65d6059402e07f2b4e8eb2fb37bf0617
+2013-04-16T20:53:29.809735Z
+1697
 tmadden
 has-props
 
@@ -676,109 +611,7 @@ has-props
 
 
 
-83564
-
-lutmodscr.m
-file
-
-
-
-
-2015-10-21T19:07:15.198683Z
-cbe1f64aa3d16082a505bc09e6d6bece
-2015-05-04T18:24:47.776029Z
-2621
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-264
-
-SysgenFeatureReport.htm
-file
-
-
-
-
-2015-10-21T19:07:15.188682Z
-9e07d6f0ab44059a92983fb38e3f1a79
-2015-08-19T20:52:27.748474Z
-2690
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-10973
-
-bin2list.c
-file
-
-
-
-
-2015-10-21T19:07:15.177682Z
-c8e218a41f429e68a551d532e0312d0a
-2015-01-19T22:31:44.667509Z
-2472
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-8462
+16478
 
 ddrcontrolb.m
 file
@@ -814,18 +647,17 @@ tmadden
 
 6538
 
-tengbtestc.slx
+bin2list.c
 file
 
 
 
 
-2015-10-21T19:07:15.154685Z
-a164f8cac29701e52d5b1a600135d223
-2015-04-07T19:45:17.783095Z
-2604
+2015-10-21T19:07:15.177682Z
+c8e218a41f429e68a551d532e0312d0a
+2015-01-19T22:31:44.667509Z
+2472
 tmadden
-has-props
 
 
 
@@ -846,7 +678,144 @@ has-props
 
 
 
-132819
+
+8462
+
+SysgenFeatureReport.htm
+file
+
+
+
+
+2015-10-21T19:07:15.188682Z
+9e07d6f0ab44059a92983fb38e3f1a79
+2015-08-19T20:52:27.748474Z
+2690
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+10973
+
+lutmodscr.m
+file
+
+
+
+
+2015-10-21T19:07:15.198683Z
+cbe1f64aa3d16082a505bc09e6d6bece
+2015-05-04T18:24:47.776029Z
+2621
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+264
+
+analyzeqdrdacdata.m
+file
+
+
+
+
+2016-03-07T21:11:19.836690Z
+30995ae9c0d2fdac0c6e96d9599c9ac1
+2015-12-18T22:57:22.111469Z
+2881
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+701
+
+fft_core_config.m
+file
+
+
+
+
+2016-03-07T21:11:19.844690Z
+6a67168a17087ef60c54534d765bdc53
+2015-12-18T22:57:22.111469Z
+2881
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4378
 
 mpfit.pyc
 file
@@ -919,10 +888,10 @@ has-props
 pyfiles
 dir
 
-bestBitFiles
+mfiles
 dir
 
-mfiles
+bestBitFiles
 dir
 
 maddenlibrary.slx
@@ -931,10 +900,10 @@ file
 
 
 
-2015-10-21T19:07:15.281680Z
-534457120f2067b3c2eecf1f275d059b
-2015-10-08T13:43:11.555990Z
-2773
+2016-03-07T21:11:19.885688Z
+74a0d78a5321131ea594b4b7f41b61f7
+2016-03-02T20:35:35.919487Z
+2967
 tmadden
 has-props
 
@@ -957,7 +926,7 @@ has-props
 
 
 
-2291172
+2292841
 
 bin2hdf5.c
 file
@@ -1033,10 +1002,10 @@ file
 
 
 
-2015-10-21T19:07:15.380679Z
-7b95945c350f0aca079d13bb29634361
-2015-10-08T13:43:11.555990Z
-2773
+2016-03-07T21:11:19.919692Z
+6213feccdbc1296df7d533e12c8cfb2d
+2015-12-08T22:56:08.840884Z
+2872
 tmadden
 has-props
 
@@ -1059,7 +1028,41 @@ has-props
 
 
 
-1575979
+1589584
+
+maddogLibrary.slx
+file
+
+
+
+
+2016-03-07T21:11:19.938687Z
+8daf8f33a8a56fcb2220799212554936
+2016-03-02T20:35:35.919487Z
+2967
+tmadden
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+53041
 
 gbDataWrite.m
 file
@@ -1067,10 +1070,10 @@ file
 
 
 
-2015-10-21T19:07:15.393684Z
-ba0fd5b2c109751ecd18a9e359b5e2bd
-2015-10-19T19:11:20.418968Z
-2797
+2016-03-07T21:11:19.949687Z
+72594927cb808985a6483204f9e2d922
+2015-11-19T23:35:07.573647Z
+2859
 tmadden
 
 
@@ -1093,7 +1096,7 @@ tmadden
 
 
 
-4464
+6588
 
 .loglogin
 file
@@ -1135,10 +1138,10 @@ file
 
 
 
-2015-10-21T19:07:15.438679Z
+2016-03-07T21:11:19.963688Z
 e140df71f88bedf3ea0f9596448ab083
-2015-08-11T22:37:46.105746Z
-2682
+2015-12-08T22:56:08.840884Z
+2872
 tmadden
 has-props
 
@@ -1234,74 +1237,6 @@ has-props
 
 759448
 
-qdrtest.slx
-file
-
-
-
-
-2015-10-21T19:07:15.492676Z
-400102ec296f152273a92feb14c09993
-2015-08-11T22:37:46.105746Z
-2682
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-168722
-
-quadnotch.slx
-file
-
-
-
-
-2015-10-21T19:07:15.509677Z
-043b2412f6072f0ebc5519ed8f9ddf1e
-2015-05-05T21:16:30.959612Z
-2623
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-26123
-
 pulsereader.c
 file
 
@@ -1336,16 +1271,19 @@ tmadden
 
 6953
 
-qdrtestb.slx
+testDesigns
+dir
+
+fft_core.slx
 file
 
 
 
 
-2015-10-21T19:07:15.536677Z
-393372d903c7210c4c79c56ed0c16d6e
-2015-05-13T19:55:48.954061Z
-2626
+2016-03-07T21:11:19.995686Z
+f084608cb823c2d37033ae4ba5b6e95e
+2015-12-16T17:52:13.473351Z
+2878
 tmadden
 has-props
 
@@ -1368,7 +1306,7 @@ has-props
 
 
 
-184928
+1500573
 
 fifoFSMPh2.m
 file
@@ -1376,10 +1314,10 @@ file
 
 
 
-2015-10-21T19:07:15.546678Z
-3f476c08149acbb51661020a26052075
-2015-10-12T22:15:09.324181Z
-2775
+2016-03-07T21:11:20.009688Z
+2df4bf9c0d67eef6b2a230aa64865e2c
+2015-10-29T21:25:54.870507Z
+2816
 tmadden
 
 
@@ -1402,7 +1340,41 @@ tmadden
 
 
 
-13925
+14239
+
+fifoFSMPh3.m
+file
+
+
+
+
+2016-03-07T21:11:20.018687Z
+6a44a184398eb87e5fe08a935bf86ffd
+2016-03-07T20:56:47.714869Z
+2977
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+12828
 
 if_board.m
 file
@@ -1437,40 +1409,6 @@ tmadden
 
 
 388
-
-tengbddrb.slx
-file
-
-
-
-
-2015-10-21T19:07:15.572676Z
-b8d326d1ec1ac92f4bd4cc9e710bb215
-2015-04-30T21:24:28.418992Z
-2620
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-177031
 
 UserManual.odt
 file
@@ -1540,50 +1478,16 @@ tmadden
 
 1554
 
-tengbddrc.slx
-file
-
-
-
-
-2015-10-21T19:07:15.641675Z
-ba74c2827423c74aff12c0be808bf0c1
-2015-05-08T15:47:51.150274Z
-2624
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-257567
-
 qdrdac.slx
 file
 
 
 
 
-2015-10-21T19:07:15.684675Z
-f58fcbd284c75c7aab7c2785d67a807d
-2015-10-21T15:32:28.249642Z
-2803
+2016-03-07T21:11:20.043690Z
+1aa03b3e2e16ffe8dbb41104ba51a408
+2016-03-07T20:55:59.275196Z
+2976
 tmadden
 has-props
 
@@ -1606,75 +1510,7 @@ has-props
 
 
 
-1184658
-
-networkanalyzer.slx
-file
-
-
-
-
-2015-10-21T19:07:15.704677Z
-924a0c6a56039529e01ddce93b978cb1
-2014-06-26T21:29:50.531230Z
-2209
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-290707
-
-tengbtest.slx
-file
-
-
-
-
-2015-10-21T19:07:15.721675Z
-f77b6931aa90648175263cc3e80f5e21
-2015-04-02T20:02:03.808623Z
-2602
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-91081
+906554
 
 notes.txt
 file
@@ -1710,40 +1546,6 @@ tmadden
 
 5163
 
-notchtester.slx
-file
-
-
-
-
-2015-10-21T19:07:15.747672Z
-66bc49a590e57b90eb8efc9e5fce64a0
-2015-05-14T21:20:04.489637Z
-2630
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-17157
-
 m2py.mat
 file
 
@@ -1778,16 +1580,16 @@ has-props
 
 30827
 
-lutmod.slx
+fluxrampdemodulation.slx
 file
 
 
 
 
-2015-10-21T19:07:15.780672Z
-ca57775a8d445ffe19ff21e3d726e114
-2015-05-04T18:24:47.776029Z
-2621
+2016-03-07T21:11:20.060694Z
+1e9180795159eabcbe2ab9589bb0230b
+2016-03-02T20:35:35.919487Z
+2967
 tmadden
 has-props
 
@@ -1810,7 +1612,7 @@ has-props
 
 
 
-61332
+48814
 
 madbuffer.c
 file

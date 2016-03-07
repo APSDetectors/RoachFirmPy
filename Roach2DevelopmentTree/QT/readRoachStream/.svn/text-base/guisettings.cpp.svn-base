@@ -3,7 +3,7 @@
 #import <QStringList>
 
 guiSettings::guiSettings() :
-    txdestip("127.0.0.1")
+    txdestip("192.168.1.102")
 {
 
 
@@ -19,7 +19,7 @@ guiSettings::guiSettings() :
 
 
 
-     txdestport = 54321;
+     txdestport = 50000;
 
 
 

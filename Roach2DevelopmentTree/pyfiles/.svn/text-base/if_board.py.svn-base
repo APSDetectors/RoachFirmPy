@@ -168,9 +168,9 @@ class attenSetting:
 
     def setAtten(self):
         
-        self.reg_U28=63-int(2*self.atten_U28)
-        self.reg_U6=63-int(2*self.atten_U6)
-        self.reg_U7=63-int(2*self.atten_U7)
+        self.reg_U28=63-int(2.0*self.atten_U28)
+        self.reg_U6=63-int(2.0*self.atten_U6)
+        self.reg_U7=63-int(2.0*self.atten_U7)
         
     def report(self):
         contents= inspect.getmembers(self)
@@ -399,7 +399,7 @@ class ifBoard:
         self.endian='big'
         self.invclk=True
 
-
+        self.n_atten_bits=18
 
 
         #
@@ -500,10 +500,10 @@ class ifBoard:
                 bitval=0;    
 
             #clk is low. all le bits are high. at must be low..
-            regval=(0<<self.clk_sle)+(0<<self.swat_le)+(0<<self.lo_sle)+(int(bitval)<<self.ser_di)+(0<<self.ser_clk)
-            #only lower the le bit of interest.
-            lemask = 0xffffffff - (1<<lebit)
-            regval = regval&lemask;
+            regval=(0<<self.clk_sle)+(0<<self.swat_le)+(0<<self.lo_sle)+ \
+                (int(bitval)<<self.ser_di)+(0<<self.ser_clk)
+                
+           
 
             #make a version w/ the serial clock hi
             regvalclk=regval | (1<<self.ser_clk)
@@ -522,7 +522,8 @@ class ifBoard:
 
         #lebit is hi .
         bitval=0
-        regval=(0<<self.clk_sle)+(0<<self.swat_le)+(0<<self.lo_sle)+(int(bitval)<<self.ser_di)+(0<<self.ser_clk)
+        regval=(0<<self.clk_sle)+(0<<self.swat_le)+(0<<self.lo_sle)+ \
+            (int(bitval)<<self.ser_di)+(0<<self.ser_clk)
 
         regval = regval | (1<<lebit)
 
@@ -544,7 +545,8 @@ class ifBoard:
 
         #lebit is low. .
         bitval=0
-        regval=(0<<self.clk_sle)+(0<<self.swat_le)+(0<<self.lo_sle)+(int(bitval)<<self.ser_di)+(0<<self.ser_clk)
+        regval=(0<<self.clk_sle)+(0<<self.swat_le)+(0<<self.lo_sle)+ \
+                (int(bitval)<<self.ser_di)+(0<<self.ser_clk)
 
 
 
@@ -862,7 +864,8 @@ class ifBoard:
 
 
         #clockl out the data- 
-        regval = (0<<self.clk_sle) + (0<<self.swat_le) + (0<<self.lo_sle) + (0<<self.ser_di) + (0<<self.ser_clk)
+        regval = (0<<self.clk_sle) + (0<<self.swat_le) + (0<<self.lo_sle) + \
+            (0<<self.ser_di) + (0<<self.ser_clk)
 
         self.roach.write_int('%s_regs'%(self.fw_block_name),regval)
         self.roach.write_int('%s_regs'%(self.fw_block_name),regval + (1<<self.sw_stb))
@@ -894,20 +897,35 @@ class ifBoard:
 
         attenset.setAtten()
 
-        lebit = self.swat_le
+        
 
+        if self.invclk==False : 
+            clkvalue = 0
+        else: 
+            clkvalue = (1<<self.ser_clk)
+        
 
-        regval = (0<<self.swat_le) + (0<<self.lo_sle) + (0<<self.clk_sle) +(0<<self.ser_di) + (0<<self.ser_clk) +  (0<<self.sw_stb)
+        regval = (0<<self.swat_le) + (0<<self.lo_sle) + (0<<self.clk_sle) + \
+                (0<<self.ser_di) + clkvalue +  (0<<self.sw_stb)
+                
         self.roach.write_int('%s_regs'%(self.fw_block_name), regval)
 
+        if self.endian=='big':
+            u28=self.flipEndian(attenset.reg_U28,6)
+            u6=self.flipEndian(attenset.reg_U6,6)
+            u7=self.flipEndian(attenset.reg_U7,6)
+        else:
+            
+            u28=attenset.reg_U28
+            u6=attenset.reg_U6
+            u7=attenset.reg_U7
+            
+        
+        data = (u28<<0)+(u7<<6)+(u6<<12)
 
-        data = (attenset.reg_U28<<12)+(attenset.reg_U7<<6)+(attenset.reg_U6<<0)
-
-        for b in range(18):
-            if self.endian=='big':
-                bitmask = 1<<(17-b)
-            else:
-                bitmask = 1<<b
+        for b in range(self.n_atten_bits):
+            bitmask = 1<<b
+  
 
             if data&bitmask!=0:
                 bitval = 1;
@@ -915,10 +933,10 @@ class ifBoard:
                 bitval=0;    
 
             #clk is low. all le bits are high.
-            regval=(0<<self.clk_sle)+(1<<self.swat_le)+(0<<self.lo_sle)+(int(bitval)<<self.ser_di)+(0<<self.ser_clk)+(0<<self.sw_stb)
-            #only lower the le bit of interest.
-            lemask = 0xffffffff - (1<<lebit)
-            regval = regval&lemask;
+            regval=(0<<self.clk_sle)+(0<<self.swat_le)+(0<<self.lo_sle)+ \
+                    (int(bitval)<<self.ser_di)+(0<<self.ser_clk)+(0<<self.sw_stb)
+                    
+          
 
             #make a version w/ the serial clock hi
             regvalclk=regval | (1<<self.ser_clk)
@@ -939,16 +957,29 @@ class ifBoard:
                 self.roach.write_int('%s_regs'%(self.fw_block_name), regvalclk)
                 #print bin(regvalclk)
 
-        regval =(0<<self.clk_sle)+ (0<<self.swat_le)+(0<<self.lo_sle)+(0<<self.ser_di)+(0<<self.ser_clk)+(0<<self.sw_stb)
+
+
+        if self.invclk==False : 
+            clkvalue = 0
+        else: 
+            clkvalue = (1<<self.ser_clk)
+        
+        regval =(0<<self.clk_sle)+ (0<<self.swat_le)+(0<<self.lo_sle)+ \
+                (0<<self.ser_di)+clkvalue+(0<<self.sw_stb)
+                
         self.roach.write_int('%s_regs'%(self.fw_block_name), regval)
         #print bin(regval)
 
-        regval =(0<<self.clk_sle)+ (1<<self.swat_le)+(0<<self.lo_sle)+(0<<self.ser_di)+(0<<self.ser_clk)+(0<<self.sw_stb)
+        regval =(0<<self.clk_sle)+ (1<<self.swat_le)+(0<<self.lo_sle)+ \
+                (0<<self.ser_di)+clkvalue+(0<<self.sw_stb)
+                
         self.roach.write_int('%s_regs'%(self.fw_block_name), regval)
         #print bin(regval)
 
 
-        regval =(0<<self.clk_sle)+ (0<<self.swat_le)+(0<<self.lo_sle)+(0<<self.ser_di)+(0<<self.ser_clk)+(0<<self.sw_stb)
+        regval =(0<<self.clk_sle)+ (0<<self.swat_le)+(0<<self.lo_sle)+ \
+                (0<<self.ser_di)+clkvalue+(0<<self.sw_stb)
+                
         self.roach.write_int('%s_regs'%(self.fw_block_name), regval)
         #print bin(regval)
 
@@ -959,6 +990,17 @@ class ifBoard:
 
 
 
+    def flipEndian(self,val,nbits):
+    
+        val2=0
+        
+        for k in range(nbits):
+            bpos = 1<<k
+            bpos2=1<<( (nbits-1) - k)
+            if val&bpos > 0:
+                val2 = val2 + bpos2
+        return(val2)
+            
 
 
 

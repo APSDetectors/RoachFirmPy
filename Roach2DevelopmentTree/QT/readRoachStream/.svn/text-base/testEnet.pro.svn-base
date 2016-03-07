@@ -19,14 +19,26 @@ SOURCES += main.cpp\
     udprcv.cpp \
     roachscope.cpp \
     ../qcustomplot-source/qcustomplot.cpp \
-    roachparser.cpp
+    roachparser.cpp \
+    dataqueue.cpp \
+    packetParse.cpp \
+    packetFifo.cpp \
+    ../roachUDPBuffer/pipereader.cpp \
+    textcommander.cpp \
+    argparse.cpp
 
 HEADERS  += mainwindow.h \
     guisettings.h \
     udprcv.h \
     roachscope.h \
     ../qcustomplot-source/qcustomplot.h \
-    roachparser.h
+    roachparser.h \
+    dataqueue.h \
+    packetParse.h \
+    packetFifo.h \
+    ../roachUDPBuffer/pipereader.h \
+    textcommander.h \
+    argparse.h
 
 FORMS    += mainwindow.ui \
     roachscope.ui

@@ -17,8 +17,8 @@
    <widget class="QLineEdit" name="lineEdit_destIP">
     <property name="geometry">
      <rect>
-      <x>120</x>
-      <y>280</y>
+      <x>90</x>
+      <y>0</y>
       <width>161</width>
       <height>27</height>
      </rect>
@@ -30,8 +30,8 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>290</y>
+      <x>10</x>
+      <y>10</y>
       <width>69</width>
       <height>17</height>
      </rect>
@@ -43,21 +43,21 @@
    <widget class="QLineEdit" name="lineEdit_destPort">
     <property name="geometry">
      <rect>
-      <x>120</x>
-      <y>310</y>
+      <x>100</x>
+      <y>30</y>
       <width>113</width>
       <height>27</height>
      </rect>
     </property>
     <property name="text">
-     <string>54321</string>
+     <string>50000</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>320</y>
+      <x>10</x>
+      <y>30</y>
       <width>69</width>
       <height>17</height>
      </rect>
@@ -69,23 +69,23 @@
    <widget class="QCheckBox" name="checkBox_streamUDP">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>360</y>
+      <x>280</x>
+      <y>20</y>
       <width>131</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
-     <string>CaptureStream</string>
+     <string>UDP Connect</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_RcvData">
     <property name="geometry">
      <rect>
-      <x>310</x>
+      <x>630</x>
       <y>20</y>
-      <width>561</width>
-      <height>471</height>
+      <width>241</width>
+      <height>611</height>
      </rect>
     </property>
     <property name="autoFillBackground">
@@ -101,8 +101,8 @@
    <widget class="QLabel" name="label_6">
     <property name="geometry">
      <rect>
-      <x>518</x>
-      <y>520</y>
+      <x>330</x>
+      <y>640</y>
       <width>111</width>
       <height>20</height>
      </rect>
@@ -114,8 +114,8 @@
    <widget class="QLabel" name="label_rcvFromIP">
     <property name="geometry">
      <rect>
-      <x>650</x>
-      <y>520</y>
+      <x>430</x>
+      <y>640</y>
       <width>141</width>
       <height>17</height>
      </rect>
@@ -127,8 +127,8 @@
    <widget class="QLabel" name="label_7">
     <property name="geometry">
      <rect>
-      <x>518</x>
-      <y>540</y>
+      <x>330</x>
+      <y>660</y>
       <width>111</width>
       <height>20</height>
      </rect>
@@ -140,8 +140,8 @@
    <widget class="QLabel" name="label_rcvFromPort">
     <property name="geometry">
      <rect>
-      <x>650</x>
-      <y>540</y>
+      <x>470</x>
+      <y>660</y>
       <width>69</width>
       <height>17</height>
      </rect>
@@ -153,14 +153,136 @@
    <widget class="QCheckBox" name="checkBox_scopeOpen">
     <property name="geometry">
      <rect>
-      <x>500</x>
-      <y>570</y>
+      <x>600</x>
+      <y>640</y>
       <width>96</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
      <string>Scope</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>70</y>
+      <width>67</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Parser A</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>510</x>
+      <y>70</y>
+      <width>67</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Parser B</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_parserA">
+    <property name="geometry">
+     <rect>
+      <x>320</x>
+      <y>90</y>
+      <width>131</width>
+      <height>501</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Panel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Sunken</enum>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_parserB">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>90</y>
+      <width>131</width>
+      <height>491</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Panel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Sunken</enum>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_udpStat">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>60</y>
+      <width>261</width>
+      <height>571</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Panel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Sunken</enum>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_clearEvents">
+    <property name="geometry">
+     <rect>
+      <x>60</x>
+      <y>640</y>
+      <width>93</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>ClearEvents</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_saveEvents">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>640</y>
+      <width>93</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>SaveEvents</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_readpipe">
+    <property name="geometry">
+     <rect>
+      <x>420</x>
+      <y>20</y>
+      <width>131</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>ReadPipe</string>
     </property>
    </widget>
   </widget>

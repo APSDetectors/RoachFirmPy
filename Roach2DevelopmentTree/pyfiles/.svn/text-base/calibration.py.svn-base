@@ -14,6 +14,70 @@ cal.phasetest()
 
 cal.phasetest2()
 
+
+
+
+################################################################
+#pos sideband
+sram.Q_phase_offs=0.02 * -18.5
+sram.Q_amp_factor = -1.0
+sram.setLutFreqs(arange(10e6,200e6,10e6), 3000)
+
+
+
+####################################################################
+#neg sideband
+
+#LO at 3.5G
+#sram.Q_phase_offs=0.02 * 18.5
+#LO at 4.5G
+#sram.Q_phase_offs=0.02 * 10
+
+
+sram.Q_phase_offs=(pi/180) *0
+sram.Q_amp_factor = -1.0
+sram.Q_time_delay = 0
+sram.setLutFreqs(arange(10e6,200e6,10e6), 2000)
+
+sram.Q_phase_offs=(pi/180) *18
+sram.setLutFreqs(arange(10e6,200e6,10e6), 2000)
+
+
+a=scoper()
+
+
+#####################################
+# cal the 1st tone
+#
+
+
+sram.setLutFreqs([200e6], 20000)
+
+
+freq =  sram.frequency_list[0]
+pbin = 512.0*freq / sram.dac_clk
+nbin = 512 - pbin
+
+nph = angle(FF[nbin])
+namp = abs(FF[nbin])
+
+pph = angle(FF[pbin])
+pamp = abs(FF[pbin])
+
+
+#make a sine and cos to add to the wavetable to cancle pbin.
+cal_amp = sram.amplist[0] * pamp / namp
+cal_ph = pi + (pph - nph) - sram.lut_phase_list[0]
+
+
+sram.lut_i=sram.lut_i + sram.singleFreqLUT(freq, 'I', sram.dac_clk,sram.lut_length , cal_ph, cal_amp)
+sram.lut_q=sram.lut_q + sram.singleFreqLUT(freq, 'Q', sram.dac_clk,sram.lut_length , cal_ph, cal_amp)
+sram.lut_binaryIQ=sram.convertToBinary128(sram.lut_i,sram.lut_q)
+sram.writeSram(sram.lut_binaryIQ)
+sram.streamSram()
+        
+
+
 """
 
 class calibration:
