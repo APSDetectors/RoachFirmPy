@@ -1,4 +1,6 @@
-.svn/*
+.svn
 QT/build-testEnet-Desktop-Debug
 slprj
 bestBitFiles
+QT/readRoachStream/.svn
+pyfiles/.svn

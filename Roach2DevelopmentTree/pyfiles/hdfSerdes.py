@@ -1,6 +1,10 @@
 '''
 
-hdf.open('test.h5','r')
+hdf=hdfSerdes()
+
+
+
+hdf.open('vsweep1.h5','w')
 
 qq=hdf.read()
 

@@ -4,7 +4,7 @@ from PySide.QtGui import *
  
 
 import socket
-import matplotlib, corr, time, struct, numpy
+import matplotlib, time, struct, numpy
 from bitstring import BitArray
 import matplotlib.pyplot as mpl
 mpl.rcParams['backend.qt4']='PySide'
@@ -34,6 +34,10 @@ execfile('katcpNc.py')
 execfile('resView.py')
 execfile('resonator.py')
 execfile('mkidMeasure.py')
+
+
+execfile('sim928.py')
+
 #from fftAnalyzerR2 import *
 
 #from resView import *
@@ -214,7 +218,8 @@ class AppForm(QMainWindow):
         global fa
         global na
         global measure
-        
+        global sim
+        global hdf
         
         ip=self.textbox_roachIP.text()
         roach=katcpNc(ipaddr = ip)
@@ -245,6 +250,18 @@ class AppForm(QMainWindow):
         time.sleep(.5)
         fa.stopCapture()
 
+        if False:
+            sim=sim928()
+            sim.open()
+            sim.connport(8)
+            sim.getId()
+           
+
+      
+
+        hdf=hdfSerdes()
+
+        
 
         #if is_use_multiprocess==1:
         if False: 
@@ -429,7 +446,9 @@ class AppForm(QMainWindow):
         #runs on THIS thread
         #na.powerSweep(self.at_inst,self.at_st,self.at_inend,self.at_step,self.at_sweeps,self.resonator_span,self.mlist)
         measure.measspecs.num_noise_traces = self.spinbox_numNoise.value()
-       
+        ntime = float(self.textbox_noisesec.text())
+        
+        measure.setNoiseTime(ntime)
         measure.runNoise()
 
 
@@ -572,7 +591,9 @@ class AppForm(QMainWindow):
         global is_use_multiprocess
         is_use_multiprocess=0
     
-        if state>0:
+        #!!
+        #!!if state>0:
+        if False:
             is_use_multiprocess=1
             print "Using Queue and  fit server"
             startQMP()
@@ -637,11 +658,12 @@ class AppForm(QMainWindow):
          #   else:
             self.powersweep2();
 
-    #    if self.check_runFits.isChecked():
+            time.sleep(1.0)
+        if self.check_runFits.isChecked():
 #            if is_use_multiprocess>0:    
 #                threadflag=threadflag | 2
 #            else:   
-#                self.runFits2()
+            self.runFits2()
 #
         if self.check_runIQvelocity.isChecked():
             self.IQvelocity()
@@ -651,9 +673,11 @@ class AppForm(QMainWindow):
 #            else:   
 #                self.IQvelocity()
 #
-
+        time.sleep(1.0)
         if self.check_getnoise.isChecked():
             self.runNoise()
+
+        time.sleep(1.0)
 
 #        if self.check_getnoise.isChecked():
 #            if is_use_multiprocess>0:    
@@ -783,172 +807,6 @@ class AppForm(QMainWindow):
         a=1
 
 
-    def fftRun(self):
-    
-      
-
-        if self.current_fw_index!=1:
-
-            self.current_fw_index=1
-            print 'Load FW %s'%(fwnames[self.current_fw_index])
-            startFW(roach,fwnames[self.current_fw_index])
-            setupfai2()
-
-        
-    
-        sigtype = self.combobox_lut_sigtype.currentIndex()
-
-        gain_indx = self.combobox_fft_gain.currentIndex()
-        fftgains=[2047,1023,511,255,127,63,31]
-        na.roach_fft_shift=fftgains[gain_indx]
-
-        #manual harmonic tones
-        if sigtype==0:
-
-            f0=float(self.textbox_lut_freq.text())*1e6
-            amp=float(self.textbox_lut_amplitude.text())*32768.0
-            fstep=float(self.textbox_lut_fspace.text())*1e6
-            nharm=float(self.textbox_lut_nharms.text())
-
-            fbase=10109375
-            farray=numpy.arange(fbase,fbase + fstep*nharm,fstep)    
-
-
-            if na.isneg_freq==1:
-                fcarr=f0+fbase
-            else:
-               fcarr=fo-fbase
-
-            farray=farray
-            self.setAttenFromGUI()
-
-            na.setCarrier(fcarr)
-            na.setLutFreqs(farray.tolist(),amp)
-
-            binmode=self.combobox_bin_return.currentIndex()
-
-            na.is_add_noise_2_res=0
-            if binmode==0:
-                na.fftsynctime = na.dftLen*5
-                na.fftBinsAll()
-
-            else:
-                na.fftsynctime = na.dftLen
-                na.fftBinsFreqs()
-                na.progRoach()
-
-
-
-
-            na.resetDAC()
-            na.trigFFT()
-
-            self.status_text.setText('FFT Readback Running')
-
-            na.debugobjs.append( ('form.fftRun' ,na.printRegs(0,0)) )
-
-            na.TgrabData(10000)
-
-            self.is_sweeping=1
-            #self.plottype=0
-
-
-
-        #get checked resonators...
-        elif sigtype==1:
-
-            self.mlist=  self.getMkidSelectedChecked(self.list_reslist2)[0]
-            self.fftreslist=[]
-
-
-            newlist = na.sweepAndReadout(self.mlist)
-
-            for m in newlist:
-                self.fftreslist.append(m.reslist[0])
-
-
-
-            self.status_text.setText('FFT Readback Running')
-
-            #na.debugobjs.append( ('form.fftRun' ,na.printRegs(0,0)) )
-
-            self.is_sweeping=1
-
-        #mkid and trace spec'ed in text boxes
-        elif sigtype==2:
-
-            self.fftreslist=[]
-            mkidnum=int(self.textbox_mkid_num.text())
-            tracenum=int(self.textbox_mtrace_num.text())    
-
-            restrace=MKID_list[mkidnum-1].reslist[tracenum-1]
-            self.fftreslist.append(restrace)
-
-            f0=restrace.skewcircle_fr
-
-            self.textbox_lut_freq.setText('%f'%(f0/1e6))
-
-            amp=restrace.lut_sine_amp*32768.0
-
-
-            self.textbox_lut_amplitude.setText('%f'%(amp))
-
-            self.textbox_lut_fspace.setText('1.0')
-            self.textbox_lut_nharms.setText('1')
-
-            na.setSweepResonator(restrace)
-            na.setResonatorSettings()
-
-                #na.is_add_noise_2_res=1
-
-            at.report()
-
-        
-
-            #self.setAttenFromGUI()
-
-
-            binmode=self.combobox_bin_return.currentIndex()
-            if binmode==0:
-                na.fftsynctime = na.dftLen*5
-                na.fftBinsAll()
-            else:
-                na.fftsynctime = na.dftLen
-                na.fftBinsFreqs()
-                na.progRoach()
-
-
-            na.resetDAC()
-            na.trigFFT()
-
-            self.status_text.setText('FFT Readback Running')
-
-            na.debugobjs.append( ('form.fftRun' ,na.printRegs(0,0)) )
-
-            na.TgrabData(10000)
-
-            self.is_sweeping=1
-            #self.plottype=0
-
-
-
-    #set up lut and binreadout based on list of mkids- needed so we can setup pulse detector
-    #used to set up pulse det before we stream data, we setup proper lut singlas and proper readout
-    def streamSetup(self):
-
-        if self.current_fw_index!=1:
-
-           self.current_fw_index=1
-           print 'Load FW %s'%(fwnames[self.current_fw_index])
-           startFW(roach,fwnames[self.current_fw_index])
-           setupfai2()
-
-
-
-        mlist =self.getSelMkid()
-
-        na.fftAnalSetupFromMlist(mlist)
-
 
 
 
@@ -957,59 +815,56 @@ class AppForm(QMainWindow):
     
       
 
-        if self.current_fw_index!=1:
-
-            self.current_fw_index=1
-            print 'Load FW %s'%(fwnames[self.current_fw_index])
-            startFW(roach,fwnames[self.current_fw_index])
-            setupfai2()
-
-
 
         mlist =self.getSelMkid()
-
-
-        na.sweepAndStream2(
-        self.textbox_streamfilename.text(),
-        float(self.textbox_streamsec.text()),
-        1 - self.prawdata,
-        mlist)
-
-
-
+        if len(mlist) == 0:
+            print "no selected resonators"
+            return
+            
+            
+        rffreqs = []
+        
+        for mkid in mlist:
+            res = mkid.reslist[0]
+            rffreqs.append(res.getFc())
+            print res.getFc()
+            
+            
+        bbfreqs = []
+             
+        (LO, bbfreqs ) = fa.calcBBLOFromRFFreqs( numpy.array(rffreqs) )
+        
+        if len(bbfreqs)==0:
+            print "No resonators!!"
+            return
+            
+        print LO
+        print bbfreqs
+             
+        fa.setCarrier(LO)
+        
+        amp = 30000.0 * (1.0 / len(bbfreqs))
+        print amp
+        
+        fa.sourceCapture(bbfreqs, amp)
+        
+        
 
 
 
 
     def streamStop(self):
-        print "Hit Ctrl-D on the white windows"
+        fa.stopCapture()
+
+        time.sleep(1.0)
+        fa.getIQ()
+        
+        fa.dataread.plotStreams(nsamples=2000)
 
 
 
 
 
-
-
-
-
-    def fftStop(self):
-    
-
-      #self.button_StSweep.setEnabled(True)
-    #self.button_readPulses.setEnabled(True)
-
-        #na.stopSweep()
-        try:
-            self.timer.stop()
-    
-        except:
-            a=1
-    
-        self.status_text.setText('Connected/Idle')
-        na.thread_running=0
-    
-        self.is_sweeping=0
-    #self.plottype=0
 
 
     def saveSweep(self):
@@ -1895,34 +1750,9 @@ class AppForm(QMainWindow):
 
 
 
-    def enablePulseDet(self,state):
-
-
-        self.prawdata=1
-        if state>0:
-            self.prawdata=0
-
-
-
      
 
 
-    def progPulseDet(self):
-        nstd = float(self.textbox_pulsethresh.text())
-
-        na.progPulseDetector(nstd,1-self.prawdata,10)
-
-        na.clearFIFOs()
-        na.numFFTs(1e9)
-        na.trigFFT()
-        rate = na.getEventRate(0.1)
-        self.label_test_event_rate.setText('%6.0f'%(rate))
-        na.clearFIFOs()
-
-
-    def measPulseMeans(self):
-        na.measurePulseDetectorMeanThresh(1)
-    
     
     #
 #    
@@ -2107,6 +1937,70 @@ class AppForm(QMainWindow):
         app.quit()
 
   
+  
+    def setRampSyncSource(self):
+          
+        
+        ci = self.combobox_syncsource.currentIndex()
+        
+        #no ramp
+        if ci==0:
+            fa.rampgen.setIsSync(0)
+            fa.rampgen.setSyncSource(0)
+            fa.rampgen.setChannelizerFifoSync()
+        
+        #ext ramp
+        elif ci==1:
+        #int ramp
+            fa.rampgen.setIsSync(1)
+            fa.rampgen.setSyncSource(0)
+            fa.rampgen.setChannelizerFifoSync()
+
+
+        else:
+            fa.rampgen.setIsSync(1)
+            fa.rampgen.setSyncSource(1)
+            self.setRampSpecs()
+            ##fa.rampgen.setChannelizerFifoSync()
+        
+  
+  
+      
+        
+        
+        
+    def setRampSpecs(self):
+        r_amp = self.spinbox_RampAmp.value() / 100.0
+        r_freq = self.spinbox_RampFreq.value()
+        fa.rampgen.setRamp(r_amp,r_freq)
+        fa.rampgen.setChannelizerFifoSync()
+        
+        
+  
+    def setFluxRampDemod(self):
+    
+        frd=[0,0]
+        
+        frdci = self.combobox_flxRmpDmd.currentIndex()
+        if frdci==0:
+            frd = [0,0]
+        elif frdci==1:
+            frd= [1,1]
+        elif frdci==2:
+            frd = [1,0]
+        else:
+            frd=[0,0]
+        
+        numprd = float(self.textbox_flxRmpPrd.text())
+        
+        fa.chanzer.setFluxRampDemod(frd[0],frd[1],fa.chanzer.read_fifo_size,numprd)
+
+    def refreshFRDSettings(self):
+        self.setRampSpecs()
+        self.setRampSyncSource()
+        self.setFluxRampDemod()
+        
+    
     def file_dialog(self):
         print 'add dialog box here'
         #self.newdatadir = QFileDialog.getExistingDirectory(self, str("Choose SaveDirectory"), "",QFileDialog.ShowDirsOnly)
@@ -2515,6 +2409,8 @@ class AppForm(QMainWindow):
     
     
     
+        
+    
     
         self.label_pwrsw_atsweeps = QLabel('# of Sweeps')
         self.label_pwrsw_atsweeps.setMaximumWidth(120)
@@ -2701,6 +2597,14 @@ class AppForm(QMainWindow):
 
 
 
+    # extract threshold N*sigma
+        self.textbox_noisesec = QLineEdit('0.25')
+        self.textbox_noisesec.setMaximumWidth(50)
+        self.label_noisesec = QLabel('NoiseSec')
+
+
+
+
         self.check_multiprocess = QCheckBox("MultiProcess")
         self.check_multiprocess.stateChanged.connect(self.startMPQueue)
     
@@ -2793,21 +2697,6 @@ class AppForm(QMainWindow):
         #acq FFTs button- will load FW if need to.
 
 
-        #
-        # signal type
-        #
-
-
-
-        self.combobox_lut_sigtype=QComboBox()
-        self.combobox_lut_sigtype.addItem('Harmtones')   
-        self.combobox_lut_sigtype.addItem('Checked Res Fc')
-        self.combobox_lut_sigtype.addItem('Res N, Trace M')
-
-    
-        label_lut_sigtype = QLabel('Signal Type')
-   
-   
    
    
    
@@ -2853,131 +2742,11 @@ class AppForm(QMainWindow):
    
 
 
-        # lut amp
-        self.textbox_lut_amplitude = QLineEdit('.6')
-        self.textbox_lut_amplitude.setMaximumWidth(50)
-        label_lut_amplitude = QLabel('Lut Amp')
-
-   
-        # lut freq
-        self.textbox_lut_freq = QLineEdit('3300')
-        self.textbox_lut_freq.setMaximumWidth(50)
-        label_lut_freq = QLabel('LutFreq(MHz)')
    
    
-        #lut freq spacing
-        self.textbox_lut_fspace = QLineEdit('10')
-        self.textbox_lut_fspace.setMaximumWidth(50)
-        label_lut_fspace = QLabel('FreqSpace MHz')
-   
-    
-        #lut nharms
-        self.textbox_lut_nharms = QLineEdit('1')
-        self.textbox_lut_nharms.setMaximumWidth(50)
-        label_lut_nharms = QLabel('NumTones')
-   
-
-           #return bins
-        self.combobox_bin_return=QComboBox()
-        self.combobox_bin_return.addItem('AllBins')   
-        self.combobox_bin_return.addItem('Freqs')
-
-        label_bin_return = QLabel('Returned Bins')
-    
-    
+      
     
 
-        #fft gain
-        self.combobox_fft_gain=QComboBox()
-        self.combobox_fft_gain.addItem('2047')   
-        self.combobox_fft_gain.addItem('1023')
-        self.combobox_fft_gain.addItem('511')
-        self.combobox_fft_gain.addItem('255')
-        self.combobox_fft_gain.addItem('127')
-        self.combobox_fft_gain.addItem('63')
-        self.combobox_fft_gain.addItem('31')
-
-        label_fft_gain = QLabel('FFT Atten (large num=low gain)')
-    
-    
-    
-    #MKID num
-        self.textbox_mkid_num = QLineEdit('1')
-        self.textbox_mkid_num.setMaximumWidth(50)
-        label_mkid_num = QLabel('MKID Num(1..N)')
-
-        #mkid tracenum
-        self.textbox_mtrace_num = QLineEdit('1')
-        self.textbox_mtrace_num.setMaximumWidth(50)
-        label_mtrace_num = QLabel('TraceNum (1..M)')
-
-    
-    
-
-
-        #checkboxes for controlling IF board loopbacks
-        self.checkbox_pulsedetect=QCheckBox('PulseDet')
-        self.checkbox_pulsedetect.setMaximumWidth(200)
-        self.checkbox_pulsedetect.stateChanged.connect(self.enablePulseDet)
-
-
-    
-    
-    
-    #set up and test pulse detecotr
-        self.button_progpulsedet = QPushButton("ProgPulseDet")
-        self.button_progpulsedet.setMaximumWidth(170)
-        self.connect(self.button_progpulsedet, SIGNAL('clicked()'), self.progPulseDet)            
-        
-
-    #on stream screen, load proper FW, setuo lut and fft readout based on seleted mkids
-    #used for testing puslel detector and setup
-        self.button_streamsetup = QPushButton("Mkids->ROACH")
-        self.button_streamsetup.setMaximumWidth(170)
-        self.connect(self.button_streamsetup, SIGNAL('clicked()'), self.streamSetup)            
-
-    
-
-        label_tevtrate = QLabel('EventRate')
-        self.label_test_event_rate = QLabel('0')
-
-
-    
-    
-    
-#
-    
-    #set up and test pulse detecotr
-        self.button_pulsedetmeasmeans = QPushButton("MeasMeans")
-        self.button_pulsedetmeasmeans.setMaximumWidth(170)
-        self.connect(self.button_pulsedetmeasmeans, SIGNAL('clicked()'), self.measPulseMeans)            
-        
-#    #checkboxes for controlling IF board loopbacks
-#    self.checkbox_pulseavg=QCheckBox('PDAverage')
-#    self.checkbox_pulseavg.setMaximumWidth(200)
-#    self.checkbox_pulseavg.stateChanged.connect(self.enablePulseDetAvg)
-
-
-    #MKID num
-        self.textbox_pulsethresh = QLineEdit('10')
-        self.textbox_pulsethresh.setMaximumWidth(50)
-        label_pulsethresh = QLabel('PulseDet Nstd')
-    
-    
-    
-    
-    
-    #run FFTs
-        self.button_fft_run = QPushButton("RunFFTs")
-        self.button_fft_run.setMaximumWidth(170)
-        self.connect(self.button_fft_run, SIGNAL('clicked()'), self.fftRun)            
-        
-    #stop FFTs
-        self.button_fft_stop = QPushButton("StopFFTs")
-        self.button_fft_stop.setMaximumWidth(170)
-        self.connect(self.button_fft_stop, SIGNAL('clicked()'), self.fftStop)            
-    
-    
     
     
     
@@ -2987,94 +2756,104 @@ class AppForm(QMainWindow):
         self.connect(self.button_gui_stop, SIGNAL('clicked()'), self.guiStop)            
     
     
-    
-    
-    
-    # Add widgets to window.
-    
-    
-    
-    
     #
-    # FFT tab
+    # Ramp and sync tab
     #
     
     
-    #need noise trace mode.
-    #need noise cloud on circle plot- checked reson.
-    #need sweep single reson. mode
-    #need sweep checked res mode.
-    #need noise on several res mode, readout several res.
+ 
     
-    
-    
-        t4_gbox0 = QVBoxLayout()
-        
-        t4_hbox00 = QHBoxLayout()
-        t4_hbox00.addWidget(label_lut_sigtype)
-        t4_hbox00.addWidget(self.combobox_lut_sigtype)
-    
-    
-
-        t4_hbox00.addWidget(label_lut_amplitude)
-        t4_hbox00.addWidget(self.textbox_lut_amplitude)
-        
-        t4_gbox0.addLayout(t4_hbox00)
-
-
-        t4_hbox1 = QHBoxLayout()
-        t4_hbox1.addWidget(label_lut_freq)
-        t4_hbox1.addWidget(self.textbox_lut_freq)
-        t4_hbox1.addWidget(label_lut_fspace)
-        t4_hbox1.addWidget(self.textbox_lut_fspace)
-        t4_hbox1.addWidget(label_lut_nharms)
-        t4_hbox1.addWidget(self.textbox_lut_nharms)
-        
-        t4_gbox0.addLayout(t4_hbox1)
-
-
-        t4_hbox2 = QHBoxLayout()
-        t4_hbox2.addWidget(label_bin_return)
-        t4_hbox2.addWidget(self.combobox_bin_return)
+        self.combobox_syncsource=QComboBox()
        
-        t4_hbox2.addWidget(label_fft_gain)
-        t4_hbox2.addWidget(self.combobox_fft_gain)
-    
-    
-        label_fft_gain = QLabel('FFT Atten (large num=low gain)')
-    
-    
-    
-        t4_gbox0.addLayout(t4_hbox2)
+        self.combobox_syncsource.addItem('No RampSource')   
+        self.combobox_syncsource.addItem('Ext RampSource')   
+        self.combobox_syncsource.addItem('Int RampSource')   
 
+        #self.connect(self.combobox_plottype, SIGNAL('currentIndexChanged'), self.setPlotType) 
+        self.combobox_syncsource.currentIndexChanged.connect(self.setRampSyncSource)
 
     
-        t4_hbox4 = QHBoxLayout()
-        t4_hbox4.addWidget(label_mkid_num)
-        t4_hbox4.addWidget(self.textbox_mkid_num)
-        t4_hbox4.addWidget(label_mtrace_num)
-        t4_hbox4.addWidget(self.textbox_mtrace_num)
-       
     
-       
+    
+        self.spinbox_RampAmp = QSpinBox()
+        self.spinbox_RampAmp.setRange(0,100)
+        self.spinbox_RampAmp.setValue(50)
+        self.spinbox_RampAmp.setSingleStep(1)
+        self.spinbox_RampAmp.setMaximumWidth(150)
+        self.spinbox_RampAmp.valueChanged.connect(self.setRampSpecs)
+        label_RampAmp = QLabel('Amp 0% - 100%')
+    
+    
+    
+    
+        self.spinbox_RampFreq = QSpinBox()
+        self.spinbox_RampFreq.setRange(1000,2000000)
+        self.spinbox_RampFreq.setValue(10000)
+        self.spinbox_RampFreq.setSingleStep(1000)
+        self.spinbox_RampFreq.setMaximumWidth(150)
+        self.spinbox_RampFreq.valueChanged.connect(self.setRampSpecs)
+        label_RampFreq = QLabel('Freq Hz 1e3-2e6')
         
-        t4_gbox0.addLayout(t4_hbox4)
-    
-
-        t4_hbox3 = QHBoxLayout()
-        t4_hbox3.addWidget(self.button_fft_run)
-        t4_hbox3.addWidget(self.button_fft_stop)
-       
         
-        t4_gbox0.addLayout(t4_hbox3)
+        
+        
     
+        self.combobox_flxRmpDmd=QComboBox()
+       
+        self.combobox_flxRmpDmd.addItem('Raw Data')   
+        self.combobox_flxRmpDmd.addItem('Raw + FRD')   
+        self.combobox_flxRmpDmd.addItem('FRD only')   
+
+        #self.connect(self.combobox_plottype, SIGNAL('currentIndexChanged'), self.setPlotType) 
+        self.combobox_flxRmpDmd.currentIndexChanged.connect(self.setFluxRampDemod)
+
     
+        
+        # lut amp
+        self.textbox_flxRmpPrd = QLineEdit('3.0')
+        self.textbox_flxRmpPrd.setMaximumWidth(50)
+        self.textbox_flxRmpPrd.returnPressed.connect(self.setFluxRampDemod)
+
+        label_flxRmpPrd = QLabel('FlxRmp Periods')
+   
+        
+        
+        self.button_setupRamp = QPushButton("RefreshSettings")
+        self.button_setupRamp.setMaximumWidth(170)
+        self.connect(self.button_setupRamp, SIGNAL('clicked()'), self.refreshFRDSettings)            
     
+        
+
+        gbox_sync = QVBoxLayout()
+        hbox_sync1 = QHBoxLayout()
+        hbox_sync1.addWidget(self.combobox_syncsource)
+        hbox_sync2 = QHBoxLayout()
+
+        hbox_sync2.addWidget(label_RampAmp)
+        hbox_sync2.addWidget(self.spinbox_RampAmp)
+        
     
-    
-    
-    
-    
+        hbox_sync3 = QHBoxLayout()
+
+        hbox_sync3.addWidget(label_RampFreq)
+        hbox_sync3.addWidget(self.spinbox_RampFreq)
+        
+        
+        
+        hbox_sync4 = QHBoxLayout()
+        hbox_sync4.addWidget(self.combobox_flxRmpDmd)
+        hbox_sync4.addWidget(label_flxRmpPrd)
+        hbox_sync4.addWidget(self.textbox_flxRmpPrd)
+        
+        hbox_sync5 = QHBoxLayout()
+        hbox_sync5.addWidget(self.button_setupRamp)
+        
+        gbox_sync.addLayout(hbox_sync1)
+        gbox_sync.addLayout(hbox_sync2)
+        gbox_sync.addLayout(hbox_sync3)
+        gbox_sync.addLayout(hbox_sync4)
+        gbox_sync.addLayout(hbox_sync5)
+        
     
     #
     # Settings tab
@@ -3325,8 +3104,6 @@ class AppForm(QMainWindow):
 
         t5_hbox00 = QHBoxLayout()
 
-        t5_hbox00.addWidget(self.button_streamsetup)
-
 
         t5_hbox00.addWidget(label_lut_strfilename)
         t5_hbox00.addWidget(self.textbox_streamfilename)
@@ -3347,16 +3124,9 @@ class AppForm(QMainWindow):
 
         t5_hbox4 = QHBoxLayout()
 
-        t5_hbox4.addWidget(self.checkbox_pulsedetect)
-        t5_hbox4.addWidget(label_pulsethresh)
-        t5_hbox4.addWidget(self.textbox_pulsethresh)
-        #t5_hbox4.addWidget(self.checkbox_pulseavg)
+        
 
-        t5_hbox4.addWidget(self.button_pulsedetmeasmeans)
-
-        t5_hbox4.addWidget(self.button_progpulsedet)
-        t5_hbox4.addWidget(label_tevtrate)
-        t5_hbox4.addWidget(self.label_test_event_rate)
+       
 
 
 
@@ -3436,7 +3206,8 @@ class AppForm(QMainWindow):
         t3_hbox12.addWidget(self.button_stoprepeat)
         t3_hbox12.addWidget(self.label_repeatmin)
         t3_hbox12.addWidget(self.textbox_repeatmin)
-
+        t3_hbox12.addWidget(self.label_noisesec)
+        t3_hbox12.addWidget(self.textbox_noisesec)
 
     
 
@@ -3526,8 +3297,8 @@ class AppForm(QMainWindow):
 
         tab4=QWidget()
         tab4_layout=QVBoxLayout(tab4)
-        tab4_layout.addLayout(t4_gbox0)
-
+        tab4_layout.addLayout(gbox_sync)
+       
 
         tab5=QWidget()
         tab5_layout=QVBoxLayout(tab5)
@@ -3536,7 +3307,7 @@ class AppForm(QMainWindow):
 
         tab_widget.addTab(tab1,"Settings")
         tab_widget.addTab(tab2,"Sweep")
-        tab_widget.addTab(tab4,"FFT")
+        tab_widget.addTab(tab4,"FlxRamp")
         tab_widget.addTab(tab5,"Stream")
 
         tab_widget.addTab(tab3,"ResData")
@@ -3778,4 +3549,15 @@ def sweepCallback():
         pass
     
 
+try:
+    sim.close()
+except:
+    pass
     
+
+#sim=sim928()
+#sim.open()
+#sim.connport(8)
+#sim.getId()
+
+

@@ -46,11 +46,10 @@
       var sgBanner = new Image();
       // ** Insert data **
       sgBanner.src='File:////local/Xilinx/14.6/ISE_DS/ISE/sysgen/data/images/sgbanner.jpg';
-      var modelName = 'pulsetraintest';
+      var modelName = 'eventfsmtester';
       var jTblExternally_Connected_Blocks = new Array();
                        
-      jTblExternally_Connected_Blocks[0] = {val1:"pulsetraintest/Gateway In",act1:"matlab:load_system('xbsIndex');xlHiliteOne('pulsetraintest/Gateway In');",val2:"gw_in_outport",act2:""};
-      jTblExternally_Connected_Blocks[1] = {val1:"pulsetraintest/Gateway In1",act1:"matlab:load_system('xbsIndex');xlHiliteOne('pulsetraintest/Gateway In1');",val2:"gw_in_outport",act2:""};
+      jTblExternally_Connected_Blocks[0] = {val1:"eventfsmtester/Gateway In",act1:"matlab:load_system('xbsIndex');xlHiliteOne('eventfsmtester/Gateway In');",val2:"gw_in_outport",act2:""};
 
       // ** End Insert Table Data **
       

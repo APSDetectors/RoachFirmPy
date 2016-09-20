@@ -32,6 +32,8 @@ piperead=0;
 
      data_fifo=0;
 
+     ui->label_builddate->setText(QString("%1T%2").arg(__DATE__).arg(__TIME__));
+
 }
 
 
@@ -46,6 +48,12 @@ void MainWindow::addParser(roachParser *p)
     parsers.append(p);
 }
 
+
+void MainWindow::addSaver(fileSaver *fs)
+{
+    savers.append(fs);
+
+}
 
 void MainWindow::updateGui(void)
 {
@@ -63,6 +71,8 @@ void MainWindow::updateGui(void)
         txt = txt +  QString("nparse:\n%1\n").arg(parsers[0]->num_parse_calls);
 
         txt = txt +  QString("ndone_parse:\n%1\n").arg(parsers[0]->ndone_parse);
+        txt = txt +  QString("Queued Lists:\n%1\n").arg(parsers[0]->getListQueueLength());
+        txt = txt +  QString("Pulses:\n%1\n").arg(parsers[0]->pulse_counter);
 
         ui->label_parserA->setText(txt);
 
@@ -75,6 +85,9 @@ void MainWindow::updateGui(void)
         txt = txt +  QString("Qlen:\n%1\n").arg(parsers[1]->data_source->length());
         txt = txt +  QString("nparse:\n%1\n").arg(parsers[1]->num_parse_calls);
         txt = txt +  QString("ndone_parse:\n%1\n").arg(parsers[1]->ndone_parse);
+        txt = txt +  QString("Queued Lists:\n%1\n").arg(parsers[1]->getListQueueLength());
+        txt = txt +  QString("Pulses:\n%1\n").arg(parsers[1]->pulse_counter);
+
         ui->label_parserB->setText(txt);
 
 
@@ -85,7 +98,8 @@ void MainWindow::updateGui(void)
             int plsize = 10000;
             QVector<double> x(plsize),y(plsize);
             int chan = 0;
-            int lnx =parsers[1]->events[chan]["stream_mag"].length();
+            int lnx =(*(parsers[1]->events))[chan]["stream_mag"].length();
+           // int lnx =parsers[1]->(*events)[chan]["stream_mag"].length();
             int ptx;
             if (lnx>plsize)
             {
@@ -93,7 +107,7 @@ void MainWindow::updateGui(void)
                 for (ptx=(lnx-plsize);ptx<lnx;ptx++)
                 {
                     x[kk]=(double)kk;
-                    y[kk]=(double)parsers[1]->events[chan]["stream_mag"][ptx];
+                    y[kk]=(double)(*(parsers[1]->events))[chan]["stream_mag"][ptx];
                     kk++;
                 }
             }
@@ -364,9 +378,20 @@ void MainWindow::on_pushButton_saveEvents_clicked()
 
     if (parsers.length()==2 &&fname.length()>0)
     {
-        parsers[0]->saveEvents(fname+"_A");
-        parsers[1]->saveEvents(fname+"_B");
+        parsers[0]->queueEvents();
+
+        parsers[1]->queueEvents();
+
     }
+    if (savers.length()==2 && fname.length()>0)
+    {
+        savers[0]->setFileName(fname+"_A");
+        savers[0]->doSaveAll();
+        savers[1]->setFileName(fname+"_B");
+        savers[1]->doSaveAll();
+
+    }
+
 
 
 }
@@ -375,4 +400,74 @@ void MainWindow::on_checkBox_readpipe_clicked(bool checked)
 {
     if (piperead)
      piperead->isWriteFifo(checked);
+}
+
+void MainWindow::on_checkBox_writePipe_clicked(bool checked)
+{
+    mypparse->writeToPipe(checked);
+}
+
+void MainWindow::on_pushButton_dumpPacketFifo_clicked()
+{
+    mypparse->dumpFifo();
+}
+
+void MainWindow::on_lineEdit_pipeName_editingFinished()
+{
+
+}
+
+void MainWindow::on_lineEdit_pipeName_textEdited(const QString &arg1)
+{
+    mypparse->setPipeName(arg1);
+}
+
+void MainWindow::on_checkBox_streamEv2Disk_clicked(bool checked)
+{
+    savers[0]->setIsStream(checked);
+    savers[1]->setIsStream(checked);
+
+    if (checked)
+    {
+    QMetaObject::invokeMethod(
+                savers[0],
+                "doSaveThread",
+                Qt::QueuedConnection);
+
+    QMetaObject::invokeMethod(
+                savers[0],
+                "doSaveThread",
+                Qt::QueuedConnection);
+    }
+
+}
+
+void MainWindow::on_checkBox_isPulseDetect_clicked(bool checked)
+{
+    parsers[0]->setIsPulseDetect(checked);
+    parsers[1]->setIsPulseDetect(checked);
+
+}
+
+
+
+void MainWindow::on_lineEdit_pulseThresh_returnPressed()
+{
+    parsers[0]->pulse_thresh =(ui->lineEdit_pulseThresh->text()).toDouble();
+    parsers[1]->pulse_thresh =(ui->lineEdit_pulseThresh->text()).toDouble();
+
+}
+
+void MainWindow::on_lineEdit_pulseSaveEvts_returnPressed()
+{
+    int nevts = (ui->lineEdit_pulseSaveEvts->text()).toInt();
+    parsers[0]->save_max_count = nevts;
+            parsers[1]->save_max_count = nevts;
+
+}
+
+void MainWindow::on_checkBox_isPulseDetectFRD_clicked(bool checked)
+{
+    parsers[0]->setIsPulseDetectFRD(checked);
+    parsers[1]->setIsPulseDetectFRD(checked);
 }

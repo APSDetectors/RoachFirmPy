@@ -3,19 +3,128 @@
 
 import os
 
+#test C++ data extactor
+#nc -u 192.168.1.102 50000 < res1NsPhaseJmp.bin
+
 #
 # use qdrtest.slx as the firmware
 #
-
+ 
+#nc -ul 192.168.1.102 50000 | tee myfile.bin | hexdump -v
 
 
 execfile('dataExtract.py')
 
 dd=dataExtract(fa.sram,fa.rfft)
 
-fname = '/localc/temp/trigffts'
+hdf.open('../../datafiles/jul13/vsweep2.h5','r')
+iq=hdf.read()
+hdf.close()
 
-dd.readEvents(fname)
+dd.iqdata=iq
+
+
+dd.getEventFromStream(chan=192, index=0)
+
+execfile('dataExtract.py')
+dd=dataExtract(fa.sram,fa.rfft)
+packets = dd.createRoachStream( iq=vs[994],nevts=20,fname='aaa.bin')
+
+
+dd.plotEvents2D(fignum=5, chans=-1,data=-1,stevent = 0, nevents=1)
+
+fname = '/home/oxygen31/TMADDEN/ROACH2/datafiles/may24_2016/fluxramp_res1_1.bin'
+
+#fname = '/home/oxygen31/TMADDEN/ROACH2/projcts/pyfiles/myfile.bin'
+
+#fname = '/home/oxygen31/TMADDEN/ROACH2/datafiles/may24_2016/sweep_5073_span3MHz_packets.bin'
+
+fname = '/localc/strdump.bin'
+
+fname = '/localc/fifo128_2chan.bin'
+fname = '/localc/fifo100_2chan.bin'
+fname = '/localc/fifo75_2chan.bin'
+fname = '/localc/fifo32_2chan.bin'
+
+
+fname = '/localc/fifo128_3chan.bin'
+fname = '/localc/fifo100_3chan.bin'
+fname = '/localc/fifo75_3chan.bin'
+fname = '/localc/fifo32_3chan.bin'
+
+fname = 'aaa.bin'
+
+dd=dataExtract(fa.sram,fa.rfft)
+
+magphs = dd.readBinFile(fname,whichstream=1,blocksize=2*65536,foffset=0)
+figure(8)
+events = dd.extractEvents(magphs,is_pause=False)
+dd.plotStreams(fignum=8, nsamples = 35000,isclf=False)
+
+
+########################
+
+execfile('dataExtract.py')
+
+dd=dataExtract(None,None)
+
+fn = '/home/oxygen31/TMADDEN/ROACH2/datafiles/aug24_frdtests/frd_pi_error.bin'
+
+magphs = dd.readBinFile(fn,whichstream=1,blocksize=65536,foffset=0)
+events = dd.extractEvents(magphs,is_pause=False)
+
+dd.plotEvents2D(fignum=5, chans=-1,data=events,stevent = 0, nevents=1000)
+
+####################33
+
+
+
+
+
+
+figure(1)
+fname = '/home/oxygen31/TMADDEN/ROACH2/datafiles/may24_2016/res1NsPhaseJmp.bin'
+magphs = dd.readBinFile(fname,whichstream=1,blocksize=65536,foffset=0)
+events = dd.extractEvents(magphs,is_pr_bin=True)
+
+figure(10)
+clf()
+subplot(2,1,1)
+plot(events[192]['stream_mag'])
+subplot(2,1,2)
+plot(events[192]['stream_phase'])
+
+
+
+
+
+events.keys()
+   
+#for x in magphs[:120]: print hex(x)
+
+
+#fname = '/home/oxygen31/TMADDEN/ROACH2/datafiles/may24_2016/sweep_5054_dbg_Cevents/sweep_5054_dbg_Cevents'
+fname = '/home/oxygen31/TMADDEN/ROACH2/datafiles/Aug29_2016/TEST1'
+events = dd.readEvents(fname)
+
+events[192]['stream_phase']=dd.removePhaseJumps(events[192]['stream_phase'])
+figure(10)
+#clf()
+subplot(2,1,1)
+plot(events[192]['stream_mag'][:10024])
+subplot(2,1,2)
+plot(events[192]['stream_phase'][:10024])
+
+
+   
+magphs = dd.readBinFile(fname,whichstream=1,blocksize=65536,foffset=0)
+   
+for x in magphs: print hex(x)
+
+
+
+events = dd.extractEvents(magphs)
+
 
 dd.plotChan3D(fignum=1,zlim=-1,stspec = 0, nspec=2000,ampphase='stream_mag')
 
@@ -51,6 +160,20 @@ dd.plotTimestamps()
 
 
 
+execfile('dataExtract.py')
+
+dd=dataExtract(fa.sram,fa.rfft)
+
+dd.plotEvents2D(fignum=5, chans=-1,data=iq,stevent = 0, nevents=1000)
+
+dd=dataExtract(None,None)
+
+
+
+dsname = '/home/oxygen31/TMADDEN/ROACH2/datafiles/aug23_pulsedata/5109pulses/puse_TYESON_rampOn'
+
+iq= dd.readEvents(dsname)
+
 '''
 
 
@@ -61,11 +184,12 @@ class dataExtract:
         self.rfft = rfft_
         self.sram = sram_
     
-        self.fftLen = self.rfft.fftLen
-        self.dftLen = self.rfft.dftLen
+        if self.rfft!=None:
+            self.fftLen = self.rfft.fftLen
+            self.dftLen = self.rfft.dftLen
 	
-        self.dac_clk = self.rfft.dac_clk
-        self.isneg_freq=self.rfft.isneg_freq
+            self.dac_clk = self.rfft.dac_clk
+            self.isneg_freq=self.rfft.isneg_freq
 
         #
         #we get data in retuyrned memory in packets. we have two rams, for phase and mag
@@ -77,6 +201,8 @@ class dataExtract:
         self.outmem_datalen=32;
         #mem is 32 bits wide.
         self.outmem_width=32;
+        
+        self.event_length = self.outmem_datalen + self.outmem_headerlen
         #below is sign buts, total buts, num frac buts
         self.outmem_mag_datatype = [0,16,16]
         self.outmem_phs_datatype = [1,16,13]
@@ -85,6 +211,7 @@ class dataExtract:
         self.outmem_ts_maskhi = 0xffff0000
         self.outmem_ts_norm= 65536
         self.outmem_fff_mask=0xffff
+        self.outmem_fff_maskhi=0xffff0000
         self.outmem_chan_mask=0xff
         self.outmem_pulse_mask=0x100
 
@@ -97,11 +224,12 @@ class dataExtract:
         self.iqdata=[ zeros(2048), zeros(2048)]
 	
     	#default channel to fft bin map
-        self.chan_to_bin=self.rfft.chan_to_bin
+        if self.rfft!=None:
+            self.chan_to_bin=self.rfft.chan_to_bin
         
-        self.chan_to_srcfreq={}
-        for chan in self.chan_to_bin.keys():
-            self.chan_to_srcfreq[chan] = self.rfft.bin_to_srcfreq[self.chan_to_bin[chan][0]]
+            self.chan_to_srcfreq={}
+            for chan in self.chan_to_bin.keys():
+                self.chan_to_srcfreq[chan] = self.rfft.bin_to_srcfreq[self.chan_to_bin[chan][0]]
         
         
         
@@ -135,21 +263,49 @@ class dataExtract:
         b2=fp.read(blocksize*4*2)
         block2=struct.unpack('>' + 'I'*blocksize*2,b2)
 
-       
-        
+        lastpacket = -1;
+        nsearches=0
         block = list(block2[whichstream::2])
         
         #remove 0xffffffff
         fff = 0xffffffff
         
         block3 = []
+        #states = ['search', 'ffff', 'packnum', 'data']
+        state = 'search'
+        
         for b in block:
-            if b!=fff:
-                block3.append(b)
+            if state=='search':
                 
+                if b==fff: 
+                    state='ffff'
+                else:
+                    nsearches = nsearches + 1
+            elif state == 'ffff':
+                #found packet number, throw it away.
+                if b!=fff:
+                    state = 'data'
+                    
+                    if lastpacket!=-1:
+                        if b-lastpacket>1:
+                            print "lost packet at %d"%b
+                    
+                    lastpacket=b
+           
+            elif state == 'data':
+                if b!=fff:
+                    block3.append(b)
+                else:
+                    state = 'ffff'
+            else:
+                print 'error in parsing'
+                 
+         
+         
+      
         
         
-       
+        print nsearches
         return(numpy.array(block3))
         
      
@@ -159,9 +315,11 @@ class dataExtract:
         events = {}    
        
         for d1 in dirs:
+          try:
             dirs2 = os.listdir(d1)   
             
             for d2 in dirs2:
+              
                 dirx = d1 + '/' + d2
                 tokens=d2.split('_')
                 channel = int(tokens[1])
@@ -177,7 +335,9 @@ class dataExtract:
                     fdata = struct.unpack('f'*(len(bdata)/4),bdata)
                     events[channel][fn]=numpy.array(fdata)
                     fp.close()
-        
+             
+          except:
+            pass          
         self.iqdata = events
         return(events)
                      
@@ -203,7 +363,7 @@ class dataExtract:
     #
     #
     ###########################################################################
-    def extractEvents(self,magphs,append=0):
+    def extractEvents(self,magphs,append=0,channel_offset = 128,is_pause=True,is_pr_bin=False):
         
         
         if append==0: events=dict()
@@ -221,53 +381,162 @@ class dataExtract:
             k = 0
             while k<endsearch:
                 print 'while %d magphs 0x%x'%(k,magphs[k])
-                if magphs[k]&self.outmem_fff_mask == 0xaaaa:
-                    print "FOUND aaaa\n"
+                
+                
+                if (magphs[k]&self.outmem_fff_maskhi)>>16 == 0x5555:
+                    print "FOUND 5555\n"
                     if True:
                 
-                        chan=magphs[k+1]&self.outmem_chan_mask
-                        timestamp = int(magphs[k]&self.outmem_ts_maskhi) 
-                        timestamp = timestamp + (int(magphs[k+1]&self.outmem_ts_masklow) >>9)
-                        is_pulse = magphs[k+1]&self.outmem_pulse_mask
-                        dp=(magphs[(k+2):(k+2+self.outmem_datalen)])&0xffff
-                        dm=((magphs[(k+2):(k+2+self.outmem_datalen)])&0xffff0000)>>16
-                        dataph=self.convToFloat(dp,self.outmem_phs_datatype)
-                        dataph=dataph*pi
-                        datamag=self.convToFloat(dm,self.outmem_mag_datatype)
+                
+                        self.event_length = (magphs[k]&0xff);
+                        self.packtype = ((magphs[k]&0xff00)>>8);
+                        
+                        # subtract off the aaaa and timestamp words, leaving only fft coef data
+                        self.is_get_raw_evt_data=True
+                        
+                        if (self.packtype==0 or self.packtype==1):
+                        
+                            self.outmem_datalen = self.event_length-2;
+    
+                        elif  (self.packtype==3):
+                            self.outmem_datalen = self.event_length
+                        else:
+                            self.outmem_datalen
+                            self.is_get_raw_evt_data=False
+                            
+                        
+                        
+                        k=k+1
+                        
+                        if (self.packtype==2 or self.packtype==3):
+                            self.flux_ramp_data = magphs[k]
+                            k=k+1
+                            self.flux_ramp_fl=self.convToFloat(
+                                [self.flux_ramp_data],
+                                self.outmem_phs_datatype)[0]
+                            
+        
+                        #fprintf(stderr, "outmem_datalen %d\n",outmem_datalen);
+                        datalongaaa = magphs[k]
+                        k=k+1
+                        
+                        datalong1 =magphs[k] 
+                        k=k+1
+                        
+                        chan=datalong1&self.outmem_chan_mask
+                        
+                        chan = chan + channel_offset;
+                        bin = -1;
 
+                        if (self.rfft!=None):
+                            if (chan in  self.chan_to_bin):
+                                bin = self.chan_to_bin[chan];
+                        else:
+                            bin = -1
+                        
+                        timestamp = int(datalongaaa&self.outmem_ts_maskhi) 
+                        timestamp = timestamp + (int(datalong1&self.outmem_ts_masklow) >>9)
+                        is_pulse = datalong1&self.outmem_pulse_mask
+                        
+                        if self.is_get_raw_evt_data:
+                            dp=(magphs[(k):(k+self.outmem_datalen)])&0xffff
+                            dm=((magphs[(k):(k+self.outmem_datalen)])&0xffff0000)>>16
+                            dataph=self.convToFloat(dp,self.outmem_phs_datatype)
+                            dataph=dataph*pi
+                            dataph=self.removePhaseJumps(dataph)
+                            k=k+self.outmem_datalen      
+                        
+                        
+                            datamag=self.convToFloat(dm,self.outmem_mag_datatype)
+
+                        else:
+                            datamag=numpy.array([0]* self.outmem_datalen )
+                            dataph=numpy.array([0]* self.outmem_datalen )
+                        
                         if events.has_key(chan)==False:
                             print 'chan %d'%(chan)
                             events[chan]=dict()
-                            events[chan]['stream']=[array([]), array([])]
+                            events[chan]['stream_mag']=array([])
+                            events[chan]['stream_phase']=array([])
 
                             events[chan]['timestamp']=[]
                             events[chan]['is_pulse']=[]
-                            events[chan]['bin']=self.chan_to_bin[chan][0]
+                            events[chan]['bin']=bin
                             #events[chan]['bin']=-1
+                            events[chan]["data_start_index"]=[]
+                            events[chan]["event_len"] = []
+                            events[chan]["flux_ramp_phase"] = []
+                      
+                            
+                            
+                            
+                            
                             
                         events[chan]['timestamp'].append(timestamp)
                         events[chan]['is_pulse'].append(is_pulse)
-                        stm=events[chan]['stream'][0]
-                        stp=events[chan]['stream'][1]
-                        events[chan]['stream'][0] = numpy.append(stm,datamag )
-                        events[chan]['stream'][1] = numpy.append(stp,dataph )
+                        
+                        if (self.packtype==2 or self.packtype==3):
+                            events[chan]['flux_ramp_phase'].append(self.flux_ramp_fl)
+                        else:
+                            events[chan]['flux_ramp_phase'].append(0)
+                        
+                        if self.is_get_raw_evt_data:
+                            stm=events[chan]['stream_mag']
+                            stp=events[chan]['stream_phase']
+                            events[chan]['stream_mag'] = numpy.append(stm,datamag )
+                            events[chan]['stream_phase'] = numpy.append(stp,dataph )
 
-                        print 'chan   %d  k  %d  is_pulse  %d  timestamp  %x    '%\
-                              (chan,k,is_pulse,timestamp)
 
-                        nextk=k+self.outmem_headerlen + self.outmem_datalen        
+                            if ( len(events[chan]["data_start_index"]) ==0):
+                              events[chan]["data_start_index"].append(0.0);
+                            else:
+                              events[chan]["data_start_index"].append(
+                                          events[chan]["data_start_index"][-1] +\
+                                            events[chan]["event_len"][-1]);
+
+                            events[chan]["event_len"].append((float)(self.outmem_datalen));
+
+                        print 'chan   %d  k  %d  is_pulse  %d  timestamp  %x  aaa 0x%x data1 0x%x  '%\
+                              (chan,k,is_pulse,timestamp,datalongaaa, datalong1, )
+
+                        
+                        if is_pause:
+                            clf()
+                            subplot(2,1,1)
+                            plot(datamag)
+                            subplot(2,1,2)
+                            plot(dataph)
+                          
+                            if is_pr_bin:
+                                
+                                print "Mag Data: ",
+                                for xx in dm: print ' %04x'%(xx),
+                                print ' '
+                                print "Phs Data: ",
+                                for xx in dp: print ' %04x'%(xx),
+                                print ' '
+
+                            resp = raw_input(':')
+                            if ('q' in resp):
+                                break
+                            if ('g' in resp):
+                                is_pause = False   
+                                
+                         
 
 
-                        k = nextk
+                        
                         evtcnt=evtcnt+1
                     else:
                         print "bad event"
                         nbad_events=nbad_events+1
                         k=k+32
                 else:
+                    
+                    searches=searches+1
+                            
+                    print "search %d, data=0x%x"%(k,magphs[k])
                     k=k+1
-                    searches=searches+1        
-                    print k
 
         else:
             pass
@@ -282,11 +551,55 @@ class dataExtract:
         self.eventcount = evtcnt
         print 'evt cnt %d'%evtcnt
         self.iqdata = events
-	
+	    
+        stp=events[chan]['stream_phase']
+        stp = self.removePhaseJumps(stp)
+        events[chan]['stream_phase']=stp
         return(events)
 
 
 
+    def removePhaseJumps(self,phase_sig):
+
+        newphase = [0] * len(phase_sig)
+
+        newphase[0] = phase_sig[0]
+
+        for k in range(1,len(phase_sig)):
+            newphase[k] = phase_sig[k]
+            dphase = newphase[k] - newphase[k-1]
+            while dphase>pi:
+                newphase[k] = newphase[k]-2*pi
+                dphase = newphase[k] - newphase[k-1]
+
+            while dphase<(-pi):
+                newphase[k] = newphase[k]+2*pi
+                dphase = newphase[k] - newphase[k-1]
+
+        return(newphase)    
+
+
+    ##
+    #
+    #
+    
+    def calcFluxRampPhases(self,chan_=192,events=-1):
+    
+        if events==-1: events=self.iqdata
+
+        nevents = len(events[chan_]['timestamp'])
+        
+        for k in range(nevents):
+            ev=self.getEventFromStream(chan=chan_,index=k)
+
+            S = fft.fft(ev['phs'] - mean(ev['phs']))
+            bin = numpy.argmax(abs(S)[:20])
+            phase = numpy.angle(S[bin])
+            events[chan_]['flux_ramp_phase'][k] = phase
+            print '%d %d %f'%(k,events[chan_]['timestamp'][k],phase)
+        
+        events[chan_]['flux_ramp_phase']=self.removePhaseJumps(events[chan_]['flux_ramp_phase'])
+        return(events)
 
     ###########################################################################
     # give chan, event dict which default to iqdata.
@@ -316,16 +629,26 @@ class dataExtract:
         
     
         ts=events[chan]['timestamp'][index]
-        st_=index*32
-        ed_=st_+32
+        
+        
+        
+        
+        #st_=0
+        evtlen = events[chan]['event_len'][0]
+        
+        #for k in range(index): st_=st_ + events[chan]['event_len'][k]
+        st_ = int(evtlen*index)
+        
+        ed_=int(st_+evtlen)
         mag=events[chan]['stream_mag'][st_:ed_]
         phs=events[chan]['stream_phase'][st_:ed_]    
         is_pulse=events[chan]['is_pulse'][index]
-        
+        fluxrampphs = events[chan]['flux_ramp_phase'][index]
         answer={ 'mag':mag,
                 'phs':phs,
             'timestamp':ts,
-            'is_pulse':is_pulse}
+            'is_pulse':is_pulse,
+            'flux_ramp_phase':fluxrampphs}
         return(answer)
         
 
@@ -362,6 +685,8 @@ class dataExtract:
     
     def extractBinSeries(self,freq):
 
+        if self.rfft==None: return
+        
         freq=self.sram.getLegalFreqs([freq])[0]
         #recordlen=self.getRecordLen()
 
@@ -497,7 +822,8 @@ class dataExtract:
 
     def extractSpectrum(self,spec_num):    
             
-
+        if self.rfft==None: return
+        
         spectrum_P=zeros(self.rfft.fftLen)
         spectrum_M=zeros(self.rfft.fftLen)
 
@@ -610,13 +936,15 @@ class dataExtract:
     ############################################################################
 
     def plotChan3D(self,fignum=1,zlim=-1,stspec = 0,nspec=-1,ampphase='stream_mag'):
+        if self.rfft==None: return
+
         fig = figure(fignum)
         clf()
         ax = fig.gca(projection='3d')
         
         zranges=[]
         for chan in self.iqdata.keys():    
-            try:
+            if True:
                 if nspec==-1:
                     nspec=len(self.iqdata[chan][ampphase])        
                 
@@ -627,10 +955,10 @@ class dataExtract:
                 
                 zranges.append(median(z))
                 y=arange(len(z))
-                bin = self.chan_to_bin[chan]
+                bin = self.rfft.chan_to_bin[chan]
                 x = numpy.array( [ bin  ]*len(z) )
                 ax.plot(x, y, z,label='zz')
-            except:
+            else:
                 print "bad chan?"
             #ax.legend()
 
@@ -645,6 +973,27 @@ class dataExtract:
         return(ax)
 
 
+
+
+    def plotStreams(self,fignum = 8, chans=-1, data = -1, st=0, nsamples = 1000,isclf=True):
+        if data ==-1: data = self.iqdata
+        
+        if chans==-1: chans=data.keys()
+
+        figure(fignum)
+        if isclf:
+            clf()
+     
+        
+        for c in chans:
+           subplot(2,1,1)
+           plot(data[c]['stream_mag'][st:(st+nsamples)] )
+
+           subplot(2,1,2)
+           plot(data[c]['stream_phase'][st:(st+nsamples)] )
+          
+        
+    
     ########################################################################
     #
     #2d plot of iqdata. chans is list of channels, or -1. data is an iqdata struct
@@ -652,7 +1001,7 @@ class dataExtract:
     #
     ############################################################################
 
-    def plotEvents2D(self,fignum=5, chans=-1,data=-1,stevent=20000,nevents=100):
+    def plotEvents2D(self,fignum=5, chans=-1,data=-1,stevent=0,nevents=100,is_pause=True):
     
         if data ==-1: data = self.iqdata
         
@@ -662,22 +1011,49 @@ class dataExtract:
         clf()
         pcolors = ['b','g','r','c','m','y','k']
         ccount = 0
-        
+
+                
         for c in chans:
             i=0  
             for evcnt in range(stevent,stevent+nevents):   
             
-                ts_ = data[c]['timestamp'][evcnt]
+                #ts_ = data[c]['timestamp'][evcnt]
+                #frp=data[c]['flux_ramp_phase'][evcnt]
                 #!!ts = e[3]
-                print ts_
+                
                 evx=self.getEventFromStream(c,index=evcnt,events=data)
                 amp=evx['mag']
                 phs=evx['phs']
-                timevec=numpy.arange(ts_,ts_+32)
-                subplot(2,1,1)
-                plot(timevec,amp,pcolors[ccount])
-                subplot(2,1,2)
-                plot(timevec,phs,pcolors[ccount])
+                ts_ =evx['timestamp']
+                frp = evx['flux_ramp_phase']
+                print ts_
+                
+                subplot(2,2,1)
+                plot(range(len(amp)),amp,pcolors[ccount])
+                subplot(2,2,3)
+                plot(range(len(amp)),phs,pcolors[ccount])
+              
+                 
+                 
+                #calc the fl ramp phase of event from evt data, to compare to fluxramp pjhse from roach\
+                S = fft.fft(phs - mean(phs))
+               
+                bin = numpy.argmax(abs(S)[:20])
+                frphase = numpy.angle(S[bin])
+                subplot(1,2,2,polar=True)
+                plot(frphase,evcnt,'r.')
+                
+                
+                plot(frp*pi,evcnt,'b.')
+                if is_pause:
+               
+                    resp = raw_input(':')
+                    if ('q' in resp):
+                        break
+                    if ('g' in resp):
+                        is_pause = False   
+                  
+                                  
 
             
             ccount=(ccount+1)%(len(pcolors))
@@ -864,7 +1240,7 @@ class dataExtract:
 	########################################33			
 
     def getFreqFromBin(self,bin):
-	
+    	if self.rfft==None: return
 
         if self.rfft.isneg_freq==1:
             whichbin = self.rfft.fftLen - bin
@@ -877,3 +1253,160 @@ class dataExtract:
 	    
         return(freq)
 	      
+
+
+
+    ##
+    # execfile('dataExtract')
+    # dd = dataExtract()
+    
+    def createRoachStream(self, iq=-1,nevts=100000000000,fname= -1):
+        if iq==-1: iq = self.iqdata
+        
+        
+        evt_num = 0
+        
+        not_done = True
+        
+        outqueue_a = []
+        outqueue_b = []
+        
+        while(not_done):
+        
+            not_done=False
+            
+            for chan in iq.keys():
+                print "chan %d"%chan
+                nevents = len(iq[chan]['timestamp'])
+                
+                if nevts < nevents : nevents = nevts
+                
+                if (evt_num<nevents):
+                    print "evt num %d"%evt_num
+                    not_done = True
+                    ts = int(iq[chan]['timestamp'][evt_num])
+                    evlen = iq[chan]['event_len'][evt_num]
+                    ispulse = int(iq[chan]['is_pulse'][evt_num])
+                    st = evlen * evt_num
+                    ed = st + evlen
+                    mags = iq[chan]['stream_mag'][st:ed]
+                    phs = iq[chan]['stream_phase'][st:ed] 
+                    
+                    magsi=self.toTwoComp(
+                        mags,
+                        self.outmem_mag_datatype[1],
+                        self.outmem_mag_datatype[2])
+                    phsi=self.toTwoComp(
+                        phs,
+                        self.outmem_phs_datatype[1],
+                        self.outmem_phs_datatype[2])
+                    
+                    word555 = (evlen + 2) + (0x5555 << 16)
+                    if chan<128:     
+                        outqueue_a.append(word555)
+                    else:
+                        outqueue_b.append(word555)
+                        
+                    wordaaa = (0xaaaa) + (ts&self.outmem_ts_maskhi)
+                    if chan<128:     
+                        outqueue_a.append(wordaaa)
+                    else:
+                        outqueue_b.append(wordaaa)
+                           
+                    
+                    chanx = chan
+                    if chan>128:
+                        chanx = chan-128
+                                  
+                    word2 = chanx + ((ts&0xffff) << 9) +(ispulse <<8)
+                    if chan<128:     
+                        outqueue_a.append(word2)
+                    else:
+                        outqueue_b.append(word2)
+                        
+                    for k in range(len(magsi)):      
+                        dword = phsi[k] + (magsi[k]<<16)
+                        if chan<128:     
+                            outqueue_a.append(dword)
+                        else:
+                            outqueue_b.append(dword)
+                    #in if   (evt_num<nevents):  
+                        
+                #in for chan in iq.keys():
+            #in while
+            evt_num=evt_num+1
+            #end while loop
+            
+        #in def.after while
+        
+        qcnt_a = 0
+        qcnt_b = 0
+        
+        not_done = True
+        
+        packets=[]
+        
+        packetlen = 180
+        longcount = 0
+        packetcount = 0
+        
+        while(not_done):
+            not_done = False
+            
+            if longcount%packetlen==0:
+                longdata=int(0xffffffffffffffff)
+                packets.append(longdata)
+                packets.append(longdata)
+                packets.append( long(   packetcount + (packetcount<<32) ))
+                
+                packetcount = packetcount + 1
+            
+            if qcnt_a<len(outqueue_a):
+                data_a = int(outqueue_a[qcnt_a])
+                qcnt_a = qcnt_a + 1
+                not_done = True
+            else:
+                data_a = 0xffffffff
+                
+                 
+            if qcnt_b<len(outqueue_b):
+                data_b = int(outqueue_b[qcnt_b])
+                qcnt_b = qcnt_b + 1
+                not_done = True
+            else:
+                data_b = 0xffffffff
+            
+            longdata = data_b + (data_a << 32) 
+            
+            packets.append(longdata)
+            longcount = longcount + 1
+
+            if longcount%packetlen==0:
+               longdata=int(0xffffffffffffffff)
+               packets.append(longdata)
+              
+
+        
+        if fname!=-1:
+        
+            fp = open(fname,'wb')
+            for p in packets:
+                fp.write(struct.pack('>Q',p))
+                
+            fp.close()
+                
+        return(packets)
+              
+                     
+                
+"""
+execfile('dataExtract.py')
+ 
+dd=dataExtract(fa.sram,fa.rfft)  
+
+packets = dd.createRoachStream( iq=vs[994])
+ 
+"""
+            
+                      
+       

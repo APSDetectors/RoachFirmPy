@@ -71,7 +71,7 @@ roach2.closeFiles()
 #
 
 
-roach2.sendBof('/home/oxygen26/TMADDEN/ROACH2/projcts/bestBitFiles/if_board_setup_2015_Aug_20_1511.bof')
+roach2.sendBof('/home/oxygen31/TMADDEN/ROACH2/projcts/bestBitFiles/if_board_setup_2015_Aug_20_1511.bof')
 #if_board_setup_2015_Aug_13_1230
 
 
@@ -300,6 +300,11 @@ def scoper():
     I = adcscope.shorts
     Q = numpy.array(Q)
     I = numpy.array(I)
+    figure(70)
+    clf()
+    plot(I[:1000])
+    plot(Q[:1000])
+    figure(1)
     Q = complex(0,1)*Q
     FF=fft.fft(I[:512]+Q[:512]);
     P = 20*log10( abs(FF) + 1)
@@ -652,6 +657,45 @@ def plotty(events):
 
 
 
+############
+#
+# ramp gen
+# dac on roach
+###############################
+
+
+roach.write_int('RampGenerator_rampadder',1*65536)
+roach.write_int('RampGenerator_maxramp',10000*65536)
+roach.write_int('RampGenerator_dcoffset',25000)
+
+
+f=10000.0
+perd = 128e6/f
+amp = 40000.0
+adder = amp/ perd
+dc = 32000 - (amp/2)
+
+perd
+adder
+dc
+
+roach.write_int('RampGenerator_maxramp',amp*65536.0)
+
+roach.write_int('RampGenerator_rampadder',adder*65536)
+
+roach.write_int('RampGenerator_dcoffset',dc)
+
+
+
+def setRamp(aamp, freq):
+    f=freq
+    perd = 128e6/f
+    amp = aamp*65536
+    adder = amp/ perd
+    dc = 32000 - (amp/2)
+    roach.write_int('RampGenerator_maxramp',amp*65536.0)
+    roach.write_int('RampGenerator_rampadder',adder*65536)
+    roach.write_int('RampGenerator_dcoffset',dc)
 
 
 

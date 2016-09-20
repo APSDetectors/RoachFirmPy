@@ -17,6 +17,7 @@
 #include <QMutex>
 #include <QHash>
 #include <QTime>
+#include <QFile>
 
 #include "dataqueue.h"
 #include "packetFifo.h"
@@ -69,9 +70,15 @@ public slots:
     void writeStreams();
     void stopStreams(void);
     void dumpFifo(void);
-
+    void writeToPipe(bool is_write);
+    void setPipeName(QString pipename_);
 
 protected:
+
+    QString pipename;
+    bool is_write_pipe;
+    QFile *pipefile;
+
     dataQueue raw_data_a;
     dataQueue raw_data_b;
     quint32 buffer_max_bytes;

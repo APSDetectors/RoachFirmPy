@@ -1,7 +1,7 @@
 10
 
 dir
-2978
+3149
 https://subversion.xor.aps.anl.gov/detpool/ROACH/trunk/Roach2FWPython/testDesigns
 https://subversion.xor.aps.anl.gov/detpool
 
@@ -60,40 +60,6 @@ has-props
 
 27808
 
-fsmtest.slx
-file
-
-
-
-
-2016-03-07T21:11:19.173698Z
-78b2075a9f7c1ddcdcd70558fce20fa7
-2016-03-07T20:55:59.275196Z
-2976
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-25018
-
 fftfsmtest.slx
 file
 
@@ -128,14 +94,48 @@ has-props
 
 70730
 
-quadnotch.slx
+fsmtest.slx
 file
 
 
 
 
-2016-03-07T21:11:19.225697Z
-043b2412f6072f0ebc5519ed8f9ddf1e
+2016-03-07T21:11:19.173698Z
+78b2075a9f7c1ddcdcd70558fce20fa7
+2016-03-07T20:55:59.275196Z
+2976
+tmadden
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+25018
+
+pulsetraintest.slx
+file
+
+
+
+
+2016-03-07T21:11:19.190696Z
+8ee9cf97bb43b4a67c1b511c6e4a33df
 2016-03-07T20:12:20.604877Z
 2975
 tmadden
@@ -160,7 +160,7 @@ has-props
 
 
 
-26123
+31076
 
 qdrtest.slx
 file
@@ -196,14 +196,14 @@ has-props
 
 168722
 
-pulsetraintest.slx
+quadnotch.slx
 file
 
 
 
 
-2016-03-07T21:11:19.190696Z
-8ee9cf97bb43b4a67c1b511c6e4a33df
+2016-03-07T21:11:19.225697Z
+043b2412f6072f0ebc5519ed8f9ddf1e
 2016-03-07T20:12:20.604877Z
 2975
 tmadden
@@ -228,7 +228,7 @@ has-props
 
 
 
-31076
+26123
 
 qdrtestb.slx
 file
@@ -366,40 +366,6 @@ has-props
 
 257567
 
-sinesimulator.slx
-file
-
-
-
-
-2016-03-07T21:11:19.333694Z
-395d144cfb90b4c3188f3e1728dd51c5
-2016-03-07T20:12:20.604877Z
-2975
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-23022
-
 gbfsmtest.slx
 file
 
@@ -434,14 +400,14 @@ has-props
 
 23667
 
-networkanalyzer.slx
+sinesimulator.slx
 file
 
 
 
 
-2016-03-07T21:11:19.370694Z
-924a0c6a56039529e01ddce93b978cb1
+2016-03-07T21:11:19.333694Z
+395d144cfb90b4c3188f3e1728dd51c5
 2016-03-07T20:12:20.604877Z
 2975
 tmadden
@@ -466,7 +432,7 @@ has-props
 
 
 
-290707
+23022
 
 tengbtest.slx
 file
@@ -501,6 +467,40 @@ has-props
 
 
 91081
+
+networkanalyzer.slx
+file
+
+
+
+
+2016-03-07T21:11:19.370694Z
+924a0c6a56039529e01ddce93b978cb1
+2016-03-07T20:12:20.604877Z
+2975
+tmadden
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+290707
 
 tengbtestb.slx
 file

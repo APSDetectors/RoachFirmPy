@@ -2,6 +2,12 @@
 """
 
 
+
+Roach linux: 192.168.0.203
+Roach box       ...70
+Anritsu         ...68
+FASPAX      ...41 
+
 docs at
 https://github.com/ska-sa/katcp_devel/tree/master/tcpborphserver3
 

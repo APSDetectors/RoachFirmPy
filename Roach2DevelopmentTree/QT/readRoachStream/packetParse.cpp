@@ -20,9 +20,15 @@ packetParse::packetParse(
    baddatagram(),
    staterecord(),
    data_a(),
-   data_b()
+   data_b(),
+   pipename("packetParse.pipe")
 
 {
+
+    pipefile=0;
+     is_write_pipe=false;
+
+
 
     data_fifo=data_fifo_;
 
@@ -47,6 +53,43 @@ statereccount=0;
    lastdatagram.resize(65536);
 
 }
+
+
+
+
+void packetParse::writeToPipe(bool is_write)
+{
+    if (is_write)
+    {
+        if (!is_write_pipe)
+        {
+            pipefile=new QFile(pipename);
+            pipefile->open(QIODevice::WriteOnly);
+            is_write_pipe=true;
+        }
+
+
+    }
+    else
+    {
+        if (is_write_pipe)
+        {
+
+            pipefile->close();
+            delete pipefile;
+
+            is_write_pipe=false;
+            pipefile = 0;
+        }
+    }
+}\
+
+
+void packetParse::setPipeName(QString pipename_)
+{
+    pipename=pipename_;
+}
+
 
 QHash<QString,int>* packetParse::getCounters(void)
 {
@@ -117,6 +160,14 @@ void packetParse::writeStreams()
 
         int length;
         unsigned char *datagram = data_fifo->read(&length);
+
+        if (is_write_pipe && datagram)
+        {
+
+            pipefile->write((const char*)datagram,length);
+            pipefile->flush();
+
+        }
 
         if (datagram)
         {
@@ -272,6 +323,11 @@ void packetParse::writeStreams()
                          packet_counters["num_data_words"]++;
                          data_counter_a=0;
                          data_counter_b=0;
+                         //the hard code 180 is the length of one packet sent from
+                         // gb enet block on the roach. it can have many events etc..
+                         // this code here splits the 64 bit words into two streams A and B,
+                         // which correspond to the two fifo readers in the FW.we hardcode
+                         // gb enet bloc to have 1440 len packets plus the zzz's on start and end.
                          if (data_counter==180)
                             state=count_end_zzz;
                          else

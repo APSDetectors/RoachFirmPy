@@ -84,7 +84,13 @@ class measSpecs:
         self.noise_trace_spacing_Hz = 20000.0
         
         #time in sec to take nosie data
-        self.noise_time_sec = 0.25
+        self.noise_time_sec = 2.0
+        
+        self.noise_numffts=250000
+        
+        
+        self.vlist = arange(10,0,-0.02)
+
     
 class mkidMeasure:
 
@@ -94,7 +100,7 @@ class mkidMeasure:
         self.na = self.fa
         
         self.fit = fit_
-        
+        self.is_setTROT=True
    
         self.is_use_multiprocess=False
     
@@ -119,6 +125,120 @@ class mkidMeasure:
         self.chan_to_linedel_phase = dict()
         
         self.is_apply_delay=True
+  
+    def voltSweepRes(self):
+        self.thread_running=1
+        mlist=sorted(self.measspecs.mlist,key=MKID.getFc)
+        
+        short_list=[]
+        fcst=0
+        
+
+        for mkid in mlist:
+            for res in mkid.reslist:
+            
+                vdata = self.voltSweepFast(self.measspecs.vlist,res.getFc(),None)
+                res.tesSweep = vdata
+                
+            
+        return(self.measspecs.mlist)
+
+
+
+    def voltSweepFast(self,vlist,rffreq,fnames):
+
+        ev=0
+        #base band 10MHz, amp is 30k counts in DACs. take 200 ffts, and only return the 10MHz fft bin. do not trig the ffts yet.
+
+
+        fa.an.setOnOff(1)
+
+        #get sync from ext ramp gen.
+        fa.rampgen.setSyncSource(0)
+        #trigger on ramp gen pulses
+        fa.rampgen.setIsSync(1)
+        #meas sync freq, and set up event size (or flux ramp event size) number of samples.
+        fa.rampgen.setChannelizerFifoSync()
+
+        fa.phaser1.zeroPhaseIncs()
+        fa.phaser2.zeroPhaseIncs()
+
+        fa.chanzer.setSyncDelay(128*55)
+
+        time.sleep(0.5)
+
+
+
+        if True:
+            sim.setOutOn(1)
+            #fa.capture.setStream2Disk(1, fnames)
+
+            [LO,BB]=fa.calcBBLOFromRFFreqs(rffreq)
+            fa.setCarrier(LO)
+            amp = 32000.0/len(rffreq)
+
+            fa.sourceCapture(
+                BB,
+                amp,
+                whichbins='Freqs')
+
+        volts = vlist[0]
+        sim.setVolts(volts)
+        roach.write_int('sw_timestamp',int(1000*volts))
+        roach.write_int('sw_timestamp2',int(1000*volts))
+        #wait for the capture to start
+        time.sleep(0.01)
+
+        for volts in vlist:
+            print volts
+
+
+            sim.setVolts(volts)
+
+            #embed voltage into roach data stream so we associate the voltage with the data.
+            roach.write_int('sw_timestamp',int(1000*volts))
+            roach.write_int('sw_timestamp2',int(1000*volts))
+
+
+
+
+
+            time.sleep(0.02)
+
+
+
+            #wait a few ms for ffts to finish
+
+        if True:
+            fa.stopCapture()
+            ev =fa.getIQ()
+
+
+
+        sim.setOutOn(0)
+        fa.an.setOnOff(0)    
+
+
+        for ch in ev.keys():
+            LO = fa.carrierfreq - fa.rfft.bin_to_srcfreq[ ev[ch]['bin'][0] ]
+            ev[ch]['rffreq'] = LO
+
+
+
+        if fnames!=None:
+           hdf.open(fnames,'w')
+           hdf.write(ev,'sweepevents')
+
+
+           hdf.close()
+
+
+        return(ev)
+
+
+
+  
+  
     
     def powersweepSetup(self,mspecs):
        
@@ -197,7 +317,7 @@ class mkidMeasure:
         fc=mkid.getFc2()
   
         fa.sweep(span_Hz=span, center_Hz=fc, pts=pts_)
-
+        
 
         #because this is a sweep, we need to redo the delay phase
         #calc. because getDFT_IQ does this calc, we need to undo it.
@@ -248,8 +368,8 @@ class mkidMeasure:
         res.sweep_fbase=fbase
         res.sweep_binnumber=self.na.rfft.getBinFromFreq(fbase)
         
-        
-    
+        res.sweep_tes_bias = fa.tes_bias
+        res.sweep_bias_is_on = fa.tes_bias_on
             
         freqs = fa.freqs_sweep    
         #number of freqs where we sample ferq resp of resonator. 
@@ -294,6 +414,9 @@ class mkidMeasure:
         #bins[1][0]=bins[1][1]
         
         res.setData(fa.iqdata, fa.freqs_sweep, self.xmission_line_delay,self.fa.carrierfreq)
+        
+        
+        res.iqdata_rawsweep = ccopy.deepcopy(fa.iqdata_raw)
         
         #!!!res.IQ_raw = ccopy.deepcopy(self.I_raw)
         
@@ -442,6 +565,13 @@ class mkidMeasure:
     def IQvelocity(self):
         pass
         
+        
+    def setNoiseTime(self,sec):
+        
+        self.measspecs.noise_time_sec= sec +3;
+        self.measspecs.noise_numffts = sec * 1000000.0;
+        
+          
     def runNoise(self):
         for mkid in self.measspecs.mlist:
             for res in mkid.reslist:
@@ -452,25 +582,49 @@ class mkidMeasure:
                     fcenter = mkid.rough_cent_freq
                     
                 #example for 5 traces make indices -2,-1,0,1,2    
-                nindex = numpy.arange(self.measspecs.num_noise_traces) - \
-                        int(self.measspecs.num_noise_traces)
-                
+                if self.measspecs.num_noise_traces>1:
+                    nindex = int(self.measspecs.num_noise_traces/2) + \
+                     numpy.arange(self.measspecs.num_noise_traces) - \
+                         int(self.measspecs.num_noise_traces)
+                else:
+                    nindex = numpy.array([0])
+                                
                 #make a list of freqs centered around res center, and spaced by   measspecs.noise_trace_spacing_Hz  
                 nfreqs =  fcenter +  nindex *  self.measspecs.noise_trace_spacing_Hz     
                 
                 for fc in nfreqs:    
                     res.is_noise = res.is_noise + 1
-                    self.fa.setCarrier(fc + 10e6)
-                    self.fa.an.setPower(-3)
+                    self.fa.setCarrier(fc + res.sweep_fbase)
+                    #self.fa.an.setPower(-3)
                     self.fa.an.setOnOff(1)
 
-                    self.fa.ifSetup(                      
-                          u28=res.atten_U28,
-                          u6=res.atten_U6,
-                          u7=res.atten_U7)
 
 
-                    self.fa.sourceCapture([res.sweep_fbase],res.dac_sine_sweep_amp)
+
+                    self.fa.if_board.at.atten_U7=res.atten_U7;
+                    self.fa.if_board.at.atten_U28=res.atten_U28
+                    self.fa.if_board.at.atten_U6=res.atten_U6
+                    self.fa.if_board.progAtten(self.fa.if_board.at);
+                    self.fa.if_board.progRFSwitches(self.fa.if_board.rf)
+        
+                    #!! we shoudl not assum it is 192. ... this is generally 
+                    #the case though
+                    if self.is_setTROT:
+                        self.fa.chanzer.setFlxDmodTranTable(
+                            chan=192,xc=res.cir_xc,yc=res.cir_yc)
+                        
+                    res.is_prog_translator = self.is_setTROT
+                    
+                    
+                    time.sleep(1)
+        
+#freqlist,amp,numffts = -1,whichbins='Freqs',is_trig = True,is_zero_phaseinc=False):
+
+                    self.fa.sourceCapture(
+                        [res.sweep_fbase],
+                        res.dac_sine_sweep_amp,
+                        numffts = self.measspecs.noise_numffts)
+                        
                     time.sleep(self.measspecs.noise_time_sec)
                     self.fa.stopCapture()
                     time.sleep(1)
@@ -489,8 +643,14 @@ class mkidMeasure:
                             self.fa.carrierfreq - self.fa.sram.frequency_list[0] )
 
                 
+                    res.noise_tes_bias.append(fa.tes_bias)
+                    res.noise_tes_bias_on.append(fa.tes_bias_on)
         
+       
+                    
         #self.fftsynctimes=[0]
+    
         
              
+print "Loaded mkidMeasure.py"
              

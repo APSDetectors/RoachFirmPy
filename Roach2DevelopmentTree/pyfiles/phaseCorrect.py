@@ -96,7 +96,10 @@ class phaseCorrect:
 
     
 
-
+        #sero the accymlators
+        self.roach.write_int('%s_settings'%(self.fwname), 1)
+        time.sleep(0.1)
+        self.roach.write_int('%s_settings'%(self.fwname), 0)
 
 
 

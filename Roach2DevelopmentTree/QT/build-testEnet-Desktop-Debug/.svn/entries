@@ -1,14 +1,14 @@
 10
 
 dir
-2978
+3149
 https://subversion.xor.aps.anl.gov/detpool/ROACH/trunk/Roach2FWPython/QT/build-testEnet-Desktop-Debug
 https://subversion.xor.aps.anl.gov/detpool
 
 
 
-2016-02-26T21:07:51.701401Z
-2960
+2016-09-02T19:01:17.153786Z
+3147
 tmadden
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2016-03-07T21:10:52.561002Z
-100983b7262260a8cc79878afc1e3435
-2016-02-26T21:07:51.701401Z
-2960
+2016-09-20T16:52:48.747903Z
+93be916d033dd254bbc6ee227f309dca
+2016-09-02T19:01:17.153786Z
+3147
 tmadden
 has-props
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-5054371
+5296623
 
 Makefile
 file
@@ -66,10 +66,10 @@ file
 
 
 
-2016-03-07T21:10:52.573999Z
-42915820b456191ad561be6ef5aa5893
-2016-02-11T15:29:35.373068Z
-2948
+2016-09-20T16:52:48.768898Z
+327d16430ca54f6c47301329ad5ba595
+2016-07-13T16:06:56.742860Z
+3122
 tmadden
 
 
@@ -92,5 +92,5 @@ tmadden
 
 
 
-18912
+19837
 

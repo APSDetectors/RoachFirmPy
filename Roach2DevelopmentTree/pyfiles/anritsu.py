@@ -22,6 +22,13 @@ import subprocess
 import time
 
 
+try:
+    ROACH_DIR =  os.environ['ROACH']
+except:
+    print 'Please set env var ROACH to your roach install dir'
+    print 'Using /localc/roach'
+    ROACH_DIR='/localc/roach'
+
 class anritsu:
 
     def __init__(self,is_connect = True):
@@ -35,9 +42,8 @@ class anritsu:
         self.anritsu_power_=0
         self.anritsu_is_on_=0
 
-
-
-        self.ANRITSUCMD='/home/oxygen31/TMADDEN/ROACH/vx11/vxi11_1.10/anritsuOsc'
+        self.ANRITSUCMD=ROACH_DIR + '/vx11/vxi11_1.10/anritsuOsc'
+ 
         self.ANRITSUIP='192.168.0.68'  
         self.is_connect = is_connect
         

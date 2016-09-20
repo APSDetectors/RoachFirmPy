@@ -12,6 +12,7 @@
 #include "textcommander.h"
 #include <QTimer>
 #include "argparse.h"
+#include "filesaver.h"
 
 int main(int argc, char *argv[])
 {
@@ -34,17 +35,26 @@ int main(int argc, char *argv[])
    // piperead.moveToThread(&pt);
    //!! pt.start();
 
+
+    //
+    // Create fifo to store UDP raw data packets.
+    //
     data_fifo.fillFifo(arguments.q_length,arguments.q_packetlen);
 
 //!! nc -ul 192.168.1.102 50000 | ./testEnet
 
+    //
+    // set up udp receiver, and its own thread.
+    //
     udpRcv myudp(&data_fifo);
 
     QThread udpth;
     myudp.moveToThread(&udpth);
     udpth.start(QThread::TimeCriticalPriority);
 
-
+    //
+    //set up packet parser, that splits udp data into two streams.
+    //
     packetParse pparse(&data_fifo);
     QThread pparse_th;
     pparse.moveToThread(&pparse_th);
@@ -52,6 +62,11 @@ int main(int argc, char *argv[])
 
     dataQueue *stream_a = pparse.getOutQueueA();
     dataQueue *stream_b = pparse.getOutQueueB();
+
+    //
+    // set up two parsers.
+    //
+
 
     roachParser parser_a(stream_a);
     roachParser parser_b(stream_b,128);
@@ -62,8 +77,36 @@ int main(int argc, char *argv[])
     parser_a.moveToThread(&parseth_a);
     parser_b.moveToThread(&parseth_b);
 
+    //parser_a.setIsDumpInputDbg(true);
+    //parser_b.setIsDumpInputDbg(true);
    parseth_a.start();
     parseth_b.start();
+
+
+    //
+    // Set up two file savers, one per parser.
+    // streams to files.
+    //
+    fileSaver fsave_a;
+    fileSaver fsave_b;
+
+    fsave_a.setEventSource(&parser_a);
+    fsave_b.setEventSource(&parser_b);
+
+
+    QThread fsaveth_a;
+    QThread fsaveth_b;
+
+    fsave_a.moveToThread(&fsaveth_a);
+    fsave_b.moveToThread(&fsaveth_b);
+    fsaveth_a.start();
+    fsaveth_b.start();
+
+
+
+    //
+    // Tell gui about all the objects we have.
+    //
 
 
     w.setUdp(&myudp);
@@ -71,30 +114,16 @@ int main(int argc, char *argv[])
     w.addParser(&parser_b);
     w.setPacketParser(&pparse);
     w.setPacketFifo(&data_fifo);
+    w.addSaver(&fsave_a);
+    w.addSaver(&fsave_b);
 
-    //w.setPipeReader(&piperead);
-
-    /**
-       pparse.connect(
-                &myudp,
-                SIGNAL(socketOpen()),
-                SLOT(writeStreams()),
-                Qt::QueuedConnection);
-
-
-       pparse.connect(
-                &myudp,
-                SIGNAL(socketClose()),
-                SLOT(stopStreams()),
-                Qt::DirectConnection);
-
-    */
-
+    // start up the udp parser
     QMetaObject::invokeMethod(
                 &pparse,
                 "writeStreams",
                 Qt::QueuedConnection);
 
+    // connect udp parser output to the roach parsers.
 
     parser_a.connect(
                 &pparse,
@@ -108,25 +137,36 @@ int main(int argc, char *argv[])
                 SLOT(parseStream()),
                 Qt::QueuedConnection);
 
+    // timer for periodically updating gui
     QTimer disp_timer;
     disp_timer.start(200);
     w.connect(&disp_timer,SIGNAL(timeout()),SLOT(updateGui()),Qt::QueuedConnection);
 
 
+    //
+    // text commander. it is a text command interface that listens to a pipe.
+    // text commands are sent to this pipe from other programs, to remote control
+    // the gui of this program. python can then hit buttons or call any slot
+    // in the q obhects here.
+    //
     textCommander cmd(arguments.cmd_in_pipe_name,arguments.cmd_out_pipe_name);
     cmd.addNameObject("parser_a",&parser_a);
     cmd.addNameObject("parser_b",&parser_b);
+
+    cmd.addNameObject("saver_a",&fsave_a);
+    cmd.addNameObject("saver_b",&fsave_b);
+
     cmd.addNameObject("pparse",&pparse);
    // cmd.addNameObject("piperead",&piperead);
     cmd.addNameObject("w",&w);
     cmd.setAppName("roachstream");
 
 
-    bool isc = cmd.connect(&parser_a,SIGNAL(saveDone(QString)),SLOT(sendCommand(QString)),Qt::DirectConnection);
+    bool isc = cmd.connect(&fsave_a,SIGNAL(saveDone(QString)),SLOT(sendCommand(QString)),Qt::DirectConnection);
 
-    isc = cmd.connect(&parser_b,SIGNAL(saveDone(QString)),SLOT(sendCommand(QString)),Qt::DirectConnection);
+    isc = cmd.connect(&fsave_b,SIGNAL(saveDone(QString)),SLOT(sendCommand(QString)),Qt::DirectConnection);
 
-
+#if 1
     QThread cmdth;
     cmd.moveToThread(&cmdth);
     cmdth.start();
@@ -143,7 +183,7 @@ int main(int argc, char *argv[])
          "waitNextCommand",
          Qt::AutoConnection);
 
-
+#endif
 
     w.show();
     

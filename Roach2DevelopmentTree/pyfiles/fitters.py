@@ -308,6 +308,24 @@ class fitters:
             y = self.resonator.iqdata[1]
             self.resonator.iqdata[0] = scipy.signal.medfilt(x,5)
             self.resonator.iqdata[1] = scipy.signal.medfilt(y,5)
+
+    #do median filter on I and Q to take out impulse noise
+    def medianFilter2(self,x,y):            
+     
+        xf = scipy.signal.medfilt(x,5)
+        yf = scipy.signal.medfilt(y,5)
+        return( (xf,yf) )
+
+    #do median filter on I and Q to take out impulse noise
+    def lowPassFilter2(self,x,y):
+
+       
+        xf = scipy.signal.lfilter([0.5,0.5],[1],x)
+        yf = scipy.signal.lfilter([0.5,0.5],[1],y)
+        xf[0] = xf[1]
+        yf[0] = yf[1]
+        return( (xf,yf) )
+
             
 
 
@@ -328,6 +346,10 @@ class fitters:
                     self.setResonator(res)
                     x = self.resonator.iqdata[0]
                     y = self.resonator.iqdata[1]
+                    
+                    (x,y)=self.medianFilter2(x,y)
+                    (x,y)=self.lowPassFilter2(x,y)
+                    
                     maxIQvel = 0
                     maxIQIndex=0
                     self.resonator.maxIQVel_z=[]
@@ -359,9 +381,9 @@ class fitters:
             for res in self.reslist:
 
                 #fit the res if not a noise trace
+                
                 if res.is_ran_fits==0:
                     self.setResonator(res)
-                    res.is_ran_fits=1
                     res.is_fit_error=0
 
                     try:
@@ -400,6 +422,9 @@ class fitters:
                       if self.fit_plots:
                           self.lorentzPlots()
                           self.SkewcirclePlots() 
+                          
+                      res.is_ran_fits=1
+      
                     except:
                     #else:
                       self.fitprint("Problem fitting Resonator")
@@ -752,8 +777,9 @@ class fitters:
     #############################################
 
     def fit_circle2(self):
-            x = self.resonator.iqdata[0]
-            y = self.resonator.iqdata[1];
+            self.resonator.applyDelay()
+            x = self.resonator.iqdata_dly[0]
+            y = self.resonator.iqdata_dly[1];
 
 
             n = len(x);
@@ -872,8 +898,10 @@ class fitters:
             if st<0: st=0
             if ed>len(self.resonator.freqs): ed = len(self.resonator.freqs)
 
-            x = self.resonator.iqdata[0][st:ed]
-            y = self.resonator.iqdata[1][st:ed]
+            self.resonator.applyDelay()
+
+            x = self.resonator.iqdata_dly[0][st:ed]
+            y = self.resonator.iqdata_dly[1][st:ed]
 
 
             n = len(x);
@@ -1014,8 +1042,8 @@ class fitters:
             r=self.resonator.cir_R
 
             #Import data
-            x = self.resonator.iqdata[0];
-            y = self.resonator.iqdata[1];
+            x = self.resonator.iqdata_dly[0];
+            y = self.resonator.iqdata_dly[1];
 
             #correct data
             alpha = arctan2(yc,xc);
@@ -1087,7 +1115,8 @@ class fitters:
 
     def NinoInitialGuess(self):
 
-
+        
+        
         NUM_GUESSES_PHASE = 5000;
         NUM_GUESSES_LORENTZ = 1000;
 

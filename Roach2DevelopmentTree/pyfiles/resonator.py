@@ -1,3 +1,8 @@
+'''
+execfile('resonator.py')
+
+'''
+
 import os
 
 import scipy        
@@ -565,7 +570,7 @@ class resonatorData:
         self.createtimefl = time.time()
         
         
-        
+        self.delayraw=30e-9
         
         #which fw used for sweeping. 0 for netAnaluzer, 1 for fftanaluzer. -1 for not set.
         self.sweep_fw_index=-1
@@ -778,6 +783,8 @@ class resonatorData:
         #fft bin used in sweep
         self.sweep_binnumber=0
 
+        self.sweep_tes_bias =0
+        
         #
         # Here is where we put noise data.
        
@@ -800,7 +807,9 @@ class resonatorData:
         self.iqnoise=[  ]
        
         
-      
+        self.noise_tes_bias = []
+        self.noise_tes_bias_on = []
+        
        
         #freq of actual sin, BASEBAND
         self.srcfreq=[]
@@ -1040,7 +1049,7 @@ class resonatorData:
         #
         # keep track of how much delay we ahve applied to iqdata. incase we want to undo it.
         #
-        self.applied_delay = self.applied_delay + self.delay
+        self.applied_delay = self.delay
         
         #
         # apply delay to sweep trace.
@@ -1059,13 +1068,15 @@ class resonatorData:
 
         
 
-        self.iqdata = self.PolarToRect(iqp)
+        self.iqdata_dly = self.PolarToRect(iqp)
         
         #
         # do noise traces, apply delay there too.
         #
         i=0
-        for noise_trace in self.iqnoise:
+        self.iqnoise_dly = ccopy.deepcopy(self.iqnoise)
+        
+        for noise_trace in self.iqnoise_dly:
             
             #calc phase delay
            
@@ -1076,13 +1087,72 @@ class resonatorData:
             i=i+1
             
    
+  ##
+    # add delay to phase of nosie traces, . return noise. do not alter contents of res data
+
+    def applyDelayN(self):
+                    
+        noiselist = []
+        #
+        # do noise traces, apply delay there too.
+        #
+        i=0
+        for noise_trace in self.iqnoise:
+            
+            #calc phase delay
+           
+            d_ph = 2*pi*self.noise_rf_freq[i]*self.delay
+            #add delay to phase term of noise
+            nmag = noise_trace[192]['stream_mag']
+            nphs =noise_trace[192]['stream_phase'] + d_ph
+            i=i+1
+            noiselist.append( (nmag,nphs) )
+
+        return(noiselist)   
+   ##
+    # calc phase adjuected for delau. return resut. do not alter data in res obj.
+    # iq only
+    #  
+
+    def applyDelayIQ(self):
+                    
+        #
+        # keep track of how much delay we ahve applied to iqdata. incase we want to undo it.
+        #
+        #self.applied_delay = self.applied_delay + self.delay
+        
+        #
+        # apply delay to sweep trace.
+        #
+
+        #IQ in polar form. [mags, radians]
+        iqp=self.RectToPolar(self.iqdata);
+        #polar version of phase delay, should be 1Arg(phases).
+        phasep=self.RectToPolar([self.phasesRe,self.phasesIm]);
+
+
+        if (self.incrFreq_Hz<0.00001):
+                iqp[1] = iqp[1] + phasep[1][0]
+        else:        
+                iqp[1] = iqp[1] + phasep[1]
+
+        
+
+        iqr = self.PolarToRect(iqp)
+        
+      
    
+   
+        return( iqr )
 
 
     def plotFreq(self,isclf=1,isnoise=1,fnum=0):
         
 
-        IQ=self.iqdata
+        #return self.iqdata after addediong delay in. self.iqdata is inaltered, 
+        self.applyDelay()
+        
+        IQ=self.iqdata_dly
         freqs=self.freqs
 
         IQp=self.RectToPolar(IQ)
@@ -1090,22 +1160,35 @@ class resonatorData:
         figure(1+fnum)
         if isclf:clf()
         
-        subplot(4,1,1)
-        plot(freqs,IQp[0])
-        ylabel('Magnitude')
-        subplot(4,1,2)
+        
+        
+        dbref = -40
+        
+        subplot(4,2,1)
+        title("Delay=%dns"%(floor(self.delay*1e9)))
+        dat=20*log(IQp[0]) - dbref
+        plot(freqs,dat)
+       
+        toprange = 10+10.0*ceil(max(dat)/10.0)
+        botrange = -10+10.0*ceil(min(dat)/10.0)
+        ylim(botrange,toprange)
+        grid(True)
+        
+        ylabel('20Log10 Mag.')
+        subplot(4,2,3)
         plot(freqs,self.removeTwoPi(IQp[1]))
         ylabel('Phase')
-        subplot(4,1,3)
+        subplot(4,2,5)
         plot(freqs,IQ[0])
         ylabel('I')
-        subplot(4,1,4)
+        subplot(4,2,7)
         plot(freqs,IQ[1])
         ylabel('Q')
         draw()
         
-        figure(2+fnum)
-        if isclf:clf()
+        figure(1+fnum)
+#        if isclf:clf()
+        subplot(1,2,2)
         plot(IQ[0],IQ[1],'x')
         
         #to a cirfit, and transrot, plot it.
@@ -1113,15 +1196,16 @@ class resonatorData:
         span = 0.8e6
         fit.setResonator(self)
         fit.fit_circle3(self,fc,span)
-        
-        fit.trans_rot2()
+        try:
+            IQtr = fit.trans_rot3(self,IQ)
 
-        plot(0,0,'rx')
-        plot(self.trot_xf,self.trot_yf,'rx')
-        
+            plot(0,0,'rx')
+            plot(IQtr[0],IQtr[1],'rx')
+        except: 
+            print "resonators.py, plotFreq transrot problem"
 
 
-
+        #savefig('../../notebooks/latestfig.jpg')
 
         figure(13)
         clf()
@@ -1141,14 +1225,14 @@ class resonatorData:
             plot(self.freqs[1:lf],self.maxIQVel_z)
             
             figure(1+fnum)
-            subplot(4,1,1)
+            subplot(4,2,1)
             iqpoint = self.iqAtFreq(self.maxIQvel_freq)
             
             mag = sqrt( iqpoint[0]* iqpoint[0] + iqpoint[1]* iqpoint[1])
             plot(self.maxIQvel_freq,mag,'gx')
             
 
-            figure(13)
+            figure(13+fnum)
             
             
             iqpp  = self.RectToPolar( 
@@ -1158,7 +1242,8 @@ class resonatorData:
             polar(iqpp[1],iqpp[0],'gx')
 
 
-            figure(2+fnum)
+            figure(1+fnum)
+            subplot(1,2,2)
             plot(iqpoint[0],iqpoint[1],'gx')
 
 
@@ -1171,25 +1256,48 @@ class resonatorData:
         #self.noisefilenames=['NULL']
         #self.num_noise_files = 0
         figure(20+fnum);clf()
-        for iqdata_raw in self.iqnoise:
-            if type(iqdata_raw)==dict:
-                iqp = [ iqdata_raw[192]['stream_mag'] , 
-                iqdata_raw[192]['stream_phase'] ]
+        figure(21+fnum);clf()
+        
+        figure(22+fnum);clf()
+        figure(23+fnum);clf()
+        
+        #return all nosie traces, after time delayed,. by self.delay. do not alter orig iqnoise data.
+      
+        
+        for iqpr in self.iqnoise_dly:
+
+            try:
+                iqp = [ iqpr[192]['stream_mag'] , iqpr[192]['stream_phase'] ]
                 iq = self.PolarToRect( iqp )
                 figure(20+fnum)
                 subplot(2,1,1)
-                plot(iqp[0][10000:11000])
+                plot(iqp[0][1000:2000])
                 subplot(2,1,2)
-                plot(iqp[1][10000:11000])
-            
+                plot(iqp[1][1000:2000])
                 
-                figure(2+fnum)
-                plot(iq[0][1000:2000],iq[1][10000:11000],'.')
+
+                figure(1+fnum)
+                subplot(1,2,2)
+                plot(iq[0][1000:2000],iq[1][1000:2000],'.')
                 iqtr = fit.trans_rot3(self,iq)
-                plot(iqtr[0][1000:2000],iqtr[1][10000:11000],'.')
+                plot(iqtr[0][1000:2000],iqtr[1][1000:2000],'.')
+      
+                #iqtrcmp = iqtr[0] + complex(0,1)*iqtr[1]
+                [nfreq,npwr] = scipy.signal.welch(iqtr[1])
+                figure(21+fnum)
+                plot(nfreq,npwr)
+            except:
+                print "No raw nosie data"
+             
+             
+             
+            figure(22+fnum)
+            plot(   iqpr[192]['flux_ramp_phase'][:1000]  )
+              
+            [nfreq,npwr] = scipy.signal.welch(iqpr[192]['flux_ramp_phase'] )
+            figure(23+fnum)
+            plot(nfreq,npwr)
                 
-                
-           
 
 
     def iqAtFreq(self,fc):

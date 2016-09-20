@@ -1,7 +1,13 @@
 K 25
 svn:wc:ra_dav:version-url
 V 56
-/detpool/!svn/ver/2967/ROACH/trunk/Roach2FWPython/mfiles
+/detpool/!svn/ver/3149/ROACH/trunk/Roach2FWPython/mfiles
+END
+roachFilteranalog.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/detpool/!svn/ver/3138/ROACH/trunk/Roach2FWPython/mfiles/roachFilteranalog.m
 END
 fit_circle2.m
 K 25
@@ -51,6 +57,18 @@ svn:wc:ra_dav:version-url
 V 68
 /detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/HDFR_Info.m
 END
+toTwoComp32.m
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/detpool/!svn/ver/3138/ROACH/trunk/Roach2FWPython/mfiles/toTwoComp32.m
+END
+makeevents.m
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/detpool/!svn/ver/3149/ROACH/trunk/Roach2FWPython/mfiles/makeevents.m
+END
 funwithresonators.m
 K 25
 svn:wc:ra_dav:version-url
@@ -87,6 +105,12 @@ svn:wc:ra_dav:version-url
 V 70
 /detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/plotrawwave.m
 END
+sdm_data_anal
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/detpool/!svn/ver/3138/ROACH/trunk/Roach2FWPython/mfiles/sdm_data_anal
+END
 HDFR_List.m
 K 25
 svn:wc:ra_dav:version-url
@@ -117,17 +141,17 @@ svn:wc:ra_dav:version-url
 V 66
 /detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/mainFSM.m
 END
-HDF_getSetting.m
-K 25
-svn:wc:ra_dav:version-url
-V 73
-/detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/HDF_getSetting.m
-END
 pls.m
 K 25
 svn:wc:ra_dav:version-url
 V 62
 /detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/pls.m
+END
+HDF_getSetting.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/HDF_getSetting.m
 END
 eventsaveFSM.m
 K 25
@@ -141,6 +165,12 @@ svn:wc:ra_dav:version-url
 V 65
 /detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/makeiq.m
 END
+sdm_data_anal.m
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/detpool/!svn/ver/3053/ROACH/trunk/Roach2FWPython/mfiles/sdm_data_anal.m
+END
 makepulses.m
 K 25
 svn:wc:ra_dav:version-url
@@ -153,11 +183,11 @@ svn:wc:ra_dav:version-url
 V 73
 /detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/viewmemcontrol.m
 END
-HDF_ListSettings.m
+getSetting.m
 K 25
 svn:wc:ra_dav:version-url
-V 75
-/detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/HDF_ListSettings.m
+V 69
+/detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/getSetting.m
 END
 fft_simvals.m
 K 25
@@ -165,11 +195,11 @@ svn:wc:ra_dav:version-url
 V 70
 /detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/fft_simvals.m
 END
-getSetting.m
+HDF_ListSettings.m
 K 25
 svn:wc:ra_dav:version-url
-V 69
-/detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/getSetting.m
+V 75
+/detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/HDF_ListSettings.m
 END
 HDFR_getSetting.m
 K 25
@@ -188,4 +218,10 @@ K 25
 svn:wc:ra_dav:version-url
 V 71
 /detpool/!svn/ver/2597/ROACH/trunk/Roach2FWPython/mfiles/phaseincprog.m
+END
+makeAAAAEvent.m
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/detpool/!svn/ver/3138/ROACH/trunk/Roach2FWPython/mfiles/makeAAAAEvent.m
 END

@@ -1,14 +1,14 @@
 10
 
 dir
-2978
+3149
 https://subversion.xor.aps.anl.gov/detpool/ROACH/trunk/Roach2FWPython/mfiles
 https://subversion.xor.aps.anl.gov/detpool
 
 
 
-2016-03-02T20:35:35.919487Z
-2967
+2016-09-16T22:01:18.162008Z
+3149
 tmadden
 
 
@@ -25,6 +25,40 @@ tmadden
 
 
 b68ab6fb-3108-62fe-f298-bffb3bbe96ba
+
+roachFilteranalog.m
+file
+
+
+
+
+2016-09-20T16:52:10.867307Z
+84b36c2cc3ef0b0cd95ce4897b3275b1
+2016-08-15T22:21:26.874744Z
+3138
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+650
 
 fit_circle2.m
 file
@@ -298,6 +332,74 @@ tmadden
 
 5442
 
+toTwoComp32.m
+file
+
+
+
+
+2016-09-20T16:52:10.876310Z
+d2ec8246e94f8a1300a12b8a4ca78fcf
+2016-08-15T22:21:26.874744Z
+3138
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+305
+
+makeevents.m
+file
+
+
+
+
+2016-09-20T16:52:10.887308Z
+08ba0f688e2c186798b59b2d10ee21f9
+2016-09-16T22:01:18.162008Z
+3149
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3068
+
 funwithresonators.m
 file
 
@@ -502,6 +604,40 @@ tmadden
 
 108
 
+sdm_data_anal
+file
+
+
+
+
+2016-09-20T16:52:10.895308Z
+a9c089d51aec8f85b18256c96d7dc834
+2016-08-15T22:21:26.874744Z
+3138
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+23
+
 HDFR_List.m
 file
 
@@ -672,40 +808,6 @@ tmadden
 
 22723
 
-HDF_getSetting.m
-file
-
-
-
-
-2015-10-21T19:07:09.689748Z
-6526fcb73422d6e37b760b7a566788e5
-2015-03-26T16:26:21.317890Z
-2597
-tmadden
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1508
-
 pls.m
 file
 
@@ -739,6 +841,40 @@ tmadden
 
 
 742
+
+HDF_getSetting.m
+file
+
+
+
+
+2015-10-21T19:07:09.689748Z
+6526fcb73422d6e37b760b7a566788e5
+2015-03-26T16:26:21.317890Z
+2597
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1508
 
 eventsaveFSM.m
 file
@@ -808,6 +944,40 @@ tmadden
 
 2375
 
+sdm_data_anal.m
+file
+
+
+
+
+2016-09-20T16:52:10.904307Z
+3cdf0322377998b092dedfa2494b0260
+2016-04-05T14:30:58.936601Z
+3053
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+285
+
 makepulses.m
 file
 
@@ -876,14 +1046,14 @@ tmadden
 
 847
 
-HDF_ListSettings.m
+getSetting.m
 file
 
 
 
 
-2015-10-21T19:07:09.807746Z
-1d0f6c283545ad2fd94985c1b2f4ee20
+2015-10-21T19:07:09.791747Z
+54acbd7ce46cd759d78dbdab8bd1efee
 2015-03-26T16:26:21.317890Z
 2597
 tmadden
@@ -908,7 +1078,7 @@ tmadden
 
 
 
-377
+118
 
 fft_simvals.m
 file
@@ -944,14 +1114,14 @@ tmadden
 
 1146
 
-getSetting.m
+HDF_ListSettings.m
 file
 
 
 
 
-2015-10-21T19:07:09.791747Z
-54acbd7ce46cd759d78dbdab8bd1efee
+2015-10-21T19:07:09.807746Z
+1d0f6c283545ad2fd94985c1b2f4ee20
 2015-03-26T16:26:21.317890Z
 2597
 tmadden
@@ -976,7 +1146,7 @@ tmadden
 
 
 
-118
+377
 
 HDFR_getSetting.m
 file
@@ -1079,4 +1249,38 @@ tmadden
 
 
 424
+
+makeAAAAEvent.m
+file
+
+
+
+
+2016-09-20T16:52:10.912305Z
+2ddb34d7feeae91575aba745c5f2fa4d
+2016-08-15T22:21:26.874744Z
+3138
+tmadden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+546
 

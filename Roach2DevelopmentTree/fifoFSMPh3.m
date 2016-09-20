@@ -255,7 +255,7 @@ else
         fifo_rden=false;
         wr_coef_big_fifo=false; 
         datapath_enable = false;
-        state = ckeck_halffull;
+        
         write_data_sel=0;
         done_event=false;
         

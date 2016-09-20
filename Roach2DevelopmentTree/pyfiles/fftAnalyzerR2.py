@@ -2,6 +2,10 @@
 
 cd ROACH2/projcts/pyfiles
 
+Listen to what comes from riach- the gb card on the linux is 168.1.102. roach sends there
+nc -ul 192.168.1.102 50000 | hexdump -v
+
+
 
 
 execfile('katcpNc.py')
@@ -13,6 +17,9 @@ execfile('katcpNc.py')
 
 fa = fftAnalyzerR2(roach)
 
+fa = fftAnalyzerR2(roach,is_datacap_=False)
+
+
 roach=katcpNc()
 roach.startNc()
 
@@ -21,9 +28,159 @@ fa.an.shut()
 
 roach.closeFiles()
 
+fa.chanzer.b_rst = 1
+fa.chanzer.progRoach()
+fa.chanzer.b_rst = 0
+fa.chanzer.progRoach()
+
+
+##########################################################3
+
+fa.sram.is_mod_freq=True
+fa.sram.mod_periods=4.0
+fa.sram.setLutSize(65536)
+
+fa.chanzer.setFluxRampDemod(1,1,100,3.0)
+
+fa.setCarrier(5100e6)
+
+freqs = arange(1e6,1e6+128e6,1e6).tolist()
+freqs = freqs + arange(271e6,271e6 + 128e6,1e6).tolist()
+print len(freqs)
+fa.sourceCapture(freqs,2000)
+time.sleep(.1)
+fa.stopCapture()
+print len(freqs)
+
+
+fa.sourceCapture([10e6],20000)
+time.sleep(1)
+fa.stopCapture()
+
+iq=fa.getIQ()
 
 
 
+dd=fa.dataread
+
+dd.plotEvents2D(fignum=5, chans=-1,data=iq,stevent = 0, nevents=1000)
+
+
+
+
+dftscope = roachScope(roach,'FRD1_DFT_octoscope')
+
+dftscope.trigScope(0,0)
+dftscope.readScopeOcto()
+
+#clf()
+
+dftscope.trigScope(-1,0)
+dftscope.readScopeOcto()
+clf()
+dftscope.interleave([7])
+plot(10*bitwise_and( dftscope.plotdata, 65280)/256)
+
+#dvld
+plot(1000*bitwise_and( dftscope.plotdata, 8)/8)
+dftscope.interleave([1])
+plot(array(dftscope.plotdata)+12000)
+dftscope.interleave([2])
+plot(array(dftscope.plotdata)/10)
+dftscope.interleave([3])
+plot(array(dftscope.plotdata)/10)
+
+dftscope.interleave([4])
+plot(array(dftscope.plotdata)/10)
+
+dftscope.interleave([5])
+plot(array(dftscope.plotdata)/10)
+
+###
+dftscope.trigScope(0,0)
+dftscope.readScopeOcto()
+
+
+clf()
+dftscope.interleave([4])
+#plot(dftscope.plotdata[:180])
+
+pf = dd.convToFloat(dftscope.plotdata,[1,16,13])
+plot(pf[:180])
+
+dftscope.interleave([5])
+pf = dd.convToFloat(dftscope.plotdata,[1,16,13])
+plot(pf[:180])
+
+
+#pi = uint16(dftscope.plotdata)
+#plot(pi[:180])
+
+###
+
+dftscope.interleave([6])
+plot(dftscope.plotdata[:180])
+
+dftscope.trigScope(-1,0)
+dftscope.readScopeOcto()
+clf()
+dftscope.interleave([7])
+plot(bitwise_and( dftscope.plotdata, 65280)/256)
+#sum en
+plot(100*bitwise_and( dftscope.plotdata, 128)/128)
+#dvld
+plot(100*bitwise_and( dftscope.plotdata, 8)/8)
+#rst cnt
+plot(100*bitwise_and( dftscope.plotdata, 16)/16)
+
+
+#dftscope.plotScope(signbit = 15,replot=True,pllen=128)
+
+fa.capture.shut()
+fa.capture=None
+
+nc -ul 192.168.1.102 50000 | hexdump -v
+
+clf()
+
+plot(iq[192]['stream_phase'])
+
+plot(iq[192]['stream_mag'])
+
+
+plot(iq[192]['flux_ramp_phase'])
+
+
+dd=fa.dataread
+
+dd.plotEvents2D(fignum=5, chans=-1,data=iq,stevent = 0, nevents=1000)
+
+##################################
+
+
+
+dbscope = roachScope(roach, 'roachscope')
+
+dbscope.trigScope(trigin=-1, inpt=0)
+
+clf()
+dbscope.plotScope(pllen = 2048,
+        is_usebits = False, 
+        bits = '15:11;10:10;9:9;8:8',
+        isprint = False,
+        isprintsh=False,
+        shskip = 1,
+        shoffset=0,
+        signbit=-1,        
+        replot=False,
+        isfit_=True)
+       
+clf();plot(dbscope.shorts)       
+        
+
+roach.write_int('sw_timestamp',1)
+
+roach.write_int('roachscope_snapshot_ctrl',12)
 
 fa = fftAnalyzerR2(
     roach,
@@ -36,11 +193,11 @@ fa = fftAnalyzerR2(
     
 
 
-fa.ifSetup(rfloop=0, 
+fa.ifSetup(rfloop=1, 
         bbloop=0,
-        u28=0,
-        u6=3,
-        u7=3,
+        u28=5,
+        u6=5,
+        u7=5,
         lo_src=0,
         lo_internal=0,
         lofreq = 3500e6,
@@ -48,7 +205,7 @@ fa.ifSetup(rfloop=0,
         clk_int=-1)
 
 
-fa.an.setPower(-3)
+fa.an.setPower(-5)
 fa.an.setOnOff(1)
 fa.setCarrier(4e9)
 
@@ -63,16 +220,66 @@ fa.sweep(span_Hz = 4000e6, center_Hz =4500e6, pts=5000)
 
 fa.sweep(span_Hz=300e6, center_Hz=5700e6, pts=256)
 
+clf()
+
 plot(fa.freqs_sweep,  fa.iqdata[1])
 plot(fa.freqs_sweep,  fa.iqdata[0])
 
 
+iq=fa.dataread.RectToPolar(fa.iqdata)
+clf()
+subplot(2,1,1)
+plot(fa.freqs_sweep,  iq[0])
+subplot(2,1,2)
+plot(fa.freqs_sweep,  iq[1])
+
+#nc -ul 192.168.1.102 50000 | tee myfile.bin | hexdump -v
+
+
+fa.chanzer.flushFifos()
+fa.chanzer.clearFull()
+
+fa.capture.dumpPacketFifo()
+
+fa.capture.clearEvents()
+
+roach.write_int('sw_timestamp',12345)
+
+fa.rfft.numFFTs(100)
+fa.rfft.trigFFT()
+
+#roach.readAllReg()
+roach.read_int('gbdatalen')
+roach.read_int('gbeofcount')
+roach.read_int('outfifowrB')
+roach.read_int('outfifordB')
+roach.read_int('evt_len1')
+roach.read_int('evtfifordB')
+roach.read_int('evtfifowrB')
+roach.read_int('numdoneevts1')
+roach.read_int('fifowrD')
 
 
 
+
+fa.sourceCapture([10e6],20000)
+time.sleep(1)
+fa.stopCapture()
+
+fa.getIQ()
+
+
+clf()
+plot(fa.iqdata_raw[192]['stream_mag'])
+
+clf()
 for k in fa.iqdata_raw.keys():
     print k
     plot(fa.iqdata_raw[k]['stream_mag'])
+
+fa.iqdata_raw[192]['timestamp']
+
+numpy.bitwise_and(numpy.uint32(fa.iqdata_raw[192]['timestamp']),3)[:2000]
 
 
 fa.an.freq_time_delay=0.02
@@ -90,11 +297,32 @@ fa.capture=dataCapture()
 
 fa.sourceCapture([10.1232e6],20000)
 
+fa.an.setPower(-5)
+fa.an.setOnOff(1)
+fa.setCarrier(5.7474e9 + 10e6)
+
+roach.write_int('sw_timestamp',3)
 
 fa.sourceCapture([10e6],20000)
-time.sleep(10)
+time.sleep(1)
 fa.stopCapture()
 
+iq=fa.getIQ()
+
+clf()
+plot(iq[192]['stream_mag'][:20000])
+
+numpy.bitwise_and(numpy.uint32(fa.iqdata_raw[192]['timestamp']),7)[:2000]
+
+
+
+sync_rate = fa.chanzer.getSyncRate()
+sync_rate
+fa.chanzer.setIsSync(1)
+seglen = floor(1e6 / sync_rate) - 4
+fa.chanzer.setReadFifoSize(seglen)
+seglen
+fa.chanzer.setReadFifoSize(55)
 
 
 fa.sourceCapture([10e6],20000,is_zero_phaseinc=True)
@@ -120,8 +348,8 @@ fa.is_digital_loopback=0
 iq=fa.getIQ()
 
 clf()
-k=128
-plot(fa.iqdata_raw[k]['stream_mag'][:2000])
+k=192
+plot(fa.iqdata_raw[k]['stream_mag'][:4000])
 
 plot(fa.iqdata_raw[192]['stream_mag'])
 
@@ -146,7 +374,7 @@ fa.adcdelays=[0,1,2,3]
       
 
 
-fa.sourceCapture([10e6],30000,numffts = 2000,whichbins='Freqs',is_trig = False)
+fa.sourceCapture([10e6],30000,numffts = 2000,whichbins='Freqs',is_trig = True)
 
 fa.sourceCapture([10e6],30000,numffts = 1,whichbins='Freqs',is_trig = False)
 
@@ -257,7 +485,7 @@ clf();plot( fa.iqdata_raw[128]['timestamp'])
 
 fa.adcscopetrig()
 
-fa.adcplot('I')
+fa.adcplot('Q')
 clf();plot(fa.adcscope.shorts)
 
 
@@ -421,6 +649,13 @@ import time, struct, numpy
 
 
 
+try:
+    ROACH_DIR =  os.environ['ROACH']
+except:
+    print 'Please set env var ROACH to your roach install dir'
+    print 'Using /localc/roach'
+    ROACH_DIR='/localc/roach'
+
 
 execfile('katcpNc.py')
 execfile('roachScope.py')
@@ -437,6 +672,7 @@ execfile('anritsu.py')
 execfile('phaseCorrect.py')
 execfile('hdfSerdes.py')
 
+execfile('fluxRampGen.py')
 
 #from katcpNc import *
 #from roachScope import *
@@ -467,6 +703,18 @@ def loadAnalyzer(filename):
     fa = hdf.read()
     hdf.close()
     
+
+
+class fluxRampSpecs:
+
+    def __init__(self):
+        self.chan_cir_xy = { 192:(0.0,0.0) }
+        self.rf_delay = 30e-9
+        
+        self.flux_bin = 3.0
+        self.is_flux_demod = False
+    
+          
     
     
 
@@ -482,19 +730,32 @@ class fftAnalyzerR2:
         is_anritsu_clk_=True, 
         is_datacap_=True):
     
-        
+        self.flux_demod_specs = fluxRampSpecs()
      
         self.roach2=roach_
+        
+        self.tes_bias=0.0
+        self.tes_bias_on = 0
+        
      
         if self.roach2 != None:
         
-            self.powerupFW = '/home/oxygen31/TMADDEN/ROACH2/projcts/bestBitFiles/if_board_setup_2015_Aug_20_1511.bof'
+            self.powerupFW = ROACH_DIR+'/projcts/bestBitFiles/if_board_setup_2015_Aug_20_1511.bof'
 
-            #self.mainFW = '/home/oxygen26/TMADDEN/ROACH2/projcts/bestBitFiles/qdrdac_2015_Oct_29_1643.bof'
-            #self.mainFW = '/home/oxygen26/TMADDEN/ROACH2/projcts/bestBitFiles/qdrdac_2015_Dec_08_0940.bof'
-            self.mainFW = '/home/oxygen31/TMADDEN/ROACH2/projcts/bestBitFiles/qdrdac_2015_Dec_18_1515.bof'
+            #this one used for most of data so far-- mar 2016
+         
+            #this one has new sync ckt, new data format from the gb enet, added 0x5555 and data len header
+            #self.mainFW = '/home/oxygen31/TMADDEN/ROACH2/projcts/bestBitFiles/qdrdac_2016_May_23_1513.bof'
+            #this is workhorse FW
+            #self.mainFW = '/home/oxygen31/TMADDEN/ROACH2/projcts/bestBitFiles/qdrdac_2016_Jul_11_1331.bof'
 
-            self.temppath = '/localc/temp/'
+            #fw for testing flux ramp demod on roach
+            self.mainFW = ROACH_DIR+'/projcts/bestBitFiles/qdrdac_2016_Sep_14_0927.bof'
+
+
+
+
+            self.temppath = ROACH_DIR+'/temp/'
 
             self.is_datacap= is_datacap_
             self.is_anritsu_lo = is_anritsu_lo_
@@ -519,9 +780,9 @@ class fftAnalyzerR2:
 
             #!!if self.is_anritsu_lo:
             self.an = anritsu(self.is_anritsu_lo)
-            self.an.setPower(-3)
+            self.an.setPower(-5)
             self.an.setOnOff(1)
-
+            self.setCarrier(5757e6)
 
 
             self.is_digital_loopback=0
@@ -545,11 +806,19 @@ class fftAnalyzerR2:
     
         self.chanzer = Channelizer(self.roach2)
 
+        #reset all fsm's on the roach
+        self.chanzer.b_rst=1
+        self.chanzer.progRoach()
+       
+        self.chanzer.b_rst=0
+        self.chanzer.progRoach()
+        
         self.phaser1 = phaseCorrect(self.sram, self.rfft,'PhaseCorrect1',0)
         self.phaser2 = phaseCorrect(self.sram, self.rfft,'PhaseCorrect2',1)
         
         if self.is_datacap:
             self.capture=dataCapture()
+            #!!self.capture.capture(True)
         else:
             self.capture = None
         
@@ -559,6 +828,9 @@ class fftAnalyzerR2:
         self.adcscope = roachScope(roach, 'octoscope')
         self.fftscope = roachScope(roach, 'octoscope1')
 
+        
+        self.rampgen = fluxRampGenerator(self.roach2,self.chanzer)
+        
         #ADC sample order
         #!!self.adcdelays = [0,1,2,3]
     
@@ -676,7 +948,9 @@ class fftAnalyzerR2:
 
 
     def stopCapture(self):
-        self.capture.capture(False)
+        if self.capture != None:
+            self.capture.capture(False)
+
         self.rfft.stopFFTs()
 
     #given rf freq list, calc carrier freq, bb frqs
@@ -692,11 +966,16 @@ class fftAnalyzerR2:
         return((carrier,freq_bb))    
 
     def sourceCapture(self,freqlist,amp,numffts = -1,whichbins='Freqs',is_trig = True,is_zero_phaseinc=False):
+        
+        self.stopCapture()
+        
         self.rfft.stopFFTs()
-        self.capture.clearEvents()
-       
-     
-        self.capture.capture(True)
+
+        if self.capture != None:
+            self.capture.clearEvents()
+            self.capture.capture(True)
+
+
         #prog and start lut sines
         self.sram.setLutFreqs(freqlist,amp)
         #startdac
@@ -717,6 +996,31 @@ class fftAnalyzerR2:
            
             
       
+       
+        if self.capture != None:
+            self.capture.mapChannels(self.rfft)
+            
+            #real time flux ramp dempd on C++ code
+            self.capture.setTimeDelay(self,self.flux_demod_specs.rf_delay)
+            self.capture.setFluxRampBin(self.flux_demod_specs.flux_bin)
+            self.capture.setCircleSpecs(self.flux_demod_specs.chan_cir_xy)
+            self.capture.setIsFluxRampDemod(self.flux_demod_specs.is_flux_demod)
+            
+            
+            
+
+        
+        self.chanzer.flushFifos()
+            
+        self.chanzer.clearFull()
+        self.chanzer.rstFifos()
+
+        self.chanzer.writeRaw(1)
+        self.chanzer.setLastReadChan(127)
+        self.chanzer.readFifos(1)
+        self.chanzer.clearFull()
+        
+     
         if not is_zero_phaseinc:
             self.phaser1.reprogPhaseIncs() 
             self.phaser2.reprogPhaseIncs()
@@ -724,19 +1028,12 @@ class fftAnalyzerR2:
             self.phaser1.zeroPhaseIncs() 
             self.phaser2.zeroPhaseIncs()
        
-       
-        self.capture.mapChannels(self.rfft)
-
-        
-        self.chanzer.flushFifos()
-        self.chanzer.writeRaw(1)
-        self.chanzer.setLastReadChan(127)
-        self.chanzer.readFifos(1)
-        self.chanzer.clearFull()
-        
      
         self.rfft.fftsynctime=128
         self.rfft.roach_fft_shift=31
+      
+      
+      
       
         self.rfft.numFFTs(numffts)
         self.rfft.progRoach()
@@ -744,20 +1041,50 @@ class fftAnalyzerR2:
             self.rfft.trigFFT()
 
     def findSweepData(self,chan=192):
-        for k in range(300):
-            if self.iqdata_raw[chan]['stream_mag'][k] >0.001:
-                return(k)
+        #for k in range(64,300):
+        #    if self.iqdata_raw[chan]['stream_mag'][k] >0.001:
+        #        return(k)
 
+
+        k=0
         return(0)
 
 
 
+    #calc base band freq list, and LO freq given list of RF freqs
+    def calcBBLOFromRFFreqs(self,rffreqs):
+  
+        frange = max(rffreqs) - min(rffreqs)
+        if frange>230e6:
+            print "cannot source this freq list- to wide BW"
+            return
 
+        LO=max(rffreqs)+10e6
+        bbfreqs = LO - rffreqs
 
+        bbfreqs = numpy.sort(bbfreqs)
+        return( (LO, bbfreqs) )
 
     def sweep(self,span_Hz=100e6, center_Hz=3000e6, pts=2048):
 
         self.stopCapture()
+
+
+        self.setTESBias(0,0)
+
+
+        #turn off flux ramp demod
+        self.chanzer.setFluxRampDemod(0,1,100,3.0)
+        #make sure sync is off... we want all data, not wait for ramp gen sync
+        self.rampgen.setIsSync(0)
+
+        self.chanzer.flushFifos()
+        self.chanzer.clearFull()
+        self.chanzer.rstFifos()
+            
+        if (self.capture!=None):
+            self.capture.dumpPacketFifo()
+            self.capture.clearEvents()
 
         self.sweep_num_freqs=pts;
         #self.sweep_samples_per_freq=floor(65536/self.sweep_num_freqs)
@@ -780,18 +1107,26 @@ class fftAnalyzerR2:
             self.end_carrier,
             self.inc_carrier )
 
-
+        
 
         self.an.setOnOff(0)
-
+        
+        
+        self.roach2.write_int('sw_timestamp',1)
+        
         #take off data... we have some fifo problem... some time delay for some rheason...
-        for k in range(256):        
-            self.rfft.trigFFT()
+        #!!for k in range(256):        
+        #!!    self.rfft.trigFFT()
 
 
-
+        
+        self.roach2.write_int('sw_timestamp',2)
 
         self.an.setOnOff(1)
+        
+        self.phaser1.zeroPhaseIncs()
+        self.phaser2.zeroPhaseIncs()
+
 
         for cf in self.carrier_freqs:
 
@@ -805,9 +1140,12 @@ class fftAnalyzerR2:
         #rest of points to fill memory, to make sure we have fifos readout. this is not used 
         #data for cal.
 
+        self.roach2.write_int('sw_timestamp',0)
 
+        self.setCarrier(self.fbase + center_Hz)
         time.sleep(.1)
-        self.an.setOnOff(0)
+        #!!self.an.setOnOff(0)
+          
 
         self.rfft.numFFTs(65536)
         self.rfft.progRoach()
@@ -815,35 +1153,77 @@ class fftAnalyzerR2:
 
         time.sleep(1)
         self.stopCapture()
-        time.sleep(1)    
+        time.sleep(1)   
+        
+        
         #now mem is fill, we can readout...
-        self.getIQ();
+        if self.capture!=None:
+            self.getIQ();
 
 
-        stindex = self.findSweepData()
-        mags = self.iqdata_raw[192]['stream_mag'][stindex : (stindex+pts)]
-        phase = self.iqdata_raw[192]['stream_phase'][stindex : (stindex+pts)]    
+            stindex = self.findSweepData()
+            mags = self.iqdata_raw[192]['stream_mag'][stindex : (stindex+pts)]
+            phase = self.iqdata_raw[192]['stream_phase'][stindex : (stindex+pts)]    
+            #phase=self.removePhaseJumps(phase)
 
-        self.iqdata = self.dataread.PolarToRect( [mags,phase] )
-        self.freqs_sweep = self.carrier_freqs - self.fbase
-        
-        
+            self.iqdata = self.dataread.PolarToRect( [mags,phase] )
+            self.freqs_sweep = self.carrier_freqs - self.fbase
+
+        self.an.setOnOff(0) 
+        self.stopCapture()
+        time.sleep(1)   
         
     def getIQ(self):
         dsname = self.temppath + 'TEMP'
-        
-        self.capture.saveEvents(dsname)
-        #!! how to tell the stuff is saved...
-        #we should get two commands from the c program. 
-        self.capture.getCmd()
-        self.capture.getCmd()
-        
-        self.iqdata_raw = self.dataread.readEvents(dsname)
-        #self.dataread
-        os.system('rm -rf %s'%(dsname+'_A'))
-        os.system('rm -rf %s'%(dsname+'_B'))
+        timeout=10
+        cnt=0
+        self.iqdata_raw={}
+        while 192 not in fa.iqdata_raw.keys():
+       
+       
+              self.capture.saveEvents(dsname)
+              #!! how to tell the stuff is saved...
+              #we should get two commands from the c program. 
+              self.capture.getCmd()
+              self.capture.getCmd()
+              time.sleep(2)
+              self.iqdata_raw = self.dataread.readEvents(dsname)
+              cnt = cnt+1
+       
+              #self.dataread
+              os.system('rm -rf %s'%(dsname+'_A'))
+              os.system('rm -rf %s'%(dsname+'_B'))
+ 
+              if cnt==timeout:
+                      print "ERROR cannot get data"
+                      break
+ 
+ 
         return(self.iqdata_raw)
         
+
+
+    def removePhaseJumps(self,phase_sig):
+        print "removePhaseJumps"
+        newphase = [0] * len(phase_sig)
+
+        newphase[0] = phase_sig[0]
+
+        for k in range(1,len(phase_sig)):
+            newphase[k] = phase_sig[k]
+            dphase = newphase[k] - newphase[k-1]
+            while dphase>pi:
+                newphase[k] = newphase[k]-2*pi
+                dphase = newphase[k] - newphase[k-1]
+
+            while dphase<(-pi):
+                newphase[k] = newphase[k]+2*pi
+                dphase = newphase[k] - newphase[k-1]
+
+        return(newphase)    
+
+
+
 
     def setupEthernet(self):
     
@@ -1025,3 +1405,34 @@ class fftAnalyzerR2:
             #plot(P - max(P))
             plot(abs(FF))
     
+
+    def setTESBias(self,is_on,vbias):
+    
+        if is_on:
+            sim.setOutOn(0)
+            vsweep = arange(10.0,vbias-0.02,-0.02)
+            time.sleep(1.0)
+            sim.setVolts(10.0)
+            sim.setOutOn(1)
+
+            for v in vsweep:
+                sim.setVolts(v)
+                print v
+                time.sleep(0.01)
+
+            self.tes_bias = vbias       
+            self.tes_bias_on = 1
+        else:
+            self.tes_bias = vbias       
+            self.tes_bias_on = 0
+            sim.setOutOn(0)
+            
+            
+            
+            
+            
+            
+
+
+
+            

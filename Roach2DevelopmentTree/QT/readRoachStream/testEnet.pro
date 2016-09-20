@@ -25,7 +25,8 @@ SOURCES += main.cpp\
     packetFifo.cpp \
     ../roachUDPBuffer/pipereader.cpp \
     textcommander.cpp \
-    argparse.cpp
+    argparse.cpp \
+    filesaver.cpp
 
 HEADERS  += mainwindow.h \
     guisettings.h \
@@ -38,7 +39,8 @@ HEADERS  += mainwindow.h \
     packetFifo.h \
     ../roachUDPBuffer/pipereader.h \
     textcommander.h \
-    argparse.h
+    argparse.h \
+    filesaver.h
 
 FORMS    += mainwindow.ui \
     roachscope.ui

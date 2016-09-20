@@ -1,7 +1,7 @@
 10
 
 dir
-2978
+3149
 https://subversion.xor.aps.anl.gov/detpool/ROACH/trunk/Roach2FWPython/slprj/modeladvisor/tut2/one__GbE
 https://subversion.xor.aps.anl.gov/detpool
 
@@ -570,40 +570,6 @@ tmadden
 
 323
 
-minus.png
-file
-
-
-
-
-2015-10-21T19:07:12.178718Z
-4656c6ac479aef9d941239f2a5c659d7
-2013-04-16T20:53:29.809735Z
-1697
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-272
-
 report.html
 file
 
@@ -637,6 +603,40 @@ tmadden
 
 
 10409
+
+minus.png
+file
+
+
+
+
+2015-10-21T19:07:12.178718Z
+4656c6ac479aef9d941239f2a5c659d7
+2013-04-16T20:53:29.809735Z
+1697
+tmadden
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+272
 
 vandvback.png
 file
@@ -842,40 +842,6 @@ has-props
 
 3479
 
-icon_task_required.png
-file
-
-
-
-
-2015-10-21T19:07:12.324717Z
-d52eea1c7c39b8d1b247afbdf7c5bb53
-2013-04-16T20:53:29.809735Z
-1697
-tmadden
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3243
-
 icon_task.png
 file
 
@@ -909,6 +875,40 @@ has-props
 
 
 3040
+
+icon_task_required.png
+file
+
+
+
+
+2015-10-21T19:07:12.324717Z
+d52eea1c7c39b8d1b247afbdf7c5bb53
+2013-04-16T20:53:29.809735Z
+1697
+tmadden
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3243
 
 procedure_warning.png
 file
