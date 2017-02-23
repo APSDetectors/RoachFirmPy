@@ -102,11 +102,10 @@ if_board.wr32bit(r,if_board.lo_sle)
 
 
 #import matplotlib.pyplot as plt
-from matplotlib.pyplot import *
 import struct
 from numpy import *
-import corr, time,fractions, math,inspect,random
-import time
+import time,fractions, math,inspect,random
+
 import threading
 import copy as ccopy
 import pickle
@@ -127,9 +126,7 @@ import scipy.io
 # global mutex for roach board. so onluy one thread can program it 
 #
 
-global roachlock
 
-roachlock=threading.RLock()
 
 
 
@@ -482,7 +479,6 @@ class ifBoard:
 
     def wr32bit(self,data,lebit):
 
-        roachlock.acquire()
 
         #setup for raw ser write.
         self.roach.write_int('%s_settings_reg'%(self.fw_block_name), 1)
@@ -563,7 +559,6 @@ class ifBoard:
             self.roach.write_int('%s_regs'%(self.fw_block_name), regvalclk)
 
 
-        roachlock.release()
 
 
 
@@ -577,7 +572,6 @@ class ifBoard:
 
 
     def bitOffOnOff(self,bit):
-        roachlock.acquire()
 
         #setup for raw ser write.
         self.roach.write_int('%s_settings_reg'%(self.fw_block_name), 1)
@@ -589,7 +583,6 @@ class ifBoard:
         self.roach.write_int('%s_regs'%(self.fw_block_name), regvalclk)
         self.roach.write_int('%s_regs'%(self.fw_block_name), regval)
 
-        roachlock.release()
 
     
 
@@ -822,7 +815,6 @@ class ifBoard:
 
     def progRFSwitches(self,rfsets):
 
-        roachlock.acquire()
 
         #setup for raw ser write.
         self.roach.write_int('%s_settings_reg'%(self.fw_block_name), 1)
@@ -873,7 +865,6 @@ class ifBoard:
         self.roach.write_int('%s_regs'%(self.fw_block_name),regval)
         self.roach.write_int('%s_regs'%(self.fw_block_name),regval + (0<<self.sw_stb))
 
-        roachlock.release()
 
 
 #execfile('t_brdconfig.py')
@@ -889,7 +880,6 @@ class ifBoard:
 
     def progAtten(self,attenset):
 
-        roachlock.acquire()
 
         #setup for raw ser write.
         self.roach.write_int('%s_settings_reg'%(self.fw_block_name), 1)
@@ -983,7 +973,6 @@ class ifBoard:
         self.roach.write_int('%s_regs'%(self.fw_block_name), regval)
         #print bin(regval)
 
-        roachlock.release()
 
 
         #self.roach.write_int('%s_if_switch'%(self.fw_block_name), 0)

@@ -52,13 +52,20 @@ fname = '/localc/fifo100_3chan.bin'
 fname = '/localc/fifo75_3chan.bin'
 fname = '/localc/fifo32_3chan.bin'
 
+
+fname = '/home/beams0/TMADDEN/ROACH2/datafiles/sep29_2016/sweepmultiraw.bin'
+
+
+
+fname = '/home/beams0/TMADDEN/ROACH2/projcts/pyfiles/ddd4.bin'
+
 fname = 'aaa.bin'
 
 dd=dataExtract(fa.sram,fa.rfft)
 
-magphs = dd.readBinFile(fname,whichstream=1,blocksize=2*65536,foffset=0)
+magphs = dd.readBinFile(fname,whichstream=1,blocksize=65536,foffset=0)
 figure(8)
-events = dd.extractEvents(magphs,is_pause=False)
+events = dd.extractEvents(magphs,is_pause=True)
 dd.plotStreams(fignum=8, nsamples = 35000,isclf=False)
 
 
@@ -175,7 +182,7 @@ dsname = '/home/oxygen31/TMADDEN/ROACH2/datafiles/aug23_pulsedata/5109pulses/pus
 iq= dd.readEvents(dsname)
 
 '''
-
+from socket import *
 
 class dataExtract:
 
@@ -400,6 +407,8 @@ class dataExtract:
     
                         elif  (self.packtype==3):
                             self.outmem_datalen = self.event_length
+                        elif  (self.packtype==4):
+                            self.outmem_datalen = self.event_length-2
                         else:
                             self.outmem_datalen
                             self.is_get_raw_evt_data=False
@@ -408,7 +417,7 @@ class dataExtract:
                         
                         k=k+1
                         
-                        if (self.packtype==2 or self.packtype==3):
+                        if (self.packtype==2 or self.packtype==3 or self.packtype==4):
                             self.flux_ramp_data = magphs[k]
                             k=k+1
                             self.flux_ramp_fl=self.convToFloat(
@@ -475,7 +484,7 @@ class dataExtract:
                         events[chan]['timestamp'].append(timestamp)
                         events[chan]['is_pulse'].append(is_pulse)
                         
-                        if (self.packtype==2 or self.packtype==3):
+                        if (self.packtype==2 or self.packtype==3 or self.packtype==4):
                             events[chan]['flux_ramp_phase'].append(self.flux_ramp_fl)
                         else:
                             events[chan]['flux_ramp_phase'].append(0)
@@ -1001,7 +1010,7 @@ class dataExtract:
     #
     ############################################################################
 
-    def plotEvents2D(self,fignum=5, chans=-1,data=-1,stevent=0,nevents=100,is_pause=True):
+    def plotEvents2D(self,fignum=5, chans=-1,data=-1,stevent=0,nevents=100,skip=1,is_pause=True):
     
         if data ==-1: data = self.iqdata
         
@@ -1015,7 +1024,7 @@ class dataExtract:
                 
         for c in chans:
             i=0  
-            for evcnt in range(stevent,stevent+nevents):   
+            for evcnt in range(stevent,stevent+nevents,skip):   
             
                 #ts_ = data[c]['timestamp'][evcnt]
                 #frp=data[c]['flux_ramp_phase'][evcnt]
@@ -1041,10 +1050,10 @@ class dataExtract:
                 bin = numpy.argmax(abs(S)[:20])
                 frphase = numpy.angle(S[bin])
                 subplot(1,2,2,polar=True)
-                plot(frphase,evcnt,'r.')
+                plot(frphase,evcnt-stevent,'r.')
                 
                 
-                plot(frp*pi,evcnt,'b.')
+                plot(frp*pi,evcnt-stevent,'b.')
                 if is_pause:
                
                     resp = raw_input(':')
@@ -1289,23 +1298,72 @@ class dataExtract:
                     ispulse = int(iq[chan]['is_pulse'][evt_num])
                     st = evlen * evt_num
                     ed = st + evlen
-                    mags = iq[chan]['stream_mag'][st:ed]
-                    phs = iq[chan]['stream_phase'][st:ed] 
                     
-                    magsi=self.toTwoComp(
-                        mags,
-                        self.outmem_mag_datatype[1],
-                        self.outmem_mag_datatype[2])
-                    phsi=self.toTwoComp(
-                        phs,
-                        self.outmem_phs_datatype[1],
-                        self.outmem_phs_datatype[2])
+                    frp = iq[chan]['flux_ramp_phase'][evt_num] / 3.141592653589793
+                   
+                    if frp==0.0:
+                        is_frd = False
+                    else:
+                        is_frd = True
+                        
+                    is_get_raw_evt_data=True
+                    if ('stream_mag' in events[192].keys()) == False:
+                        event_type = 2
+                        is_get_raw_evt_data=False
+                        
                     
-                    word555 = (evlen + 2) + (0x5555 << 16)
+                    if is_get_raw_evt_data:
+                    
+                        magsp = iq[chan]['stream_mag'][st:ed] 
+                        phsp = iq[chan]['stream_phase'][st:ed] 
+                        
+                        
+                        mags = magsp / 3.141592653589793
+                        phs = phsp / 3.141592653589793
+                        
+                        if is_frd:
+                            event_type = 4
+                        else:
+                            event_type = 1
+                        
+
+                        magsi=self.toTwoComp(
+                            mags,
+                            self.outmem_mag_datatype[1],
+                            self.outmem_mag_datatype[2])
+                        phsi=self.toTwoComp(
+                            phs,
+                            self.outmem_phs_datatype[1],
+                            self.outmem_phs_datatype[2])
+                    
+                    if event_type==4 or event_type==1 or event_type ==0:  
+                        evlensend = evlen+2
+                    elif event_type ==3:
+                        evlensend = evlen
+                    else:
+                        evlensend = 0
+                        
+                    
+                    
+                    word555 = (evlensend) +(event_type<<8)+ (0x5555 << 16)
                     if chan<128:     
                         outqueue_a.append(word555)
                     else:
                         outqueue_b.append(word555)
+                      
+                      
+                    if (event_type==2 or event_type==3 or event_type==4):
+                        frpi=self.toTwoComp(
+                            [frp],
+                            self.outmem_phs_datatype[1],
+                            self.outmem_phs_datatype[2])[0]         
+                   
+                        if chan<128:     
+                            outqueue_a.append(frpi)
+                        else:
+                            outqueue_b.append(frpi)
+                        
+                       
                         
                     wordaaa = (0xaaaa) + (ts&self.outmem_ts_maskhi)
                     if chan<128:     
@@ -1324,12 +1382,17 @@ class dataExtract:
                     else:
                         outqueue_b.append(word2)
                         
-                    for k in range(len(magsi)):      
-                        dword = phsi[k] + (magsi[k]<<16)
-                        if chan<128:     
-                            outqueue_a.append(dword)
-                        else:
-                            outqueue_b.append(dword)
+                        
+                    if  is_get_raw_evt_data:     
+                        for k in range(len(magsi)):      
+                            dword = phsi[k] + (magsi[k]<<16)
+                            if chan<128:     
+                                outqueue_a.append(dword)
+                            else:
+                                outqueue_b.append(dword)
+                   
+                    
+                   
                     #in if   (evt_num<nevents):  
                         
                 #in for chan in iq.keys():
@@ -1345,7 +1408,7 @@ class dataExtract:
         not_done = True
         
         packets=[]
-        
+        thispacket = []
         packetlen = 180
         longcount = 0
         packetcount = 0
@@ -1355,9 +1418,10 @@ class dataExtract:
             
             if longcount%packetlen==0:
                 longdata=int(0xffffffffffffffff)
-                packets.append(longdata)
-                packets.append(longdata)
-                packets.append( long(   packetcount + (packetcount<<32) ))
+                thispacket = []
+                thispacket.append(longdata)
+                thispacket.append(longdata)
+                thispacket.append( long(   packetcount + (packetcount<<32) ))
                 
                 packetcount = packetcount + 1
             
@@ -1378,26 +1442,67 @@ class dataExtract:
             
             longdata = data_b + (data_a << 32) 
             
-            packets.append(longdata)
+            thispacket.append(longdata)
             longcount = longcount + 1
 
             if longcount%packetlen==0:
                longdata=int(0xffffffffffffffff)
-               packets.append(longdata)
-              
+               thispacket.append(longdata)
+               packets.append(thispacket)
+               thispacket = []
 
         
         if fname!=-1:
         
             fp = open(fname,'wb')
             for p in packets:
-                fp.write(struct.pack('>Q',p))
+                fp.write(struct.pack('>' + 'Q'*len(p),*p))
                 
             fp.close()
                 
         return(packets)
               
-                     
+        
+        
+    ###############################################
+    # stream hdf5 file data back into the roach CPP software server.
+    #take saved hdf5 data, convert to raw roach packets. send over udp port.
+    #reasd the h5 file in chunks so we don't run out of mem.
+    
+    
+    def streamEventsToUDP(
+        self, 
+        inhdffile='superduper.h5', 
+        packets = -1,
+        host='192.168.1.102',
+        port=50000,
+        is_testenet=True):
+        
+        if packets==-1:
+            hdf= hdfSerdes()
+        
+            hdf.open(inhdffile,'r')
+        
+            events = hdf.read()['iqdata_raw']
+            hdf.close()
+            packets = self.createRoachStream(events)
+        
+        if is_testenet:
+            fa.capture.capture(1)
+            
+        UDPSock = socket(AF_INET,SOCK_DGRAM)
+        addr = (host,port)
+        for p in packets:
+            data = struct.pack('>' + 'Q'*len(p),*p)
+            UDPSock.sendto(data,addr)  
+            time.sleep(0.001)
+        
+        UDPSock.close()
+        
+        time.sleep(1)
+        if is_testenet:
+            fa.capture.capture(0)
+           
                 
 """
 execfile('dataExtract.py')

@@ -10,6 +10,7 @@
 #include "roachparser.h"
 #include "packetParse.h"
 #include "filesaver.h"
+#include "hdffilesaver.h"
 #include <QTime>
 #include "../roachUDPBuffer/pipereader.h"
 
@@ -76,6 +77,8 @@ private slots:
     void on_lineEdit_pulseSaveEvts_returnPressed();
 
     void on_checkBox_isPulseDetectFRD_clicked(bool checked);
+
+    void on_pushButton_fakeEvents_clicked();
 
 signals:
     void is_save_stream(bool is_save);

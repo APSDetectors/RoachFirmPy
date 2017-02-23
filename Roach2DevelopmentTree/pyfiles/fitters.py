@@ -260,7 +260,7 @@ class fitters:
                         ied=int(min(1+ii+ihspan,res.datalen))
 
                         newres=resonatorData(ii,self.device_name);
-                        newres.setData([res.iqdata[0][ist:ied],res.iqdata[1][ist:ied]],res.freqs[ist:ied],res.delayraw,res.carrierfreq)
+                        newres.setData([res.iqdata[0][ist:ied],res.iqdata[1][ist:ied]],res.freqs[ist:ied],res.xmission_line_delay,res.carrierfreq)
                         reslist.append(newres)
 
                     return(reslist)
@@ -295,7 +295,7 @@ class fitters:
             ied=int(min(1+ii+ihspan,res.datalen))
 
             newres=resonatorData(ii,self.device_name);
-            newres.setData([res.iqdata[0][ist:ied],res.iqdata[1][ist:ied]],res.freqs[ist:ied],res.delayraw,res.carrierfreq)
+            newres.setData([res.iqdata[0][ist:ied],res.iqdata[1][ist:ied]],res.freqs[ist:ied],res.xmission_line_delay,res.carrierfreq)
             self.addRes(newres)
 
             return(newres)
@@ -340,6 +340,11 @@ class fitters:
             self.resonator.iqdata[0][0] = self.resonator.iqdata[0][1]
             self.resonator.iqdata[1][0] = self.resonator.iqdata[1][1]
 
+    def fitCircleCalc(self):
+        for res in self.reslist:
+            self.resonator=res
+            self.fit_circle2()
+    
 
     def IQvelocityCalc(self):
             for res in self.reslist:
@@ -429,6 +434,20 @@ class fitters:
                     #else:
                       self.fitprint("Problem fitting Resonator")
                       res.is_fit_error=1
+
+
+
+    def cirFitTransRotResonators(self):
+
+            self.fitprint("HELLO")
+
+            for res in self.reslist:
+                self.setResonator(res)
+                if 1==1:
+                    self.fit_circle2(); #fit a circle to data
+                    self.trans_rot2(); #move coordinate system to center of circle
+                else:
+                   print "problem w/ resonaot"
 
 
 

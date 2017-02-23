@@ -37,8 +37,9 @@ global fit
 global roach
 global measure
 
-def sweepCallback():
-    pass
+def defaultMeasureCallback():
+    print 'defaultMeasureCallback'
+   
     
     
 def makeGlobalObjs():
@@ -84,22 +85,23 @@ class measSpecs:
         self.noise_trace_spacing_Hz = 20000.0
         
         #time in sec to take nosie data
-        self.noise_time_sec = 2.0
+        self.noise_time_sec = 3.0
         
-        self.noise_numffts=250000
+        self.noise_numffts=1000000
         
         
         self.vlist = arange(10,0,-0.02)
 
+        self.lock = None
     
 class mkidMeasure:
 
-    def __init__(self,fftanal_, fit_):
+    def __init__(self):
         
-        self.fa=fftanal_
-        self.na = self.fa
         
-        self.fit = fit_
+       
+        
+       
         self.is_setTROT=True
    
         self.is_use_multiprocess=False
@@ -125,6 +127,53 @@ class mkidMeasure:
         self.chan_to_linedel_phase = dict()
         
         self.is_apply_delay=True
+ 
+        self.sweepcallback=defaultMeasureCallback()
+        self.sweepcallback2=None
+        self.lock = None
+        
+ 
+    def saveTranslatorSweepData(self,fname):
+    
+
+        dat = {
+        'measspecs.rffreqs': self.measspecs.rffreqs,
+        'measspecs.mlist_raw1': self.measspecs.mlist_raw1 ,
+        'measspecs.andata_1': self.measspecs.andata_1 ,      
+        'measure.iqcenterdata': self.iqcenterdata ,
+        'measspecs.mlist_trans': self.measspecs.mlist_trans ,
+        'measspecs.andata_trans': self.measspecs.andata_trans }
+        
+        metadata = fa.getUsefulMetaData()
+
+ 
+        hdf= hdfSerdes()
+        hdf.open(fname,'w')
+        hdf.write(dat,'sweepProgTranslatorData')
+        hdf.write(metadata,'Metadata')
+        hdf.close()
+
+    def loadTranslatorSweepData(self,fname):
+      
+ 
+        hdf= hdfSerdes()
+        hdf.open(fname,'r')
+        dat = hdf.read()
+        hdf.close()
+        
+        self.measspecs.rffreqs = \
+            dat['sweepProgTranslatorData']['measspecs.rffreqs']
+        self.measspecs.mlist_raw1 = \
+            dat['sweepProgTranslatorData']['measspecs.mlist_raw1']
+        self.measspecs.andata_1 = \
+            dat['sweepProgTranslatorData']['measspecs.andata_1']
+        self.iqcenterdata = \
+            dat['sweepProgTranslatorData']['measure.iqcenterdata']
+        self.measspecs.mlist_trans = \
+            dat['sweepProgTranslatorData']['measspecs.mlist_trans']
+        self.measspecs.andata_trans = \
+            dat['sweepProgTranslatorData']['measspecs.andata_trans']
+      
   
     def voltSweepRes(self):
         self.thread_running=1
@@ -162,8 +211,10 @@ class mkidMeasure:
 
         fa.phaser1.zeroPhaseIncs()
         fa.phaser2.zeroPhaseIncs()
+        fa.phaser3.zeroPhaseIncs()
+        fa.phaser4.zeroPhaseIncs()
 
-        fa.chanzer.setSyncDelay(128*55)
+        fa.chanzer.setSyncDelay(fa.chanzer.sync_delay_extgenerator)
 
         time.sleep(0.5)
 
@@ -244,7 +295,7 @@ class mkidMeasure:
        
         self.measspecs = mspecs
 
-        self.fa.if_board.at.atten_U6  = self.measspecs.atU6
+        fa.if_board.at.atten_U6  = self.measspecs.atU6
         self.sweepcount=0
         
 
@@ -257,7 +308,7 @@ class mkidMeasure:
         
         self.thread_running=1
         
-        self.fa.if_board.at.atten_U6 = self.measspecs.atU6
+        fa.if_board.at.atten_U6 = self.measspecs.atU6
         
         for atx in arange(
             self.measspecs.attStart,
@@ -266,11 +317,11 @@ class mkidMeasure:
             print 'Atten Out %f, Atten In %f'%(atx,atin)
     
     
-            self.fa.if_board.at.atten_U7=atx;
-            self.fa.if_board.at.atten_U28=atin
+            fa.if_board.at.atten_U7=atx;
+            fa.if_board.at.atten_U28=atin
         
-            self.fa.if_board.progAtten(self.fa.if_board.at);
-            self.fa.if_board.progRFSwitches(self.fa.if_board.rf)
+            fa.if_board.progAtten(fa.if_board.at);
+            fa.if_board.progRFSwitches(fa.if_board.rf)
         
             time.sleep(1)
         
@@ -278,8 +329,8 @@ class mkidMeasure:
 
             for k in range(self.measspecs.numSweeps):
                 self.sweepResonators()
-                    
-                sweepCallback()
+                self.sweepcallback()    
+                
                 self.sweepcount=self.sweepcount+1
                 if self.thread_running==0:
                     print "Ending Loop/Thraed"
@@ -288,8 +339,17 @@ class mkidMeasure:
 
             atin=atin-self.measspecs.attIncr    
     
+    def setSweepCallback(self,cb):
+        self.sweepcallback = cb;
+        
+    def setSweepCallback2(self,cb):
+        self.sweepcallback2 = cb;
 
 
+    def setLock(self,l):
+        self.lock = l
+        
+        
     #take list if mkids and divide into short lists of mkids within bw of 200MHz, then sweep the
     #shorts lists. list of MKID objhects expeced
     def sweepResonators(self):
@@ -301,22 +361,56 @@ class mkidMeasure:
         
 
         for mkid in mlist:
-             self.sweepOneResonators(
+            self.sweepOneResonators(
                 mkid,
                 self.measspecs.resonator_span,
                 self.measspecs.num_res_freq_points)
-
+            
+            if self.lock!=None:                             
+                self.lock.release()
+                time.sleep(1.0)
+                self.lock.acquire()
             
         return(self.measspecs.mlist)
-        
 
+
+    def getResonatorIQCenters(self):
+       
+        mlist=sorted(self.measspecs.mlist,key=MKID.getFc)
+        self.iqcenterdata = []
+        
+        for m in mlist:
+            item={}
+            item['resonator_num']=m.resonator_num;
+            item['rffreq']=m.getFc2();
+            item['xc']=m.reslist[0].cir_xc;
+            item['yc']=m.reslist[0].cir_yc;
+            item['reschan']=m.reslist[0].channel       
+            item['bbfreq'] = m.reslist[0].sweep_fbase
+            item['bin'] = m.reslist[0].sweep_binnumber
+            item['LO'] = m.reslist[0].carrierfreq
+            item['chan'] = fa.rfft.bin_to_chan[item['bin']]
+            
+            
+            
+            #item['mkid'] = m
+            #item['res'] = m.reslist[0]
+            self.iqcenterdata.append(item)
+        return(self.iqcenterdata)
+        
+        
     #sweep group of mkids w./ ftts bu sweeping LO. res must be all in 200MHz BW.
     #res are swept at same time. traces (resonatorData) are added to MKID objs
     def sweepOneResonators(self,mkid,span,pts_):
 
         fc=mkid.getFc2()
   
-        fa.sweep(span_Hz=span, center_Hz=fc, pts=pts_)
+        fa.sweep(
+            span_Hz=span, 
+            center_Hz=fc, 
+            pts=pts_,
+            lock=self.lock,
+            callback=self.sweepcallback2)
         
 
         #because this is a sweep, we need to redo the delay phase
@@ -337,7 +431,7 @@ class mkidMeasure:
 
         mkid.addRes(trace)
         
-        sweepCallback()
+        self.sweepcallback()
         #dones nothing here- for later i FW
         #self.reprogPhaseIncs()
         
@@ -351,9 +445,56 @@ class mkidMeasure:
         mkid = MKID(N=self.mkid_number,cname=self.device_name,fc=res_freq_Hz)
         self.mkid_number = self.mkid_number + 1
         return(mkid)
-    
 
-    def getResonator(self,mkid):
+
+    def getIQSweepFromRaw(self,chan,sweeplen):
+    
+        if fwtype=='tesd':
+            iqp = [fa.iqdata_raw[chan]['stream_mag'][:2*sweeplen:2] , 
+                fa.iqdata_raw[chan]['stream_phase'][:2*sweeplen:2]]
+        else:
+            iqp = [fa.iqdata_raw[chan]['stream_mag'][:sweeplen] , 
+                fa.iqdata_raw[chan]['stream_phase'][:sweeplen]]
+             
+            
+        fa.iqdata = fa.dataread.PolarToRect(iqp)
+        bin = int(fa.iqdata_raw[chan]['bin'][0])
+        srcfreq = fa.rfft.bin_to_srcfreq[bin]
+        fa.fbase=srcfreq
+        fa.freqs_sweep = fa.carrier_freqs - srcfreq
+        
+        
+        return( (fa.iqdata, fa.freqs_sweep) )
+  
+    def getMKIDsFromMultiSweep(self,sweeplen = 256):
+    
+        mlist=[]
+        fit.clearResList()
+        
+        for chan in fa.iqdata_raw.keys():
+            self.getIQSweepFromRaw(chan,sweeplen)
+            res_freq_Hz=fa.freqs_sweep[sweeplen/2]
+            m = self.newMkid(res_freq_Hz)
+            res = self.getResonator(m,chan)
+            res.channel=chan
+            #!!res.setDelay(self.xmission_line_delay)
+            res.setDelay(0)
+            fit.addRes(res)
+            m.addRes(res)
+            fit.IQvelocityCalc()
+            fit.setResonator(res)
+            fit.fit_circle3(res,res.getFc(),0.8e6)
+            mlist.append(m)
+        
+        #fit.fitCircleCalc()
+        self.measspecs.mlist = mlist
+        return(mlist)
+        
+              
+            
+              
+
+    def getResonator(self,mkid,channel_ = 192):
         
         res=resonatorData(mkid.resonator_num, mkid.chip_name);
         #self.rescnt=self.rescnt+1;
@@ -361,17 +502,21 @@ class mkidMeasure:
         
         #tell that we used fftanal fw for sweep
         res.sweep_fw_index=1
-
+        res.channel = channel_
         
-        fbase= self.na.fbase
+       
         
-        res.sweep_fbase=fbase
-        res.sweep_binnumber=self.na.rfft.getBinFromFreq(fbase)
+        
+        res.sweep_binnumber=fa.rfft.chan_to_bin[res.channel][0]
+        res.sweep_fbase=fa.rfft.bin_to_srcfreq[res.sweep_binnumber]
+       
+        
         
         res.sweep_tes_bias = fa.tes_bias
         res.sweep_bias_is_on = fa.tes_bias_on
             
-        freqs = fa.freqs_sweep    
+        freqs = fa.carrier_freqs -res.sweep_fbase
+             
         #number of freqs where we sample ferq resp of resonator. 
         #generallt 200 for a long sweep
         num_sweep_points = len(freqs)
@@ -401,7 +546,7 @@ class mkidMeasure:
         #bins=self.calcXmissnLineDelay(bins_,freqs)
         
       
-        #iqp = fa.dataread.RectToPolar(self.fa.iqdata)
+        #iqp = fa.dataread.RectToPolar(fa.iqdata)
         
         #if self.is_apply_delay:
         #    iqp=self.calcLineSweepDelay(iqp,fbase)
@@ -413,52 +558,52 @@ class mkidMeasure:
         #bins[0][0]=bins[0][1]
         #bins[1][0]=bins[1][1]
         
-        res.setData(fa.iqdata, fa.freqs_sweep, self.xmission_line_delay,self.fa.carrierfreq)
+        res.setData(fa.iqdata, fa.freqs_sweep, self.xmission_line_delay,fa.carrierfreq)
         
         
         res.iqdata_rawsweep = ccopy.deepcopy(fa.iqdata_raw)
         
         #!!!res.IQ_raw = ccopy.deepcopy(self.I_raw)
         
-        res.isneg_freq=self.fa.rfft.isneg_freq
+        res.isneg_freq=fa.rfft.isneg_freq
  
         #copy a bunch of fields to the res object.
-        res.anritsu_power= self.fa.an.anritsu_power_
+        res.anritsu_power= fa.an.anritsu_power_
         
         
-        res.atten_U6=self.fa.if_board.at.atten_U6
-        res.atten_U7=self.fa.if_board.at.atten_U7
-        res.atten_U28=self.fa.if_board.at.atten_U28
+        res.atten_U6=fa.if_board.at.atten_U6
+        res.atten_U7=fa.if_board.at.atten_U7
+        res.atten_U28=fa.if_board.at.atten_U28
 
 
-        res.baseband_loop=self.fa.if_board.rf.baseband_loop
-        res.rf_loopback=self.fa.if_board.rf.rf_loopback
-        res.clk_internal=self.fa.if_board.rf.clk_internal
-        res.lo_internal=self.fa.if_board.rf.lo_internal
-        res.lo_source = self.fa.if_board.rf.lo_source
+        res.baseband_loop=fa.if_board.rf.baseband_loop
+        res.rf_loopback=fa.if_board.rf.rf_loopback
+        res.clk_internal=fa.if_board.rf.clk_internal
+        res.lo_internal=fa.if_board.rf.lo_internal
+        res.lo_source = fa.if_board.rf.lo_source
 
         #!!
-        res.dac_sine_sweep_amp = self.fa.sram.amplist[0]
+        res.dac_sine_sweep_amp = fa.sram.amplist[0]
 
 
-        res.dftLen =self.fa.rfft.dftLen
+        res.dftLen =fa.rfft.dftLen
         res.sd_mod=0
 
-        #res.fftsynctime= self.fa.rfft.fftsynctime
+        #res.fftsynctime= fa.rfft.fftsynctime
         
         res.is_noise = 0
             
-        res.firmware_delay=0
+        #res.firmware_delay=0
         
         
         res.xmission_line_delay=self.xmission_line_delay
 
-        res.roach_fft_shift = self.fa.rfft.roach_fft_shift
+        res.roach_fft_shift = fa.rfft.roach_fft_shift
             
         #!!    
-        res.lut_sine_amp = self.fa.sram.amplist[0]
+        res.lut_sine_amp = fa.sram.amplist[0]
         
-        res.IQ_raw.append(self.fa.iqdata_raw)
+        #res.IQ_raw.append(fa.iqdata_raw)
         
         return(res)
 
@@ -477,21 +622,21 @@ class mkidMeasure:
         
         #if self.data_mode == 2:
         #    #get center freq of bins
-        #    flist = self.fa.rfft.getFreqsFromBins(self.fa.rfft.fft_bins_requested)
+        #    flist = fa.rfft.getFreqsFromBins(fa.rfft.fft_bins_requested)
         
         #else:
             #get freqs we source...
-        flist = self.fa.sram.frequency_list
+        flist = fa.sram.frequency_list
         
-        binlist = self.fa.rfft.getBinsFromFreqs(flist)
+        binlist = fa.rfft.getBinsFromFreqs(flist)
         
         flist = numpy.array(flist)
 
-        if self.fa.rfft.isneg_freq:
+        if fa.rfft.isneg_freq:
             #freqs=-2*pi*  (self.carrierfreq - flist)
-            freqs=2*pi*  (self.fa.carrierfreq - flist)
+            freqs=2*pi*  (fa.carrierfreq - flist)
         else:
-            freqs=2*pi*  (self.fa.carrierfreq + flist) 
+            freqs=2*pi*  (fa.carrierfreq + flist) 
         
         
         
@@ -505,7 +650,7 @@ class mkidMeasure:
         for k in range(len(flist)):
             f=flist[k]
             bin=binlist[k]
-            chan = self.fa.rfft.bin_to_chan[bin]
+            chan = fa.rfft.bin_to_chan[bin]
             p=[self.phasesRe[k], self.phasesIm[k]]
             self.freq_to_linedel_phase[f] = p
             self.chan_to_linedel_phase[chan]=p
@@ -522,12 +667,37 @@ class mkidMeasure:
         
         
        
-        if self.fa.rfft.isneg_freq==1:
+        if fa.rfft.isneg_freq==1:
             freqs=self.carrier_freqs - bbfreq
         else:
             freqs=self.carrier_freqs + bbfreq
         
         ft=freqs*self.xmission_line_delay;
+        ft = ft - floor(ft);
+        
+        iqp[1] = iqp[1] + 2*pi*ft;
+    
+        
+
+
+        return(iqp)
+    
+
+
+
+
+    def calcLineSweepDelay2(self,iqp,rffreqs,delaysec):
+    
+            
+        #we di bit want bin center freq. we want the sourced freqs...
+        # we have higher freq resolution in the lut than we do in the fft.
+        #sourced freqs, and hence phase delay, are based on actual sourced freq.
+        #sourced freqs are not in bin centers
+        
+        
+        self.xmission_line_delay = delaysec
+        
+        ft=rffreqs*self.xmission_line_delay;
         ft = ft - floor(ft);
         
         iqp[1] = iqp[1] + 2*pi*ft;
@@ -594,23 +764,23 @@ class mkidMeasure:
                 
                 for fc in nfreqs:    
                     res.is_noise = res.is_noise + 1
-                    self.fa.setCarrier(fc + res.sweep_fbase)
-                    #self.fa.an.setPower(-3)
-                    self.fa.an.setOnOff(1)
+                    fa.setCarrier(fc + res.sweep_fbase)
+                    #fa.an.setPower(-3)
+                    fa.an.setOnOff(1)
 
 
 
 
-                    self.fa.if_board.at.atten_U7=res.atten_U7;
-                    self.fa.if_board.at.atten_U28=res.atten_U28
-                    self.fa.if_board.at.atten_U6=res.atten_U6
-                    self.fa.if_board.progAtten(self.fa.if_board.at);
-                    self.fa.if_board.progRFSwitches(self.fa.if_board.rf)
+                    fa.if_board.at.atten_U7=res.atten_U7;
+                    fa.if_board.at.atten_U28=res.atten_U28
+                    fa.if_board.at.atten_U6=res.atten_U6
+                    fa.if_board.progAtten(fa.if_board.at);
+                    fa.if_board.progRFSwitches(fa.if_board.rf)
         
                     #!! we shoudl not assum it is 192. ... this is generally 
                     #the case though
                     if self.is_setTROT:
-                        self.fa.chanzer.setFlxDmodTranTable(
+                        fa.chanzer.setFlxDmodTranTable(
                             chan=192,xc=res.cir_xc,yc=res.cir_yc)
                         
                     res.is_prog_translator = self.is_setTROT
@@ -620,27 +790,27 @@ class mkidMeasure:
         
 #freqlist,amp,numffts = -1,whichbins='Freqs',is_trig = True,is_zero_phaseinc=False):
 
-                    self.fa.sourceCapture(
+                    fa.sourceCapture(
                         [res.sweep_fbase],
                         res.dac_sine_sweep_amp,
                         numffts = self.measspecs.noise_numffts)
                         
                     time.sleep(self.measspecs.noise_time_sec)
-                    self.fa.stopCapture()
+                    fa.stopCapture()
                     time.sleep(1)
 
-                    iq = self.fa.getIQ()
-                    res.iqnoise.append( ccopy.deepcopy(self.fa.iqdata_raw) )
+                    iq = fa.getIQ()
+                    res.iqnoise.append( ccopy.deepcopy(fa.iqdata_raw) )
 
                     res.fftLen.append(512)
-                    res.fftsynctime.append( self.fa.rfft.fftsynctime)
+                    res.fftsynctime.append( fa.rfft.fftsynctime)
                     res.num_noise_traces = res.num_noise_traces +1
                     res.fftdelay.append(0)
 
-                    res.srcfreq.append( self.fa.sram.frequency_list[0] )
-                    res.fftcarrierfreq.append( self.fa.carrierfreq)
+                    res.srcfreq.append( fa.sram.frequency_list[0] )
+                    res.fftcarrierfreq.append( fa.carrierfreq)
                     res.noise_rf_freq.append( 
-                            self.fa.carrierfreq - self.fa.sram.frequency_list[0] )
+                            fa.carrierfreq - fa.sram.frequency_list[0] )
 
                 
                     res.noise_tes_bias.append(fa.tes_bias)
@@ -651,6 +821,23 @@ class mkidMeasure:
         #self.fftsynctimes=[0]
     
         
-             
+
+    def plotMultiSweeps(self,mlist):
+    
+        if mlist ==-1:
+            mlist = self.measspecs.mlist
+            
+        clf_ = True
+        for m in mlist:
+            m.reslist[0].plotFreq(
+                isclf=clf_,
+                isnoise=0,
+                fnum=0,
+                is_pl_trot=False)
+            clf_=False
+            
+
+        
+                 
 print "Loaded mkidMeasure.py"
              

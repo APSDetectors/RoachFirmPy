@@ -146,9 +146,27 @@ public:
     // when events is queued, a new events is created on new pointer
     QMutex queue_mutex;
     QQueue<QHash<int,QHash<QString,QList<float> > > *> event_queue;
+    QHash<int,float> *phase_tracks;
+
 
     float getFreqFromBin(int bin);
     void defaultChanMap(void);
+
+
+    void makeFakeEvent(
+            int chan,
+            int timestamp,
+            int is_pulse,
+            int bin,
+            int outmem_datalen,
+            bool is_get_raw_evt_data,
+            float flux_ramp_fl,
+            int event_type
+            );
+
+
+    void makeFakeEventStream(void);
+
 
     void convToFloat(
             int *indata,

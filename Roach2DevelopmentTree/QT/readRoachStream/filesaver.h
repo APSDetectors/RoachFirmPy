@@ -19,12 +19,17 @@ public slots:
 
     void setFileName(QString fname_);
     void setIsStream(bool is_stream_);
-    void saveNow(void);
+
+
     void doSaveThread(void);
     void doSaveAll(void);
 
+public:
+ virtual void saveNow(void);
+    bool getIsStream(void);
 
-  private:
+
+protected:
     roachParser *parser;
     QHash<int,QHash<QString,QList<float> > > *events;
     QString fname;

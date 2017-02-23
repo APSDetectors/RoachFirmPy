@@ -45,9 +45,9 @@ class sim928:
         
     def getId(self):
     
-        sim.write('*IDN?\n')
+        self.write('*IDN?\n')
 
-        return(sim.readline())
+        return(self.readline())
 
         
     def connport(self,pn):
@@ -88,4 +88,62 @@ class sim928:
     def readline(self):
         rsp = self.comport.readline()
         return(rsp)
+    
+    
+    
+    
+    
+    
+    
+
+class simNULL:
+
+    def __init__(self):
+    
+        self.dev = "null"
+        
+        self.portnum = 8
+        
+    def open(self):
+        pass
+        
+        
+    def getId(self):
+    
+        
+
+        return('NULL Vsource')
+
+        
+    def connport(self,pn):
+        pass
+    
+    
+    def disconnport(self):
+        pass
+        
+        
+    def close(self):
+        
+        pass
+        
+    def write(self,c):
+        pass
+        
+    def setVolts(self,v):
+    
+        pass
+    
+    
+    def setOutOn(self,ison):
+        pass
+    
+    
+    def getVolts(self):
+        
+        return(0.0)
+               
+    def readline(self):
+       
+        return('')
     

@@ -42,6 +42,17 @@ void fileSaver::setIsStream(bool is_stream_)
 }
 
 
+/**
+ * @brief fileSaver::getIsStream
+ * @return
+ */
+bool fileSaver::getIsStream(void)
+{
+    return(is_stream);
+}
+
+
+
 void fileSaver::doSaveAll(void)
 {
 
@@ -61,21 +72,50 @@ void fileSaver::doSaveAll(void)
 
 void fileSaver::doSaveThread(void)
 {
-    while (is_stream)
+
+    bool is_running = is_stream;
+    int nwaits = 0;
+
+    //we copy is_stream so we can start saving. if we turn off stream,
+    // we only want to stop saving if no evetns left. else we miss end of data.
+    // a feature of this is that you cannot stop saving until you stop gathering data.
+    while (is_running)
     {
         events=parser->getEventList();
         if (events==0)\
         {
-            usleep(10000);
+            // every time we have to wait for data, we inc counter.
+
+            // wait .5sec for morre data
+            usleep(500000);
+
+            //if waited 2.5 sec end loop if user attempt stop it by is_stream=false
+            if (nwaits>5)
+            {
+                is_running=is_stream;
+            }
+            else
+            {
+                 // every time we have to wait for data, we inc counter.
+                nwaits++;
+
+            }
         }
         else
         {
             saveNow();
+            events->clear();
             delete events;
             events = 0;
+            //set num of waits for data to 0.
+            nwaits = 0;
 
         }
     }
+
+
+    emit saveDone(QString("fileSaver::doSaveThread done\n"));
+
 }
 
 /**

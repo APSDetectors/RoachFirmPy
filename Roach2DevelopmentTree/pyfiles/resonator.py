@@ -47,7 +47,21 @@ def mkidList():
                 print 'Res %d  fc %4.1fMHz'%(m.resonator_num, m.rough_cent_freq/1e6)
                 print 'MKID_list[%d]'%(k)
                 k=k+1
-                
+
+
+
+def mkidList2Str():
+    k=0
+    strx = ''
+    for m in MKID_list:                
+        strx = strx+ 'Res %03d  fc %5.2fMHz  '%(m.resonator_num, m.rough_cent_freq/1e6)                    
+    if strx=='': strx='     '
+    return(strx)
+    
+    
+    
+             
+                    
 def mkidDump():
         for m in MKID_list:
                 print "\n-----------------------------------------------------------\n"
@@ -67,6 +81,13 @@ def mkidDump2(mlist):
                         r.info()
 
 
+def mkidGetFreqs():
+    flist=[]
+    for m in MKID_list:
+        flist.append(m.getFc2()) 
+    return(flist)
+    
+              
 
 #
 # Save all resonators to resonator file in MKID_list                        
@@ -441,6 +462,8 @@ class MKID:
         self.resonator_num=N
         self.chip_name=cname
         
+        self.manual_cent_freq=0
+        
         self.rough_cent_freq=fc
         #no preferred attane set for -1/ preferred atten is the atten we want to run the 
         #the mkid at. That is, total inpuyt power, measured by atten. atten is sum of atten from
@@ -530,10 +553,7 @@ class MKID:
             if self.preferred_out_atten<=0.0:
                 #no set preferred attan, so use 1st trace.
                 res=self.reslist[0]
-                if res.maxIQvel_freq!=0:
-                    return(res.maxIQvel_freq)
-                else:
-                    return(self.getFc())
+                return(res.getFc())
                 
                 
                 
@@ -544,6 +564,9 @@ class MKID:
             
     #return rough cent freq of mkid        
     def getFc(self):
+        if self.manual_cent_freq!=0.0:
+            return(self.manual_cent_freq)
+        else:
             return(self.rough_cent_freq)
 
     def getResNum(self):
@@ -561,6 +584,9 @@ class MKID:
 class resonatorData:
     def __init__(self,N=0,cname='null'):
 
+        #manually set center freq.
+        self.manual_cent_freq=0.0
+
         #ampunt of delauy applied to the iqdata and iqnopise traces. 
         self.applied_delay = 0.0
 
@@ -569,8 +595,10 @@ class resonatorData:
         #current time- in sec since unix epoch, like 1970 or somthing,. can convert to str date time
         self.createtimefl = time.time()
         
+        #channel from channelizer for this res. 
+        self.channel=192
         
-        self.delayraw=30e-9
+        #self.delayraw=30e-9
         
         #which fw used for sweeping. 0 for netAnaluzer, 1 for fftanaluzer. -1 for not set.
         self.sweep_fw_index=-1
@@ -615,7 +643,7 @@ class resonatorData:
 
         #raw IQdata from ROA?CH board, no phase calcs.
         #we never touch this in fits.. it is for reference..in case we want to go back to raw data
-        self.IQ_raw=[]
+        #self.IQ_raw=[]
         
 
         #iQ data
@@ -632,15 +660,15 @@ class resonatorData:
         
      
         #rf delay if xmission line. not baseabnad
-        self.delay=0.0;
+        #self.delay=0.0;
         
-        self.firmware_delay=0
+        #self.firmware_delay=0
                 
                 
-        self.xmission_line_delay=0
+        self.xmission_line_delay=30e-9
         
         #delay of adc convertion 
-        self.adcdelay=230e-9
+        #self.adcdelay=230e-9
         
         #phases for dealing w/ delay
         self.phasesRe=ones(self.datalen);
@@ -782,6 +810,7 @@ class resonatorData:
         self.sweep_fbase=0
         #fft bin used in sweep
         self.sweep_binnumber=0
+       
 
         self.sweep_tes_bias =0
         
@@ -927,7 +956,9 @@ class resonatorData:
         
     #return center freq.        
     def getFc(self):
-        if self.maxIQvel_freq!=0:
+        if self.manual_cent_freq!=0.0:
+            return(self.manual_cent_freq)
+        elif self.maxIQvel_freq!=0:
             return(self.maxIQvel_freq)
         else:
             return(self.rough_cent_freq)
@@ -991,6 +1022,9 @@ class resonatorData:
         print "Rough Center Freq %fMHz"%(self.rough_cent_freq/1e6)
         
         print "maxIQvel=%f,maxIQvel_freq=%f"%(self.maxIQvel,self.maxIQvel_freq)
+        print "xc %f  yc=%f Radius %f"%(self.cir_xc, self.cir_yc,self.cir_R)
+        print "xc %f  yc=%f Radius %f"%(self.cir_xc, self.cir_yc,self.cir_R)
+        print " trot_Fcenter %f"%(self.trot_Fcenter)
 
 
     def setData(self,iq,f,d,fc):
@@ -1022,22 +1056,22 @@ class resonatorData:
     # remove any applied delay from sweep trace uqdata and iqnoise traces
     #
     def removeDelay(self):
-        delaysave = self.delay
-        self.delay  = 0.0 -  self.applied_delay 
+        delaysave = self.xmission_line_delay
+        self.xmission_line_delay  = 0.0 -  self.applied_delay 
         self.applyDelay()
-        self.delay = delaysave
+        self.xmission_line_delay = delaysave
         
     ##
     #set in sec. set delay time in sec of the xmission line in rf.
     #
     def setDelay(self,d):
         #230e9 is ADC/DAC time delay in ns- we add that to xmission line dly
-        self.delay=d
+        self.xmission_line_delay=d
 
        
         
-        self.phasesRe= numpy.cos(2*pi*self.freqs*self.delay)
-        self.phasesIm= numpy.sin(2*pi*self.freqs*self.delay)
+        self.phasesRe= numpy.cos(2*pi*self.freqs*self.xmission_line_delay)
+        self.phasesIm= numpy.sin(2*pi*self.freqs*self.xmission_line_delay)
 
     ##
     # add delay in sec (should be about 30ns) of cable in rf. baseband delaus not dealt with, but only rf.
@@ -1049,7 +1083,7 @@ class resonatorData:
         #
         # keep track of how much delay we ahve applied to iqdata. incase we want to undo it.
         #
-        self.applied_delay = self.delay
+        self.applied_delay = self.xmission_line_delay
         
         #
         # apply delay to sweep trace.
@@ -1079,12 +1113,14 @@ class resonatorData:
         for noise_trace in self.iqnoise_dly:
             
             #calc phase delay
-           
-            d_ph = 2*pi*self.noise_rf_freq[i]*self.delay
-            #add delay to phase term of noise
-            noise_trace[192]['stream_phase'] = \
-                noise_trace[192]['stream_phase'] + d_ph
-            i=i+1
+            try:
+                d_ph = 2*pi*self.noise_rf_freq[i]*self.xmission_line_delay
+                #add delay to phase term of noise
+                noise_trace[192]['stream_phase'] = \
+                    noise_trace[192]['stream_phase'] + d_ph
+                i=i+1
+            except:
+                print "problem w/ noise traice/ no 192" 
             
    
   ##
@@ -1101,7 +1137,7 @@ class resonatorData:
             
             #calc phase delay
            
-            d_ph = 2*pi*self.noise_rf_freq[i]*self.delay
+            d_ph = 2*pi*self.noise_rf_freq[i]*self.xmission_line_delay
             #add delay to phase term of noise
             nmag = noise_trace[192]['stream_mag']
             nphs =noise_trace[192]['stream_phase'] + d_ph
@@ -1146,7 +1182,7 @@ class resonatorData:
         return( iqr )
 
 
-    def plotFreq(self,isclf=1,isnoise=1,fnum=0):
+    def plotFreq(self,isclf=1,isnoise=1,fnum=0,is_pl_trot = True):
         
 
         #return self.iqdata after addediong delay in. self.iqdata is inaltered, 
@@ -1165,10 +1201,29 @@ class resonatorData:
         dbref = -40
         
         subplot(4,2,1)
-        title("Delay=%dns"%(floor(self.delay*1e9)))
+        title("Delay=%dns"%(floor(self.xmission_line_delay*1e9)))
         dat=20*log(IQp[0]) - dbref
         plot(freqs,dat)
        
+        #
+        # Plot x at center freq. 
+        #
+       
+        fcenter = self.getFc()
+        #find mag resp at that freq
+        #find index of freq:
+        
+        found_index = 0
+        for i in range(len(freqs)):
+            if freqs[i]>=fcenter:
+                found_index=i
+                break
+                
+        plot(freqs[found_index],dat[found_index],'rx')
+        
+        #
+        # Set axis ranges, labels etc.
+        #
         toprange = 10+10.0*ceil(max(dat)/10.0)
         botrange = -10+10.0*ceil(min(dat)/10.0)
         ylim(botrange,toprange)
@@ -1189,7 +1244,14 @@ class resonatorData:
         figure(1+fnum)
 #        if isclf:clf()
         subplot(1,2,2)
-        plot(IQ[0],IQ[1],'x')
+        plot(IQ[0],IQ[1],'bx')
+        plot(IQ[0],IQ[1],'b')
+        plot(IQ[0][found_index],IQ[1][found_index],'ro')
+        
+        
+        if not is_pl_trot: return
+        
+        
         
         #to a cirfit, and transrot, plot it.
         fc = self.getFc()
@@ -1229,7 +1291,7 @@ class resonatorData:
             iqpoint = self.iqAtFreq(self.maxIQvel_freq)
             
             mag = sqrt( iqpoint[0]* iqpoint[0] + iqpoint[1]* iqpoint[1])
-            plot(self.maxIQvel_freq,mag,'gx')
+            #plot(self.maxIQvel_freq,mag,'gx')
             
 
             figure(13+fnum)
@@ -1358,7 +1420,7 @@ class resonatorData:
         self.incrFreq_Hz=self.freqs[1]-self.freqs[0]                
 
         self.rough_cent_freq = (self.startFreq_Hz + self.endFreq_Hz)/2
-        self.setDelay(self.delay)
+        self.setDelay(self.xmission_line_delay)
         
 
 

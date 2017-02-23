@@ -13,6 +13,7 @@
 #include <QTimer>
 #include "argparse.h"
 #include "filesaver.h"
+#include "hdffilesaver.h"
 
 int main(int argc, char *argv[])
 {
@@ -87,8 +88,10 @@ int main(int argc, char *argv[])
     // Set up two file savers, one per parser.
     // streams to files.
     //
-    fileSaver fsave_a;
-    fileSaver fsave_b;
+    //fileSaver fsave_a;
+    //fileSaver fsave_b;
+    hdfFileSaver fsave_a;
+    hdfFileSaver fsave_b;
 
     fsave_a.setEventSource(&parser_a);
     fsave_b.setEventSource(&parser_b);

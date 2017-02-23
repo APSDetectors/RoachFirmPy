@@ -32,6 +32,7 @@ roachParser::roachParser(dataQueue *data_source_, int chanoffs, QObject *parent)
     ndone_parse=0;
     dbgscope=0;
     events = 0;
+    phase_tracks=0;
 
     data_source = data_source_;
 
@@ -241,6 +242,12 @@ void roachParser::clearMaps(void)
  */
 void roachParser::clearEvents(void)
 {
+    if (phase_tracks!=0)
+    {
+        phase_tracks->clear();
+        delete phase_tracks;
+        phase_tracks=0;
+    }
     searches=0;
     //carryover=0;
     evtcnt=0;
@@ -286,8 +293,18 @@ void roachParser::clearEvents(void)
  */
 void roachParser::addNewChannel(int channel)
 {
+
+    if (phase_tracks == NULL)
+        phase_tracks = new QHash<int,float>;
+
+    if (!phase_tracks->contains(channel))
+    {
+        (*phase_tracks)[channel] = 0.0;
+    }
+
     if (events==NULL)
         events = new QHash<int,QHash<QString,QList<float> > >;
+
 
     if (!events->contains(channel))
     {
@@ -308,6 +325,7 @@ void roachParser::addNewChannel(int channel)
         // length in samples of this event
 
         (*events)[channel]["event_len"]= QList<float>();
+        (*events)[channel]["event_type"]= QList<float>();
 
         // index in the data stream array telling where next event starts.
         // we get events from roacgh, or 30 to 100 samples of data. it is put into
@@ -318,6 +336,7 @@ void roachParser::addNewChannel(int channel)
         //(*events)[channel]["data_start_index"]= QList<float>();
 
         (*events)[channel]["flux_ramp_phase"]= QList<float>();
+        (*events)[channel]["flux_ramp_phase_unwrap"]= QList<float>();
 
         (*events)[channel]["circle_specs_xy"]= QList<float>();
         // for delay phase change due to RF cabling. 30ns etc... in radians for each channel
@@ -446,7 +465,7 @@ void roachParser::parseStream(void)
 int dbgql;
 
 
-        while (new_data.length() >=2*event_length)
+        while (new_data.length() >=(2*event_length + 50))
         {
             //
             datalong=new_data.dequeue();
@@ -463,16 +482,17 @@ int dbgql;
                 // 1 raw chan event data, like older FW. aaaa, chan, data
                 // 2 fluxramp, aaaa, chan
                 // 3 fluxramp, aaaa, chan , raw data
+                // 4 flux ramp aaa chan trans data
 
 
                 // subtract off the aaaa and timestamp words, leaving only fft coef data
 
-                if (event_type==0 || event_type==1)
+                if (event_type==0 || event_type==1 || event_type==4 )
                 {
                     outmem_datalen = event_length-2;
                     is_get_raw_evt_data=true;
                 }
-                else if (event_type==3)
+                else if (event_type==3 )
                 {
                     outmem_datalen= event_length;
                     is_get_raw_evt_data=true;
@@ -485,7 +505,7 @@ int dbgql;
 
 
 
-                if (event_type==2 || event_type==3)
+                if (event_type==2 || event_type==3|| event_type==4)
                 {
                    flux_ramp_data = new_data.dequeue();
                    convToFloat((int*)&flux_ramp_data,
@@ -495,6 +515,8 @@ int dbgql;
                                ph_nbits,
                                ph_sign);
 
+
+                    flux_ramp_fl = flux_ramp_fl * 3.141592653589793;
                 }
                 else
                     flux_ramp_data=0;
@@ -590,7 +612,7 @@ int dbgql;
                     //
                     // here we do pulse detectoion if turned on.
                     //
-                    if (is_pulse_detect_frd && (event_type==2 || event_type==3))
+                    if (is_pulse_detect_frd && (event_type==2 || event_type==3 || event_type==4))
                     {
                            is_good_event= pulseDetectFRD( chan,  flux_ramp_fl);
                     }
@@ -617,31 +639,14 @@ int dbgql;
                       }
 
 
-
-
-
                           (*events)[chan]["timestamp"].append((float)timestamp);
                           (*events)[chan]["is_pulse"].append((float)is_pulse);
                           (*events)[chan]["bin"].append((float)bin );//!! need to look at map
-
-
-                          //if ((*events)[chan]["data_start_index"].length() ==0)
-                          //    (*events)[chan]["data_start_index"].append(0.0);
-                          //else
-                          //    (*events)[chan]["data_start_index"].append(
-                            //              (*events)[chan]["data_start_index"].last() +
-                            //                (*events)[chan]["event_len"].last());
-
+                          (*events)[chan]["event_type"].append((float)event_type );//!! need to look at map
                           (*events)[chan]["event_len"].append((float)(outmem_datalen));//!! need to look at map
-
-
-
-
 
                           if (is_get_raw_evt_data)
                           {
-
-
 
                               //!!addPhaseDelay(chan,plen,phase_tempf);
                               for ( plen = 0; plen<outmem_datalen;plen++)
@@ -652,16 +657,35 @@ int dbgql;
 
                           }
 
-
-
-
-                          if (event_type==2 || event_type==3)
+                          if (event_type==2 || event_type==3 || event_type==4)
                           {
                               //demodFluxRamp(chan,mag_tempf, phase_tempf,outmem_datalen, &phaseout );
                               (*events)[chan]["flux_ramp_phase"].append(flux_ramp_fl);
+
+                              float last_phase = (*phase_tracks)[chan];
+                              float dphase = flux_ramp_fl - last_phase;
+                              while(dphase<(-3.141592653589793))
+                              {
+                                  flux_ramp_fl+=6.283185307179586;
+                                  dphase = flux_ramp_fl - last_phase;
+                              }
+
+                              while(dphase>3.141592653589793)
+                              {
+                                  flux_ramp_fl+=(-6.283185307179586);
+                                  dphase = flux_ramp_fl - last_phase;
+                              }
+
+                              (*phase_tracks)[chan]=flux_ramp_fl;
+
+                              (*events)[chan]["flux_ramp_phase_unwrap"].append(flux_ramp_fl);
                           }
                           else
+                          {
                               (*events)[chan]["flux_ramp_phase"].append(-1.0);
+                              (*events)[chan]["flux_ramp_phase_unwrap"].append(-1.0);
+                          }
+
 
 
                          // fprintf(stderr,"Done Good evt\n");
@@ -691,6 +715,184 @@ int dbgql;
         emit parseDone(QString("python fa parseDone 0 \n"));
 
 }
+
+
+
+void roachParser::makeFakeEventStream(void)
+{
+    int nevents = 50000;
+    int stchan = 192;
+    int numchans = 4;
+    int cur_chan = 0;
+
+    int stbin = 500;
+
+    int cur_bin = 0;
+    int datalen = 100;
+    float phase_offset_chan;
+    float phase_offset_time;
+    float flux_ramp_fl;
+
+    for (int k =0; k<nevents;k++)
+    {
+        phase_offset_chan =(float)cur_chan * 0.1;
+
+        phase_offset_time =6.28*(float)k * 0.1;
+
+
+        for (int m = 0;m<datalen;m++)
+        {
+            mag_tempf[m]= 0.01 + 0.01*((float)cur_chan);
+
+
+            phase_tempf[m] =phase_offset_chan +   0.1*cos(phase_offset_time +\
+                            3.14159 * 4.0 * ((float)m/(float)datalen) );
+        }
+
+        flux_ramp_fl = phase_offset_time;
+
+    makeFakeEvent(
+            (cur_chan + stchan), //int chan,
+            k, //int timestamp,
+            1, //int is_pulse,
+            stbin - 2*cur_chan, //int bin,
+            datalen, //int outmem_datalen,
+            1, //bool is_get_raw_evt_data,
+            flux_ramp_fl, //float flux_ramp_fl,
+            3//int event_type
+            );
+
+    cur_chan = (cur_chan+1)%numchans;
+
+
+    }
+}
+
+
+/**
+ * @brief roachParser::makeFakeEvent-
+ *  Make a software defined event into lists for debugging purposes. supply chan, etc. for phase and mag data
+ *  put data in class vars mag_tempf, phase_tempf before calling function.
+ * @param chan 0-255
+ * @param timestamp 32 but int.
+ * @param is_pulse 0 or 1
+ * @param bin 0 to 511
+ * @param outmem_datalen use 100 or around there. length of raw data in mag_tempf, phase_tempf
+ * @param is_get_raw_evt_data, 1 to unclude raw mag and phase data, 0 otherwise
+ * @param flux_ramp_fl  , calc ramp phase, in radian/pi
+ * @param event_type, 1,2,3,4. 2,3,4 use flux ramp phase. 1 is raw data only. no fl ramp.
+ */
+
+
+void roachParser::makeFakeEvent(
+        int chan,
+        int timestamp,
+        int is_pulse,
+        int bin,
+        int outmem_datalen,
+        bool is_get_raw_evt_data,
+        float flux_ramp_fl,
+        int event_type
+        )
+{
+int plen;
+
+    // adds new chan to events if not alreayd there.
+   addNewChannel(chan);
+
+
+   if ((*events)[chan]["timestamp"].length() >= max_list_length)
+   {
+       queueEvents();
+       // create new events list with current channel.
+       addNewChannel(chan);
+   }
+
+
+
+
+
+           (*events)[chan]["timestamp"].append((float)timestamp);
+           (*events)[chan]["is_pulse"].append((float)is_pulse);
+           (*events)[chan]["bin"].append((float)bin );//!! need to look at map
+
+
+           //if ((*events)[chan]["data_start_index"].length() ==0)
+           //    (*events)[chan]["data_start_index"].append(0.0);
+           //else
+           //    (*events)[chan]["data_start_index"].append(
+             //              (*events)[chan]["data_start_index"].last() +
+             //                (*events)[chan]["event_len"].last());
+
+           (*events)[chan]["event_len"].append((float)(outmem_datalen));//!! need to look at map
+            (*events)[chan]["event_type"].append((float)event_type );//!! need to look at map
+
+
+
+
+           if (is_get_raw_evt_data)
+           {
+
+
+
+               //!!addPhaseDelay(chan,plen,phase_tempf);
+               for ( plen = 0; plen<outmem_datalen;plen++)
+               {
+                   (*events)[chan]["stream_mag"].append(mag_tempf[plen] );
+                   (*events)[chan]["stream_phase"].append(phase_tempf[plen] );
+               }
+
+           }
+
+
+
+
+           if (event_type==2 || event_type==3 || event_type==4)
+           {
+               //demodFluxRamp(chan,mag_tempf, phase_tempf,outmem_datalen, &phaseout );
+               (*events)[chan]["flux_ramp_phase"].append(flux_ramp_fl);
+
+              float last_phase = (*phase_tracks)[chan];
+              float dphase = flux_ramp_fl - last_phase;
+              while(dphase<(-3.141592653589793))
+              {
+                  flux_ramp_fl+=6.283185307179586;
+                  dphase = flux_ramp_fl - last_phase;
+              }
+
+              while(dphase>3.141592653589793)
+              {
+                  flux_ramp_fl+=(-6.283185307179586);
+                  dphase = flux_ramp_fl - last_phase;
+              }
+
+              (*phase_tracks)[chan]=flux_ramp_fl;
+
+              (*events)[chan]["flux_ramp_phase_unwrap"].append(flux_ramp_fl);
+           }
+          else
+          {
+              (*events)[chan]["flux_ramp_phase"].append(-1.0);
+              (*events)[chan]["flux_ramp_phase_unwrap"].append(-1.0);
+          }
+
+
+
+
+          // fprintf(stderr,"Done Good evt\n");
+           //fflush(stdout);
+            //print 'chan   %d  k  %d  is_pulse  %d  timestamp  %x    '%\
+            //      (chan,k,is_pulse,timestamp)
+
+            evtcnt++;
+
+
+
+}
+
+
+
+
 
 
 bool roachParser::pulseDetectRaw(int chan, double phase_sum,int outmem_datalen)

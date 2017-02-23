@@ -424,10 +424,16 @@ void MainWindow::on_lineEdit_pipeName_textEdited(const QString &arg1)
 
 void MainWindow::on_checkBox_streamEv2Disk_clicked(bool checked)
 {
+    bool is_currently_streaming = savers[1]->getIsStream();
+
     savers[0]->setIsStream(checked);
     savers[1]->setIsStream(checked);
 
-    if (checked)
+    //run thread if not already runnibng.
+    // also run even if we have checked false. in this case it
+    // runs thread one loop and quits, saving nothing.
+    // it forces a signal to emit from file saver sayint its done.
+    if (!is_currently_streaming)
     {
     QMetaObject::invokeMethod(
                 savers[0],
@@ -435,7 +441,7 @@ void MainWindow::on_checkBox_streamEv2Disk_clicked(bool checked)
                 Qt::QueuedConnection);
 
     QMetaObject::invokeMethod(
-                savers[0],
+                savers[1],
                 "doSaveThread",
                 Qt::QueuedConnection);
     }
@@ -470,4 +476,10 @@ void MainWindow::on_checkBox_isPulseDetectFRD_clicked(bool checked)
 {
     parsers[0]->setIsPulseDetectFRD(checked);
     parsers[1]->setIsPulseDetectFRD(checked);
+}
+
+void MainWindow::on_pushButton_fakeEvents_clicked()
+{
+    //parsers[0]->setIsPulseDetectFRD(checked);
+    parsers[1]->makeFakeEventStream();
 }

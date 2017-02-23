@@ -1,3 +1,0 @@
-#!/bin/tcsh
-setenv PYTHONPATH /home/oxygen26/TMADDEN/ROACH/lib/python2.7/site-packages
-/APSshare/epd/rh6-x86_64/bin/ipython -pylab -i /home/oxygen26/TMADDEN/ROACH/projcts/runFits.py $1

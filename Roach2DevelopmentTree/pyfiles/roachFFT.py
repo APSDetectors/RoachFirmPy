@@ -42,9 +42,14 @@ class roachFFT:
         self.bin_to_srcfreq = dict()
         self.srcfreq_to_bin = dict()
         
+        #leg is top or bottom readout in FW
         self.bin_to_leg=dict()
+        #chan 0-127 is leg0, chan 128-256 is leg1. we remap to chan&127
         self.bin_to_legchan=dict()
-        
+        #legB is input of fifos, bin4 is the channel, or chan&63. legB is 0,1,2,3 whihc is 
+        #legb- (chan&192)>>6. cooresponding channel in legB is bin4
+        self.bin_to_legB=dict()
+        self.bin_to_legBchan=dict()
         self.num_mapped_addresss=0
         
         self.last_chan_to_read=0
@@ -132,6 +137,7 @@ class roachFFT:
         
         self.bin_to_leg=dict()
         self.bin_to_legchan=dict()
+        self.bin_to_legBchan = dict()
         
         self.num_mapped_addresss=len(blist)
         #set flags that need to be set
@@ -202,8 +208,11 @@ class roachFFT:
             else:
                 self.bin_to_leg[binx]=0
                 
+                
+            self.bin_to_legB[binx] = (mapped_channel&192)>>6     
+                
             self.bin_to_legchan[binx] =  mapped_channel&127
-               
+            self.bin_to_legBchan[binx] =  mapped_address[which_out]   
             
             if self.chan_to_bin.has_key(mapped_channel)==False:
                 self.chan_to_bin[mapped_channel]=[]
@@ -303,12 +312,10 @@ class roachFFT:
 
     def stopFFTs(self):
         
-        roachlock.acquire()        
         
         self.start_ffts=0    
         self.stop_ffts=1    
         self.progRoach1()
-        roachlock.release()
     
         
 
@@ -434,11 +441,9 @@ class roachFFT:
         self.calcRegs()    
         
         
-        roachlock.acquire()
         
         self.roach.write_int('%s_settings_reg'%self.fw_block_name, self.controlReg)
 
-        roachlock.release()
                
 
 
@@ -454,7 +459,6 @@ class roachFFT:
         
       
         
-        roachlock.acquire()
         try:
 
             self.roach.write_int('%s_settings_reg'%self.fw_block_name, self.controlReg)
@@ -487,7 +491,6 @@ class roachFFT:
         except:
             print "progRoach NO ROACH"
 
-        roachlock.release()
                
 
   
@@ -547,6 +550,50 @@ class roachFFT:
     
         return(phase_per_fft)
         
+        
+    
+    #calc phase increase per fft for some given freq.
+    def getPhasePerDelayNoPi(self,freq,delay):
+        
+        
+        ##freq in rad per sec. how much the phase changes in radians in 1 sec
+#        freqrad=2*pi*freq
+#        
+#        #
+#        #time between ffts.
+#        #
+#        
+#        #fpga clk period in sec
+#        sys_period=1.0/self.sys_clk
+#        
+#        #time in sec between successive ffts
+#        
+#        fftperiod=self.fftsynctime * sys_period;
+#        
+#        #calc how much the phase change is in fftperiod
+#        
+#        phase_per_fft = freqrad*fftperiod
+#        
+#        
+#        phase_per_fft =2.0*pi *  ( phase_per_fft/(2.0*pi) - floor(phase_per_fft/(2*pi))  )
+#        
+    
+        #num samples of 1 cycle of freq at fpga freq
+        
+        f_wavelen=self.sys_clk / freq
+        
+    
+        #number of samples between fft is self.fftsynctime, or 8192
+        #number of wavelens bween ffts
+        waves_per_delay = delay / f_wavelen
+    
+        #get the fraction part of the num waves
+        waves_per_delay_frac=waves_per_delay - floor(waves_per_delay)
+        
+        #convert to radians
+        phase_per_delay = 2.0*waves_per_delay_frac
+    
+        return(phase_per_delay)
         
         
         

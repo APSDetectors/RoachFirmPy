@@ -34,9 +34,7 @@ except:
 
 class dataCapture:
 
-    def __init__(self, 
-        
-            
+    def __init__(self,                    
         path = ROACH_DIR+'/projcts/QT/build-testEnet-Desktop-Debug/'):
      
         self.devnull = open(os.devnull, 'wb')
@@ -81,9 +79,9 @@ class dataCapture:
         
     def saveEvents(self,dsname):
     
-        self.sendcmd.write('roachstream saver_a setFileName 1 QString %s_A \n'%dsname)  
+        self.sendcmd.write('roachstream saver_a setFileName 1 QString %s_A.h5 \n'%dsname)  
         self.sendcmd.flush()
-        self.sendcmd.write('roachstream saver_b setFileName 1 QString %s_B \n'%dsname)  
+        self.sendcmd.write('roachstream saver_b setFileName 1 QString %s_B.h5 \n'%dsname)  
         self.sendcmd.flush()
         
         self.sendcmd.write('roachstream parser_a queueEvents 0 \n')
@@ -91,22 +89,34 @@ class dataCapture:
         self.sendcmd.write('roachstream parser_b queueEvents 0 \n')
         self.sendcmd.flush()
         
+        #!! need a call back or someting here from the cpp program
+        time.sleep(1.0)        
         
         self.sendcmd.write('roachstream saver_a doSaveAll 0 \n')  
         self.sendcmd.flush()
         self.sendcmd.write('roachstream saver_b doSaveAll 0 \n')  
         self.sendcmd.flush()
         
+        print self.getCmd()
+        print self.getCmd()
   
     def setStream2Disk(self,is_stream, dsname):
-        self.sendcmd.write('roachstream saver_a setFileName 1 QString %s_A \n'%dsname)  
-        self.sendcmd.flush()
-        self.sendcmd.write('roachstream saver_b setFileName 1 QString %s_B \n'%dsname)  
-        self.sendcmd.flush()
-        
+        #if starting stream, then set file name
+        if is_stream:
+            self.sendcmd.write('roachstream saver_a setFileName 1 QString %s_A.h5 \n'%dsname)  
+            self.sendcmd.flush()
+            self.sendcmd.write('roachstream saver_b setFileName 1 QString %s_B.h5 \n'%dsname)  
+            self.sendcmd.flush()
+
         
         self.sendcmd.write('roachstream w on_checkBox_streamEv2Disk_clicked 1 bool %d\n'%is_stream)
         self.sendcmd.flush()
+        
+        
+        # if we are turning file stream off, then we block here, until cpp program tells us the saving is done.
+        if not is_stream:
+            print self.getCmd()
+            print self.getCmd()
         
         
     def shut(self):

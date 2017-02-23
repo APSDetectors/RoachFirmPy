@@ -1,5 +1,34 @@
 '''
 
+
+This class uses h5py to read out python structures from hdf.
+h5py by itself only returns h5py groups/datasets that LOOK like
+py dictionaries. file must be open to accest the data.
+This class raeds the h5opy structures and creates genuione python lists
+arrays, and even obhects.
+
+The way it works is that we can write an object of certain class to hdf5 using
+hdfSerdes. The calss tuype is stored as an attribute. 
+any container is a group, or data set. Each h5 object gets an attribute
+so we know the python data tuype. attdutes can be "list" dict, array,
+class w/ objhect tuype.
+
+We can write any class to h5. when we read it back, a new objhect of
+same class is instantiated, as long as the class is in py namespace. 
+if class is unknown, an unline class object is created. 
+
+For huge datasets >1M elements, only 1M is read in. this is set by
+
+
+self.maxreadsize = 1000000     
+
+self.largefileoffset = 0
+
+
+To read in other portions of dataset, set these varieb,es and do hdf.read()
+
+
+
 hdf=hdfSerdes()
 
 
@@ -113,8 +142,24 @@ class hdfSerdes:
         self.hdffile=None
     
     
-           
-    
+        #if dataset is >1M entries read only 1M entrues to avouce killing python memory
+        self.maxreadsize = 1000000     
+        #if reading large ds>1M then we can offset start of read. 
+        self.largefileoffset = 0
+        self.stride = 1
+        self.is_decimate = False
+        
+        
+        #if we read in a class, we will make that obhect of class is in our namespace.
+        #we want inline obhects for some beucase making that obh may start up processes etc.
+        #so we have forbidden class to make.
+        self.forbiddenclasses = ['anritsu','fftAnalyzerR2',
+            'dataCapture', 'katcpNc' ]
+        
+    #for reading in partial datasets, decimating so we get sample of whole set, max samples is self.maxreadsize
+    def setDecimate(self,isdec):
+        self.is_decimate = isdec
+        
     def write(self,mydata,grpname):
     
         if (self.hdffile!=None):
@@ -153,9 +198,37 @@ class hdfSerdes:
             
             
             if ptype == 'list':
-                data = parent.value.tolist()
+                if parent.len()>self.maxreadsize:
+                    if not self.is_decimate:
+                        data = parent[self.largefileoffset:self.maxreadsize:self.stride].tolist()
+                        print "READING PARTIAL DATASET- TOO LARGE"
+                    else:
+                        lenx = parent.len()
+                        strsave = self.stride
+                        self.stride = int(ceil(float(lenx)/float(self.maxreadsize)))
+                        data = parent[::self.stride].tolist()
+                        self.stride = strsave
+                      
+                        
+                            
+                else:
+                    data = parent[...].tolist()
+                    
             elif ptype == 'array':
-                data = parent.value
+                if parent.len()>self.maxreadsize:
+                    if not self.is_decimate:
+                        data = parent[self.largefileoffset:self.maxreadsize:self.stride]
+                        print "READING PARTIAL DATASET- TOO LARGE"
+                    else:
+                        lenx = parent.len()
+                        strsave = self.stride
+                        self.stride = int(ceil(float(lenx)/float(self.maxreadsize)))
+                        data = parent[::self.stride]
+                        self.stride = strsave
+                else:
+                    data = parent[...]
+
+                
             elif ptype == 'int':
                 data  = int(parent.value[0])
             elif ptype == 'float':
@@ -187,12 +260,21 @@ class hdfSerdes:
                 data =[]
             elif ptype=='instance':
                 #try to make new instance of the class, else use inline
-                try:
-                    exec('data = %s()'%(parent.attrs['class']))
-                except:
-                    class inline:pass
                 
+                classname = parent.attrs['class']
+                
+                #makeing some classes causes starging up new progrmas etc, so we wont make everything
+                if classname not in self.forbiddenclasses:
+                    try:
+                        exec('data = %s()'%(classname))
+                    except:
+                        class inline:pass
+
+                        data = inline()  
+                else:
+                    class inline:pass
                     data = inline()  
+                    
             else:
                 print "unknown type"      
             
@@ -385,7 +467,7 @@ class hdfSerdes:
 
 
 
-        elif type(mydata)==int:
+        elif type(mydata)==int or type(mydata)==numpy.int64:
 
                #print 'scalar'
                dims=[1]

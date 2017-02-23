@@ -48,7 +48,7 @@ class Channelizer:
         self.b_flux_demod=0
         #if doing flux demod-incl raw data as well.
         self.b_savefluxraw = 0
-        
+        self.b_savefluxtrans = 0
 
         self.last_read_chan=128
         self.read_fifo_size = 100
@@ -68,6 +68,12 @@ class Channelizer:
             'read_fifo_size':'readFifoSize', 'sync_delay':'syncDelay'}
 
         self.chan_to_translate={}
+
+
+        #!!self.sync_delay_extgenerator = 55*128
+        self.sync_delay_extgenerator = 0
+        self.sync_delay_intgenerator = 5*128
+        
 
 #####################################################################################################
 #
@@ -112,9 +118,9 @@ class Channelizer:
         #turn on internal ramp if 1
         self.b_en_int_rampgen = syncsourcebit
         if self.b_sync_source==1:
-            self.setSyncDelay(5*128)    
+            self.setSyncDelay(sync_delay_intgenerator)    
         else:
-            self.setSyncDelay(55*128)    
+            self.setSyncDelay(self.sync_delay_extgenerator)    
         
         
         self.progRoach()
@@ -147,7 +153,7 @@ class Channelizer:
             (self.b_drop_all_events << 6) + (self.b_ethernet_rst<<7) + \
             (self.b_rst_full_counters << 8) + (self.b_sync_source<<9) + \
             (self.b_en_int_rampgen << 10) + (self.b_flux_demod<<11) +\
-            (self.b_savefluxraw << 12)
+            (self.b_savefluxraw << 12) + (self.b_savefluxtrans<<13)
  
  
  
@@ -165,7 +171,6 @@ class Channelizer:
         self.calcRegs()	
 
 
-        roachlock.acquire()
 
         self.roach.write_int(self.fwnames['settings'], self.settings)
 
@@ -175,8 +180,6 @@ class Channelizer:
 
         self.roach.write_int(self.fwnames['sync_delay'], self.sync_delay)
 
-
-        roachlock.release()
 
 #####################################################################################################
 #
@@ -282,7 +285,11 @@ class Channelizer:
 
 
     def setSyncDelay(self,val):
-        self.sync_delay=val
+        if fwtype=='tesd':
+            self.sync_delay=val/2
+        else:
+            self.sync_delay=val
+            
         self.progRoach()
 
 
@@ -295,7 +302,12 @@ class Channelizer:
 
 
     def setReadFifoSize(self,val):
-        self.read_fifo_size=val
+    
+        if fwtype == 'tesd':           
+            self.read_fifo_size=val/2
+        else:
+            self.read_fifo_size=val
+        
         self.progRoach()
 
 
@@ -323,7 +335,6 @@ class Channelizer:
         
         
         
-        roachlock.acquire()
 
         
 
@@ -337,19 +348,27 @@ class Channelizer:
  
 #####################################################################################################
 #
-#
-#
-#
+#is_demod 0 or 1, for turning on flux demod calc
+#is_incl_raw_trans 0,1,2 for no rawdata, raw data ,transdata. transdata only for flux demod 1
+# evt len is fifo read size, like 100 samples.
+# num_cycles how many phi0 cucles in one evt len
 #####################################################################################################
        
         
-    def setFluxRampDemod(self,is_demod,is_incl_raw, evt_len,num_cycles):
+    def setFluxRampDemod(self,is_demod,is_incl_raw_trans, evt_len,num_cycles):
     
     
         
         self.b_flux_demod=is_demod
         #if doing flux demod-incl raw data as well.
-        self.b_savefluxraw = is_incl_raw
+        self.b_savefluxraw = 0
+        self.b_savefluxtrans = 0
+        
+        if (is_incl_raw_trans==1):
+            self.b_savefluxraw = 1
+        elif  is_incl_raw_trans==2: 
+            self.b_savefluxtrans=1
+            self.b_flux_demod=1
        
         self.setReadFifoSize(evt_len)
         phase = num_cycles*2.0*numpy.pi *numpy.arange(evt_len)/evt_len 
@@ -382,7 +401,7 @@ class Channelizer:
                 bdata[k]=pow(2,nbits) - bdata[k]
         
             bdata[k] = int(bdata[k])
-           
+            bdata[k] = bdata[k]&( (1<<nbits)-1 )
         
         
         return(bdata)
@@ -396,7 +415,9 @@ class Channelizer:
 #
 #####################################################################################################
   
-  
+    def clearTransTable(self):
+        self.chan_to_translate = {}
+        
   
    
     def setFlxDmodTranTable(self,chan=192,xc=0.0,yc=0.0):
@@ -425,9 +446,8 @@ class Channelizer:
         #self.translate_intram0 = [0]*128
         self.translate_intram1 = '\0'*128*4
         
-        self.write('FRD1_trIQ_tr', self.translate_intram1 )
-        self.progTranslator()
-
+        self.roach.write('FRD1_trIQ_tr', self.translate_intram1 )
+        
 
     def progTranslator(self):
     
@@ -452,8 +472,8 @@ class Channelizer:
             #!!for fdr1 only!!!!
             chanram = chan-128
             
-            self.roach.write_int( 'FRD1_trIQ_tr',  ramint,offset = 4*chanram)
-         
+            self.roach.write_int( 'FRD1_trIQ_tr',  ramint,offset = chanram)
+            print 'ramint %i, xcb %i,ycb %i,chan %i,chanram %i, xc %f, yc%f'%(ramint,xcb,ycb,chan,chanram,xc,yc)
           
           
           

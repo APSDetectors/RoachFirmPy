@@ -5,14 +5,14 @@
 #execfile("udpRcv.py")
 
 
-host = '192.168.1.102'
-port = 54321
-global UDPSock
+host = '192.168.203.122'
+port = 1101
+
 from socket import *
 
 
 def udpRcv(host,port) :
-  global UDPSock
+
 # Set the socket parameters
   #host = "localhost"
   #port = 1101
@@ -21,8 +21,6 @@ def udpRcv(host,port) :
 
 # Create socket and bind to address
   UDPSock = socket(AF_INET,SOCK_DGRAM)
-  #UDPSock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, 'eth2')
-
   UDPSock.bind(addr)
 
 # Receive messages
@@ -32,7 +30,8 @@ def udpRcv(host,port) :
         print "Client has exited!"
         break
     else:
-        print data
+        print ByteToHex(data)
+	print "  "
 
 # Close socket
   UDPSock.close()
@@ -69,8 +68,8 @@ def ByteToHex( byteStr ):
 def udpSend() : 
 
 # Set the socket parameters
-  host = "127.0.0.1"
-  port = 2345
+  host = "localhost"
+  port = 1101
   buf = 1024
   addr = (host,port)
 
@@ -94,4 +93,4 @@ def udpSend() :
 # Client program
 
 
-#udpRcv(host,port) 
+udpRcv(host,port) 

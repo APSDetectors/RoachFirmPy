@@ -186,10 +186,12 @@ class sramLut:
 
             freq = self.frequency_list[k]
             #amp = amps[k]
-            if k==0:
-                phase = 0.0;
-            else:
-                phase = random.uniform(-math.pi, math.pi)
+            #if k==0:
+            #    phase = 0.0;
+            #else:
+            #    phase = random.uniform(-math.pi, math.pi)
+
+            phase =2.0*math.pi* double(k)/double(len(self.frequency_list))
 
             self.lut_phase_list.append(phase)
             self.lut_i=self.lut_i + self.singleFreqLUT(freq, 'I', self.dac_clk,self.lut_length , phase, self.amplist[k])

@@ -19,7 +19,6 @@ fa = fftAnalyzerR2(roach)
 
 fa = fftAnalyzerR2(roach,is_datacap_=False)
 
-
 roach=katcpNc()
 roach.startNc()
 
@@ -32,6 +31,112 @@ fa.chanzer.b_rst = 1
 fa.chanzer.progRoach()
 fa.chanzer.b_rst = 0
 fa.chanzer.progRoach()
+
+
+
+#########3
+
+
+#get from gui sweep file.
+
+
+#now plot
+
+ff = '/home/beams0/TMADDEN/ROACH2/datafiles/sep23_2016/reslist.h5'
+mkidLoadData(ff)
+rffreqs = mkidGetFreqs()
+
+fa.sram.is_mod_freq=True
+
+rsln = fa.sram.getResolution()
+fa.sourceCapture([10e6],30000)
+time.sleep(1)
+fa.stopCapture()
+
+
+aa=fa.getIQ()
+
+clf()
+
+plot(aa[192]['stream_mag'][1:1000])
+
+plot(aa[193]['stream_mag'][1:1000])
+
+plot(aa[194]['stream_mag'][1:1000])
+
+
+st = numpy.zeros(1000)
+for k in range(1,1000,2):
+    st[k] = aa[192]['stream_phase'][k+1]
+    st[k+1] = aa[192]['stream_phase'][k]
+
+plot(st)
+
+fit = fitters()
+
+
+
+fa.chanzer.setFluxRampDemod(
+    is_demod=1,
+    is_incl_raw_trans=2, 
+    evt_len=100,
+    num_cycles=2.0)
+
+
+fa.chanzer.setFluxRampDemod(
+    is_demod=1,
+    is_incl_raw_trans=1, 
+    evt_len=100,
+    num_cycles=2.0)
+
+
+
+
+fa.sweepProgTranslators(rffreqs[:4])
+
+fa.sweepProgTranslators(rffreqs[:4],3)
+
+fa.chanzer.chan_to_translate
+
+fa.chanzer.clearTransTable()
+
+fa.chanzer.setFlxDmodTranTable(192,-0.03,-0.035)
+fa.chanzer.setFlxDmodTranTable(193,-0.013,-0.034)
+fa.chanzer.setFlxDmodTranTable(194,0.039,0.002)
+fa.chanzer.setFlxDmodTranTable(195,0.023,-0.030)
+
+fa.chanzer.progTranslator()
+
+fa.sweep(
+  span_Hz=4e6, 
+  center_Hz=-1, 
+  pts=256,
+  amplitude = 0,
+  defaultFRD=0,
+  if_new_settings = False)
+  
+
+measure.getMKIDsFromMultiSweep(sweeplen = 256)
+
+mlmove = ccopy.deepcopy(measure.measspecs.mlist)
+
+
+mlzeros = ccopy.deepcopy(measure.measspecs.mlist)
+
+mlraw = ccopy.deepcopy(measure.measspecs.mlist)
+
+measure.plotMultiSweeps(mlzeros)
+
+measure.plotMultiSweeps(mlmove)
+
+
+measure.plotMultiSweeps(mlraw)
+
+
+measure.plotMultiSweeps(measure.measspecs.mlist_raw1)
+
+measure.plotMultiSweeps(measure.measspecs.mlist_trans)
+
 
 
 ##########################################################3
@@ -53,12 +158,18 @@ fa.stopCapture()
 print len(freqs)
 
 
+fa.chanzer.setFluxRampDemod(is_demod=1,is_incl_raw_trans=1, evt_len=100,num_cycles=2.0)
+
+
+fa.chanzer.setFluxRampDemod(is_demod=1,is_incl_raw_trans=2, evt_len=100,num_cycles=2.0)
+
 fa.sourceCapture([10e6],20000)
-time.sleep(1)
+time.sleep(.1)
 fa.stopCapture()
 
 iq=fa.getIQ()
 
+plot(iq[192]['stream_mag'][:1000])
 
 
 dd=fa.dataread
@@ -262,8 +373,8 @@ roach.read_int('fifowrD')
 
 
 
-fa.sourceCapture([10e6],20000)
-time.sleep(1)
+fa.sourceCapture([20e6],20000)
+time.sleep(.01)
 fa.stopCapture()
 
 fa.getIQ()
@@ -630,6 +741,21 @@ linux address = leg1 address + 128
 
 """
 
+
+
+
+
+
+###########
+##\
+## which FW we use...
+######
+
+#!!fwtype = 'qdrdac'
+fwtype = 'tesd'
+
+
+
 def dbgtestfa2():
     
     for k in range(10*120):
@@ -705,17 +831,6 @@ def loadAnalyzer(filename):
     
 
 
-class fluxRampSpecs:
-
-    def __init__(self):
-        self.chan_cir_xy = { 192:(0.0,0.0) }
-        self.rf_delay = 30e-9
-        
-        self.flux_bin = 3.0
-        self.is_flux_demod = False
-    
-          
-    
     
 
 class fftAnalyzerR2:
@@ -730,33 +845,42 @@ class fftAnalyzerR2:
         is_anritsu_clk_=True, 
         is_datacap_=True):
     
-        self.flux_demod_specs = fluxRampSpecs()
+        self.is_running = False
+        
+        #self.flux_demod_specs = fluxRampSpecs()
      
         self.roach2=roach_
         
+        self.first_bbfreq=10.0e6
         self.tes_bias=0.0
         self.tes_bias_on = 0
+
+        self.fft_shift=31
+
+        self.freqs_sweep=[]
+        self.fbase=[]
+        self.bbfreqs = []
+        self.LO = 0
+        self.iqdata = []
         
-     
+        self.qdr_cal_good=False
+        
+        
+        
         if self.roach2 != None:
         
             self.powerupFW = ROACH_DIR+'/projcts/bestBitFiles/if_board_setup_2015_Aug_20_1511.bof'
 
             #this one used for most of data so far-- mar 2016
          
-            #this one has new sync ckt, new data format from the gb enet, added 0x5555 and data len header
-            #self.mainFW = '/home/oxygen31/TMADDEN/ROACH2/projcts/bestBitFiles/qdrdac_2016_May_23_1513.bof'
-            #this is workhorse FW
-            #self.mainFW = '/home/oxygen31/TMADDEN/ROACH2/projcts/bestBitFiles/qdrdac_2016_Jul_11_1331.bof'
-
             #fw for testing flux ramp demod on roach
-            self.mainFW = ROACH_DIR+'/projcts/bestBitFiles/qdrdac_2016_Sep_14_0927.bof'
-
-
-
+            #self.mainFW = ROACH_DIR+'/projcts/bestBitFiles/qdrdac_2016_Nov_18_1100.bof'
+            self.mainFW = ROACH_DIR+'/projcts/bestBitFiles/tesd_2017_Feb_14_1518.bof'
 
             self.temppath = ROACH_DIR+'/temp/'
 
+            self.anritsu_power = -5
+            
             self.is_datacap= is_datacap_
             self.is_anritsu_lo = is_anritsu_lo_
 
@@ -780,7 +904,7 @@ class fftAnalyzerR2:
 
             #!!if self.is_anritsu_lo:
             self.an = anritsu(self.is_anritsu_lo)
-            self.an.setPower(-5)
+            self.an.setPower(self.anritsu_power)
             self.an.setOnOff(1)
             self.setCarrier(5757e6)
 
@@ -795,6 +919,7 @@ class fftAnalyzerR2:
     
         #self.adcscope = roachScope(self.roach2, 'octoscope')
 
+        
         #self.fftscope = roachScope(self.roach2, 'octoscope1')
         self.sram = sramLut(self.roach2,'SRAM_LUT')
         self.qdr0=Qdr(self.roach2,'qdr0')
@@ -813,9 +938,19 @@ class fftAnalyzerR2:
         self.chanzer.b_rst=0
         self.chanzer.progRoach()
         
-        self.phaser1 = phaseCorrect(self.sram, self.rfft,'PhaseCorrect1',0)
-        self.phaser2 = phaseCorrect(self.sram, self.rfft,'PhaseCorrect2',1)
+        if fwtype == 'tesd':
+
+            self.phaser1 = phaseCorrect(self.sram, self.rfft,'FM_PhaseCorrect3',2,0.0)
+            self.phaser2 = phaseCorrect(self.sram, self.rfft,'FM_PhaseCorrect4',3,0.0)
+            self.phaser3 = phaseCorrect(self.sram, self.rfft,'FM_PhaseCorrect5',2,64.0)
+            self.phaser4 = phaseCorrect(self.sram, self.rfft,'FM_PhaseCorrect6',3,64.0)
         
+        elif fwtype == 'qdrdac':
+            self.phaser1 = phaseCorrect(self.sram, self.rfft,'PhaseCorrect3',0)
+            self.phaser2 = phaseCorrect(self.sram, self.rfft,'PhaseCorrect4',1)
+            self.phaser3 = phaseCorrect(self.sram, self.rfft,'PhaseCorrect5',2)
+            self.phaser4 = phaseCorrect(self.sram, self.rfft,'PhaseCorrect6',3)
+
         if self.is_datacap:
             self.capture=dataCapture()
             #!!self.capture.capture(True)
@@ -825,8 +960,8 @@ class fftAnalyzerR2:
         self.dataread=dataExtract(self.sram,self.rfft)
     
     
-        self.adcscope = roachScope(roach, 'octoscope')
-        self.fftscope = roachScope(roach, 'octoscope1')
+        #!!self.adcscope = roachScope(roach, 'octoscope')
+        #!!self.fftscope = roachScope(roach, 'octoscope1')
 
         
         self.rampgen = fluxRampGenerator(self.roach2,self.chanzer)
@@ -835,7 +970,88 @@ class fftAnalyzerR2:
         #!!self.adcdelays = [0,1,2,3]
     
     
+
+    def getUsefulData(self):
+        dat = self.getUsefulMetaData()
+        dat['fa.iqdata_raw'] = self.iqdata_raw
+   
+        return(dat)
+
+
         
+
+    def getUsefulMetaData(self):
+   
+        dat={
+            'fa.rfft.bin_to_chan':self.rfft.bin_to_chan ,
+            'fa.rfft.bin_to_legchan':self.rfft.bin_to_legchan ,
+            'fa.rfft.bin_to_srcfreq':self.rfft.bin_to_srcfreq ,
+            'fa.rfft.bin_to_leg':self.rfft.bin_to_leg ,
+            'fa.rfft.chan_to_bin4':self.rfft.chan_to_bin4,  
+            'fa.rfft.fft_bin_flags':fa.rfft.fft_bin_flags,         
+            'fa.phaser3.phase_inc_array':self.phaser3.phase_inc_array,
+            'fa.phaser4.phase_inc_array':self.phaser4.phase_inc_array,
+            'fa.if_board':self.if_board,
+            'fa.an':self.an,
+            'fa.sram.frequency_list':self.sram.frequency_list,
+            'fa.iqdata':self.iqdata,
+            'fa.sram.amplist':self.sram.amplist,
+            'fa.carrierfreq':self.carrierfreq,
+            'fa.bbfreqs':self.sram.frequency_list,
+            'fa.LO':self.carrierfreq,
+            'fa.freqs_sweep':self.freqs_sweep,
+            'fa.chanzer.sync_delay':fa.chanzer.sync_delay ,
+            'fa.chanzer.settings':fa.chanzer.settings ,
+            'fa.chanzer.read_fifo_size':fa.chanzer.read_fifo_size ,
+            'fa.chanzer.chan_to_translate':fa.chanzer.chan_to_translate ,
+            'fa.chanzer.b_wr_raw_data':fa.chanzer.b_wr_raw_data ,
+            'fa.chanzer.b_sync_source':fa.chanzer.b_sync_source ,
+            'fa.chanzer.b_savefluxtrans':fa.chanzer.b_savefluxtrans ,
+            'fa.chanzer.b_savefluxraw':fa.chanzer.b_savefluxraw ,
+            'fa.chanzer.b_is_look_sync':fa.chanzer.b_is_look_sync ,
+            'fa.chanzer.b_flux_demod':fa.chanzer.b_flux_demod ,
+            'fa.chanzer.b_en_int_rampgen':fa.chanzer.b_en_int_rampgen ,
+            'fa.chanzer.b_drop_all_events':fa.chanzer.b_drop_all_events ,
+            'fa.chanzer.flux_cos':fa.chanzer.flux_cos ,
+            'fa.chanzer.flux_cos_b':fa.chanzer.flux_cos_b ,
+            'fa.chanzer.flux_nsin':fa.chanzer.flux_nsin ,
+            'fa.chanzer.flux_nsin_b':fa.chanzer.flux_nsin_b,
+            'fa.tes_bias':fa.tes_bias ,
+            'fa.tes_bias_on':fa.tes_bias_on ,
+            'fa.span_Hz':fa.span_Hz ,
+            'fa.mainFW':fa.mainFW ,
+            'fa.loadFW':fa.loadFW}
+            
+        return(dat)
+
+    def setUsefulData(self,dat):
+        self.setUsefulMetaData(dat)
+        
+        self.iqdata_raw = dat['fa.iqdata_raw'] 
+
+    def setUsefulMetaData(self,dat):
+   
+      
+            self.rfft.bin_to_chan  = dat['fa.rfft.bin_to_chan']
+            self.rfft.bin_to_legchan  = dat['fa.rfft.bin_to_legchan']
+            self.rfft.bin_to_srcfreq  = dat['fa.rfft.bin_to_srcfreq']
+            self.rfft.bin_to_leg  = dat['fa.rfft.bin_to_leg']
+            self.rfft.chan_to_bin4 = dat['fa.rfft.chan_to_bin4']           
+            self.phaser3.phase_inc_array = dat['fa.phaser3.phase_inc_array']
+            self.phaser4.phase_inc_array = dat['fa.phaser4.phase_inc_array']
+            #self.if_board = dat['fa.if_board']
+            #self.an = dat['fa.an']
+            self.sram.frequency_list = dat['fa.sram.frequency_list']
+            self.iqdata = dat['fa.iqdata']
+            self.sram.amplist = dat['fa.sram.amplist']
+            self.carrierfreq = dat['fa.carrierfreq']
+            self.sram.frequency_list = dat['fa.bbfreqs']
+            self.carrierfreq = dat['fa.LO']
+            self.freqs_sweep = dat['fa.freqs_sweep']
+      
+
+
+
     def setCarrier(self,fc_hz,is_on=1):
     
         self.carrierfreq = fc_hz
@@ -935,23 +1151,32 @@ class fftAnalyzerR2:
         #
         # calibrate the qdrs
         #
-
+        
         self.qdr0.reset()
-        self.qdr0.qdr_cal()
+        qdrstat0 = self.qdr0.qdr_cal()
         self.qdr0.qdr_delay_clk_get()
         self.qdr0.qdr_cal_check()
 
         self.qdr1.reset()
-        self.qdr1.qdr_cal()
+        qdrstat1 = self.qdr1.qdr_cal()
         self.qdr1.qdr_delay_clk_get()
         self.qdr1.qdr_cal_check()
 
-
+        self.qdr_cal_good=True
+        if (not qdrstat0) or (not qdrstat1):
+            self.qdr_cal_good = False
+            
     def stopCapture(self):
         if self.capture != None:
             self.capture.capture(False)
+  
 
         self.rfft.stopFFTs()
+       
+        if self.capture != None:    
+            #time.sleep(2.0)  
+            self.capture.setStream2Disk(0,'temp')
+
 
     #given rf freq list, calc carrier freq, bb frqs
     def calcCarrierBBFreqs(self,freqlist_rf_Hz):
@@ -959,13 +1184,23 @@ class fftAnalyzerR2:
 
         farray = numpy.array(freqlist_rf_Hz)
         fmax = numpy.max(farray)
-        carrier = 10e6 + fmax
-        freq_bb =numpy.sort( +10e6 + fmax- farray )
+        carrier = self.first_bbfreq + fmax
+        freq_bb =numpy.sort( self.first_bbfreq + fmax- farray )
         freq_bb = freq_bb.tolist()
 
         return((carrier,freq_bb))    
 
-    def sourceCapture(self,freqlist,amp,numffts = -1,whichbins='Freqs',is_trig = True,is_zero_phaseinc=False):
+    #source and capture tones. if freqlist not lisst of baseband freqs, then reuse freqs. set to -1 for reuse, else list of bb freqs in Hz.amp list or scalar in adu.
+    #sources forever or numffts etc. stopCapture to stop
+    def sourceCapture(self,
+        freqlist,
+        amp,
+        numffts = -1,
+        whichbins='Freqs',
+        is_trig = True,
+        is_zero_phaseinc=False,
+        if_new_settings=True,       
+        stream_fname = None):
         
         self.stopCapture()
         
@@ -975,38 +1210,50 @@ class fftAnalyzerR2:
             self.capture.clearEvents()
             self.capture.capture(True)
 
-
+        
         #prog and start lut sines
-        self.sram.setLutFreqs(freqlist,amp)
+        #if -1 then reuse same freqs from earlier setting
+        
+        if if_new_settings:
+            self.sram.setLutFreqs(freqlist,amp)
+            print 'sourceCapture  setLutFreqs'
+            
+            
         #startdac
         self.dac.setReset()
         self.dac.setSync(1,1)
 
         self.roach2.write_int('MKID_ADC_settings',self.is_digital_loopback);
         
-        #!!self.roach2.write_int('MKID_ADC_iqtobus_sampleorder',\
-        #!!    (self.adcdelays[0]) + (self.adcdelays[1]<<2) + (self.adcdelays[2]<<4) + (self.adcdelays[3]<<6))
       
-        if whichbins=='Freqs':
-            self.rfft.fftBinsFreqs()
-            
-        else:
-            #"High" "Low", "All"
-            self.rfft.fftBinsAll(whichbins)
-           
+        if if_new_settings:
+            print 'sourceCapture fftBinsFreqs or fftBinsAll'
+            if whichbins=='Freqs':
+                self.rfft.fftBinsFreqs()
+
+            else:
+                #"High" "Low", "All"
+                self.rfft.fftBinsAll(whichbins)
+
             
       
        
         if self.capture != None:
             self.capture.mapChannels(self.rfft)
-            
-            #real time flux ramp dempd on C++ code
-            self.capture.setTimeDelay(self,self.flux_demod_specs.rf_delay)
-            self.capture.setFluxRampBin(self.flux_demod_specs.flux_bin)
-            self.capture.setCircleSpecs(self.flux_demod_specs.chan_cir_xy)
-            self.capture.setIsFluxRampDemod(self.flux_demod_specs.is_flux_demod)
+            if stream_fname != None:
+                self.capture.setStream2Disk(1,stream_fname)
+            else:
+                self.capture.setStream2Disk(0,'temp')
             
             
+       
+    
+        self.rfft.fftsynctime=128
+        self.rfft.roach_fft_shift=self.fft_shift
+                
+            
+        self.rfft.numFFTs(numffts)
+        self.rfft.progRoach()
             
 
         
@@ -1024,19 +1271,18 @@ class fftAnalyzerR2:
         if not is_zero_phaseinc:
             self.phaser1.reprogPhaseIncs() 
             self.phaser2.reprogPhaseIncs()
+            self.phaser3.reprogPhaseIncs() 
+            self.phaser4.reprogPhaseIncs()
         else:
             self.phaser1.zeroPhaseIncs() 
             self.phaser2.zeroPhaseIncs()
+            self.phaser3.zeroPhaseIncs() 
+            self.phaser4.zeroPhaseIncs()
        
-     
-        self.rfft.fftsynctime=128
-        self.rfft.roach_fft_shift=31
+   
       
       
       
-      
-        self.rfft.numFFTs(numffts)
-        self.rfft.progRoach()
         if is_trig:
             self.rfft.trigFFT()
 
@@ -1050,23 +1296,126 @@ class fftAnalyzerR2:
         return(0)
 
 
+    def calcAmp(self,L):
+        amp = 30000.0/L
+        return(amp)
+        
+        
+    def captureNoise(self,
+        rffreqs=[5100e6],
+        timesec=1.0,
+        fname = None,
+        is_new_settings=True,
+        BB=None,
+        LO = None, 
+        amp = None,
+        lock = None):
 
+        print 'fftAnaluzerR2.captureNoise'
+        self.is_running = True
+        
+        if LO==None:
+            [LO,BB]=self.calcBBLOFromRFFreqs(rffreqs)
+        
+        if is_new_settings:
+            self.setCarrier(LO)
+            
+        self.an.setOnOff(1)
+        
+        if amp==None:
+            amp = self.calcAmp(len(rffreqs))
+        
+        isn=is_new_settings
+        
+        self.sourceCapture(
+            BB,
+            amp,
+            whichbins='Freqs',
+            if_new_settings=isn,
+            stream_fname = fname)
+
+        numsec = 0.0
+        
+        print 'fftAnaluzerR2.captureNoise- waiting'
+
+        #if we passed a lock, then we release during wait, and reacq after wait
+        if lock!=None:
+            lock.release()
+            
+        while numsec<timesec:
+        
+            time.sleep(1.0)
+            numsec = numsec+1.0
+            
+            if not self.is_running:
+                break
+        
+        print 'fftAnaluzerR2.captureNoise- Stopping'
+        
+        if lock!=None:
+            lock.acquire()
+        
+        self.stopCapture()
+        
+        if fname == None:
+            self.getIQ()
+        else:
+        
+            self.getIQ(dsname = fname,issave = False)
+            os.rename(fname+'_B.h5',fname)
+  
+        self.an.setOnOff(0)    
+       
+        if fname!=None:
+            print 'saving to %s'%fname
+            dat=self.getUsefulMetaData()
+            hdf = hdfSerdes()
+            hdf.open(fname,'a')
+            hdf.write(dat,'metadata')
+            
+            hdf.close()
+            
+        
+
+            
+             
     #calc base band freq list, and LO freq given list of RF freqs
     def calcBBLOFromRFFreqs(self,rffreqs):
   
+        if type(rffreqs)==list:
+            rffreqs=numpy.array(rffreqs)
+            
         frange = max(rffreqs) - min(rffreqs)
         if frange>230e6:
             print "cannot source this freq list- to wide BW"
             return
 
-        LO=max(rffreqs)+10e6
+        LO=max(rffreqs)+self.first_bbfreq
         bbfreqs = LO - rffreqs
 
         bbfreqs = numpy.sort(bbfreqs)
         return( (LO, bbfreqs) )
 
-    def sweep(self,span_Hz=100e6, center_Hz=3000e6, pts=2048):
+    ########################
+    #
+    #span_Hz=100e6,  a float
+    #center_Hz=3000e6, one freq in hz or a list or array of freqs. these are center freqs
+    #nim points to seep pts=2048,
+    #raw_trans=1 or 2. raw or translated data raw is preferred
+    #center_Hz if -1, then reuse old centerfreqs, and dont recalc.
+    ##
+    def sweep(self,
+        span_Hz=100e6, 
+        center_Hz=3000e6, 
+        pts=2048,
+        amplitude = 20000,
+        defaultFRD=1,
+        if_new_settings=True,
+        lock=None,
+        callback=None):
 
+        self.is_running = True;
+        
         self.stopCapture()
 
 
@@ -1074,7 +1423,9 @@ class fftAnalyzerR2:
 
 
         #turn off flux ramp demod
-        self.chanzer.setFluxRampDemod(0,1,100,3.0)
+        if defaultFRD==1:
+            self.chanzer.setFluxRampDemod(0,1,100,3.0)
+            
         #make sure sync is off... we want all data, not wait for ramp gen sync
         self.rampgen.setIsSync(0)
 
@@ -1089,23 +1440,51 @@ class fftAnalyzerR2:
         self.sweep_num_freqs=pts;
         #self.sweep_samples_per_freq=floor(65536/self.sweep_num_freqs)
 
-        self.fbase = 10e6
+
+       
+
+        if if_new_settings:
+
+            if type(center_Hz)==float or type(center_Hz)==numpy.float64:
+                center_Hz = numpy.array([center_Hz])
+            
+            if type(center_Hz)==list:
+                center_Hz = numpy.array(center_Hz)
+                
+
+            (self.LO, self.bbfreqs) = self.calcBBLOFromRFFreqs(center_Hz)
+            self.center_Hz = center_Hz
+            self.amplitude = amplitude
+            self.span_Hz = span_Hz
+            self.pts = pts
+            
+            self.fbase = self.bbfreqs
+            self.start_carrier = self.LO-self.span_Hz/2.0
+            self.end_carrier = self.LO+self.span_Hz/2.0
+            self.inc_carrier = self.span_Hz/self.pts
+            self.carrier_freqs = arange(
+                self.start_carrier ,
+                self.end_carrier,
+                self.inc_carrier )
+
+
+            print 'sweep using NEW settings'
+            
+       
+        
+        
+        
+        if_new_settings_ = if_new_settings
         self.sourceCapture(
-            [self.fbase],
-            20000,
+            self.bbfreqs,
+            self.amplitude,
             numffts = 1,
             whichbins='Freqs',
-            is_trig = False)
+            is_trig = False,
+            is_zero_phaseinc=True,
+            if_new_settings = if_new_settings_)
 
 
-
-        self.start_carrier = center_Hz + self.fbase-span_Hz/2.0
-        self.end_carrier = center_Hz + self.fbase+span_Hz/2.0
-        self.inc_carrier = span_Hz/pts
-        self.carrier_freqs = arange(
-            self.start_carrier ,
-            self.end_carrier,
-            self.inc_carrier )
 
         
 
@@ -1115,8 +1494,6 @@ class fftAnalyzerR2:
         self.roach2.write_int('sw_timestamp',1)
         
         #take off data... we have some fifo problem... some time delay for some rheason...
-        #!!for k in range(256):        
-        #!!    self.rfft.trigFFT()
 
 
         
@@ -1126,15 +1503,35 @@ class fftAnalyzerR2:
         
         self.phaser1.zeroPhaseIncs()
         self.phaser2.zeroPhaseIncs()
+        self.phaser3.zeroPhaseIncs()
+        self.phaser4.zeroPhaseIncs()
 
 
+        lcount =0
+        
         for cf in self.carrier_freqs:
 
-            print 'trig fft cf=%f'%cf
+            #print 'trig fft cf=%f'%cf
             self.setCarrier(cf)
 
+            time.sleep(0.000001)
             self.rfft.trigFFT()
 
+            if not self.is_running: break
+            
+            
+            if callback!=None:
+                callback()
+                
+            #if passed a lock, we rlease, reacquire so other threads can do something if necessary
+            #assume we alrady had the lock
+            if lock!=None:
+                if (lcount%16)==0:
+                    lock.release()
+                    time.sleep(0.000001)
+                    lock.acquire()
+                    
+            lcount = lcount +1
 
         #we have taken 200 points, becaise some FWs may not have fifl readout yet we take
         #rest of points to fill memory, to make sure we have fifos readout. this is not used 
@@ -1142,10 +1539,9 @@ class fftAnalyzerR2:
 
         self.roach2.write_int('sw_timestamp',0)
 
-        self.setCarrier(self.fbase + center_Hz)
+        self.setCarrier(self.LO)
         time.sleep(.1)
-        #!!self.an.setOnOff(0)
-          
+        
 
         self.rfft.numFFTs(65536)
         self.rfft.progRoach()
@@ -1162,42 +1558,70 @@ class fftAnalyzerR2:
 
 
             stindex = self.findSweepData()
-            mags = self.iqdata_raw[192]['stream_mag'][stindex : (stindex+pts)]
-            phase = self.iqdata_raw[192]['stream_phase'][stindex : (stindex+pts)]    
+            if fwtype=='tesd':
+                mags = self.iqdata_raw[192]['stream_mag'][stindex : (stindex+2*pts):2]
+                phase = self.iqdata_raw[192]['stream_phase'][stindex : (stindex+2*pts):2]    
+            else:
+                mags = self.iqdata_raw[192]['stream_mag'][stindex : (stindex+pts)]
+                phase = self.iqdata_raw[192]['stream_phase'][stindex : (stindex+pts)]    
             #phase=self.removePhaseJumps(phase)
 
             self.iqdata = self.dataread.PolarToRect( [mags,phase] )
-            self.freqs_sweep = self.carrier_freqs - self.fbase
+            self.freqs_sweep = self.carrier_freqs - self.bbfreqs[0]
 
         self.an.setOnOff(0) 
         self.stopCapture()
         time.sleep(1)   
+        self.is_running = False
+
         
-    def getIQ(self):
-        dsname = self.temppath + 'TEMP'
+    def getIQ(self,dsname = None,issave = True,is_decimate=False,max_read_size = 1000000):
+        
+        is_rm_tempfiles = False
+        
+        if dsname==None:
+            dsname = self.temppath + 'TEMP'
+            is_rm_tempfiles = True
+            
         timeout=10
         cnt=0
         self.iqdata_raw={}
-        while 192 not in fa.iqdata_raw.keys():
+
+        if issave:
+            self.capture.saveEvents(dsname)
+        
+        while  not os.path.isfile(dsname+'_B.h5'):
+          time.sleep(1.0)
+          cnt=cnt+1
+          print 'waiting for file save to finish'
+          if cnt==timeout:
+              print "ERROR cannot get data"
+              return({})
+          
+        #we should get two commands from the c program. 
+        #self.capture.getCmd()
+        #self.capture.getCmd()
+        
+        hdf=hdfSerdes()
+        #if dataset large, and is_decimatge, it gets sample of whole dataset but decimated to reduce sise.
+        #max size is set in hdf.maxreadsize. if not decimate, it reads only up to maxreadsize. 
+        #default to 1M samples
+        hdf.setDecimate(is_decimate)
+        hdf.maxreadsize=max_read_size
+        
+        fn = dsname + '_B.h5'
+        hdf.open(fn,'r')
+        self.iqdata_raw = hdf.read()
+        hdf.close()
        
+
+        #self.dataread
+        if is_rm_tempfiles:
+            os.system('rm -rf %s'%(dsname+'_A.h5'))
+            os.system('rm -rf %s'%(dsname+'_B.h5'))
+
        
-              self.capture.saveEvents(dsname)
-              #!! how to tell the stuff is saved...
-              #we should get two commands from the c program. 
-              self.capture.getCmd()
-              self.capture.getCmd()
-              time.sleep(2)
-              self.iqdata_raw = self.dataread.readEvents(dsname)
-              cnt = cnt+1
-       
-              #self.dataread
-              os.system('rm -rf %s'%(dsname+'_A'))
-              os.system('rm -rf %s'%(dsname+'_B'))
- 
-              if cnt==timeout:
-                      print "ERROR cannot get data"
-                      break
- 
+
  
         return(self.iqdata_raw)
         
@@ -1269,7 +1693,14 @@ class fftAnalyzerR2:
         self.roach2.write_int('txdestip',self.ip)
         self.port = 50000
         self.roach2.write_int('txdestport',self.port)
-        self.roach2.setupEth('xmit0','192.168.1.11',100,'02:02:00:00:00:01')
+        
+        
+        if fwtype == 'tesd':
+            self.roach2.setupEth('GBEthernet_xmit0','192.168.1.11',100,'02:02:00:00:00:01')
+    
+        elif fwtype == 'qdrdac':
+            self.roach2.setupEth('xmit0','192.168.1.11',100,'02:02:00:00:00:01')
+    
         self.roach2.infoEth()
 
 
@@ -1406,8 +1837,11 @@ class fftAnalyzerR2:
             plot(abs(FF))
     
 
-    def setTESBias(self,is_on,vbias):
+    def setTESBias(self,is_on,vbias,callback = None):
     
+        if sim==None:
+            return
+            
         if is_on:
             sim.setOutOn(0)
             vsweep = arange(10.0,vbias-0.02,-0.02)
@@ -1416,9 +1850,12 @@ class fftAnalyzerR2:
             sim.setOutOn(1)
 
             for v in vsweep:
+                self.temp_volts = v
                 sim.setVolts(v)
-                print v
+                
                 time.sleep(0.01)
+                if callback!=None: callback()
+                
 
             self.tes_bias = vbias       
             self.tes_bias_on = 1
@@ -1430,9 +1867,335 @@ class fftAnalyzerR2:
             
             
             
+    #give list of iqcenter data.
+    # dict with keys 'rffreq', 'xc', 'yc' mmkidMeasure,getResonatorIQCenters  retyrns this.  
+    #this will program the translator in roach w. iq circle centers
+    #call sourceCapture with freqs=-1 . also call sweep w/ freqs =-1 for sweep with these sets      
+             
+    def progTranslatorsFromIQCircles(self,iqcd):
+        
+        if iqcd != -1:
+            self.iqcenterdata = iqcd
+        
+        
+        #rffreqs = []
+        #for item in self.iqcenterdata:
+        #    rffreqs.append(item['rffreq'])
+        
+        
+     
+        for item in self.iqcenterdata:
+            #item['bbfreq'] = self.carrierfreq - item['rffreq']
+            #item['bin'] = self.rfft.getBinFromFreq(item['bbfreq'])
+            #item['LO'] = self.carrierfreq
+            #item['chan'] = self.rfft.bin_to_chan[item['bin']]
+            
+            self.chanzer.setFlxDmodTranTable(chan=item['chan'],xc=item['xc'],yc=item['yc'])
+
+        self.chanzer.progTranslator()
+        #return( self.iqcenterdata)
+        
+
+    #rffreqs as a list of freqs in hz, actual res freqs in Hz. sweep flags is 3 bits
+    #0, test center freq, 1, do sweep for iq center meas, 2 sweep to test iq center
+    def sweepProgTranslators(
+        self,
+        rffreqs, 
+        sweepflags = 7,
+        lock_=None,
+        callback_ = None):
+        
+        measure.measspecs.rffreqs = rffreqs
+
+        #if sweepflags&1:
+        if False:
+            self.chanzer.clearTransTable()
+            #
+            # sweep and do IQ vel to get exact freqs.
+            #
+            print "Measure exact frequencies of Resonators"
+
+            self.chanzer.setIsSync(0)
+            self.chanzer.setFluxRampDemod(
+                is_demod=0,
+                is_incl_raw_trans=1, 
+                evt_len=100,
+                num_cycles=2.0)
+
+            amp = self.calcAmp(len(rffreqs))
+
+            self.sweep(
+                span_Hz=4e6, 
+                center_Hz=rffreqs, 
+                pts=256,
+                amplitude = amp,
+                defaultFRD=0,
+                lock=lock_,
+                callback=callback_)
+
+            #we do IQ calc in htere..
+            mlist = measure.getMKIDsFromMultiSweep(sweeplen = 256)
+            #reset rffreqs to []
+            rffreqsrough=rffreqs
+            
+            rffreqs = []
+            for m in mlist:
+                rffreqs.append( m.reslist[0].getFc())
+
+            measure.measspecs.rffreqs = rffreqs
+            measure.measspecs.rffreqsrough = rffreqsrough
             
             
+            #measure.measspecs.iqdata_msweep_raw0 = ccopy.deepcopy(self.iqdata_raw)
+            measure.measspecs.mlist_raw0 = ccopy.deepcopy(measure.measspecs.mlist)
+            andata = self.getUsefulData()
+            measure.measspecs.andata_0 = ccopy.deepcopy(andata)
+            
+
+        #
+        # now we have correct freqs, opeimize wave lut table for these freqs. sweep to find IQ curcles
+        #
+        
+        if sweepflags&2:
+
+            print "Sweep to get IQ centers"
+            self.chanzer.setIsSync(0)
+            self.chanzer.setFluxRampDemod(
+                is_demod=0,
+                is_incl_raw_trans=1, 
+                evt_len=100,
+                num_cycles=2.0)
+            amp = self.calcAmp(len(rffreqs))
+
+            self.sweep(
+                span_Hz=4e6, 
+                center_Hz=measure.measspecs.rffreqs, 
+                pts=256,
+                amplitude = amp,
+                defaultFRD=0,
+                lock=lock_,
+                callback=callback_)
+
+            #measure.measspecs.iqdata_msweep_raw1 = ccopy.deepcopy(self.iqdata_raw)
+
+
+            #get mkid/resonator list from the sweep we just did.
+            #stored in measure.measspecs.mlist
+            measure.getMKIDsFromMultiSweep(sweeplen = 256)
+            measure.measspecs.mlist_raw1 = ccopy.deepcopy(measure.measspecs.mlist)
+            andata = self.getUsefulData()
+            measure.measspecs.andata_1 = ccopy.deepcopy(andata)
 
 
 
+
+            #extract res data we need such as rffreq, and iq circle centers
+            measure.getResonatorIQCenters()
+
+        if sweepflags & 4:
+            #
+            # Program trnaslators, sweep again to test that we cound IQ cuircles correctly
+            #
+            print "Test measured IQ centers"
+
+            self.progTranslatorsFromIQCircles(measure.iqcenterdata)
+
+            self.chanzer.setIsSync(0)
+            self.chanzer.setFluxRampDemod(
+                is_demod=1,
+                is_incl_raw_trans=2, 
+                evt_len=100,
+                num_cycles=2.0)
+            amp = self.calcAmp(len(rffreqs))
+
+            self.sweep(
+                span_Hz=4e6, 
+                center_Hz=-1, 
+                pts=256,
+                amplitude = amp,
+                defaultFRD=0,
+                if_new_settings = False,
+                lock=lock_,
+                callback=callback_)
+
+            measure.getMKIDsFromMultiSweep(sweeplen = 256)
+
+            #measure.measspecs.iqdata_msweep_trans = ccopy.deepcopy(self.iqdata_raw)
+            measure.measspecs.mlist_trans = ccopy.deepcopy(measure.measspecs.mlist)
+
+
+            #!!for m in measure.measspecs.mlist_trans: 
+            #!! m.reslist[0].setDelay(measure.xmission_line_delay)
+            #!! m.reslist[0].applyDelay()
+
+ 
+
+            andata = self.getUsefulData()
+            measure.measspecs.andata_trans = ccopy.deepcopy(andata)
+
+        self.is_running=False
+          
+  
+  
+  
+    def plotMultiSweep(self,swlen = 256,is_clf=True):
+
+        if is_clf:
+            figure(11)
+            clf()
+            figure(12)
+            clf()
+        for k in self.iqdata_raw.keys():
+            print k
+            figure(11)
+            subplot(2,1,1)
+            plot(self.iqdata_raw[k]['stream_mag'][:swlen])
+            subplot(2,1,2)
+            plot(self.iqdata_raw[k]['stream_phase'][:swlen])
+            figure(12)
+            iq=self.dataread.PolarToRect(
+                [self.iqdata_raw[k]['stream_mag'][:swlen], 
+                self.iqdata_raw[k]['stream_phase'][:swlen]  ])
+            plot(iq[0],iq[1])
+
+
+
+
+
+    def voltSweep(self,
+        vlist=None,
+        rffreq=[5100e6],
+        numsamples = 2000,
+        fnames=None,
+        BB=None,
+        LO = None,
+        amp=None,
+        lock = None,
+        callback=None):
+
+        self.is_running=True
+        
+        if vlist==None:
+            vlist = numpy.arange(10.0,0.0,-0.1)
+
+        ev=0
+        #base band 10MHz, amp is 30k counts in DACs. take 200 ffts, and only return the 10MHz fft bin. do not trig the ffts yet.
+
+        self.an.setOnOff(1)  
+        #get sync from ext ramp gen.
+        self.rampgen.setSyncSource(0)
+        #trigger on ramp gen pulses
+        self.rampgen.setIsSync(1)
+        #meas sync freq, and set up event size (or flux ramp event size) number of samples.
+        self.rampgen.setChannelizerFifoSync()
+
+        self.phaser1.zeroPhaseIncs()
+        self.phaser2.zeroPhaseIncs()
+        self.phaser3.zeroPhaseIncs()
+        self.phaser4.zeroPhaseIncs()
+
+        self.chanzer.setSyncDelay(self.chanzer.sync_delay_extgenerator)
+
+        time.sleep(0.5)
+
+        sim.setOutOn(1)
+        #self.capture.setStream2Disk(1, fnames)
+
+        if BB==None:
+            [LO,BB]=self.calcBBLOFromRFFreqs(rffreq)
+    
+        self.setCarrier(LO)
+        if amp==None:
+            amp = self.calcAmp(len(rffreq))
+
+       
+
+        self.sourceCapture(
+            BB,
+            amp,        
+            whichbins='Freqs',
+            is_trig=False,
+            stream_fname = fnames)
+
+
+        volts = vlist[0]
+        sim.setVolts(volts)
+        roach.write_int('sw_timestamp',int(1000*volts))
+        roach.write_int('sw_timestamp2',int(1000*volts))
+        self.rfft.trigFFT()
+        #wait for the capture to start
+        time.sleep(0.01)
+
+        if lock!=None: lock.release()
+        
+        for volts in vlist:
+            self.temp_volts = volts
+            sim.setVolts(volts)
+            #embed voltage into roach data stream so we associate the voltage with the data.
             
+            if lock!=None: lock.acquire()            
+            roach.write_int('sw_timestamp',int(1000*volts))
+            roach.write_int('sw_timestamp2',int(1000*volts))
+            if lock!=None: lock.release()
+            #self.chanzer.flushFifos()
+            
+            time.sleep(0.3)
+            if callback!=None:
+                callback()
+            
+            if not self.is_running:
+                break
+
+
+        if lock!=None: lock.acquire()     
+        self.stopCapture()
+        ev =self.getIQ(dsname = fnames,issave = False,is_decimate = True,max_read_size = 10000)
+        sim.setOutOn(0)
+        self.an.setOnOff(0)    
+
+        os.rename(fnames+'_B.h5',fnames)
+        
+        for ch in ev.keys():        
+            #LO = self.carrierfreq - self.rfft.bin_to_srcfreq[ ev[ch]['bin'][0] ]
+            ev[ch]['rffreq'] = LO
+
+
+
+        if fnames!=None:
+           hdf=hdfSerdes()
+           hdf.open(fnames,'a')
+          
+           dat = self.getUsefulMetaData()
+           hdf.write(dat,'metadata')
+           hdf.close()
+
+
+        return(ev)
+
+
+    # pick internal or external suync source- using internal FW ramp gen (we done use it), or the external
+    #agilent ramp source. ci is in dex of a gui- OPenLoop is 0, Closed Agilent ramp is 1, closed loop inter ramp is 2
+
+    def setRampSyncSource(self,ci):
+        
+        #no ramp
+        if ci==0:
+            self.rampgen.setIsSync(0)
+            self.rampgen.setSyncSource(0)
+            self.rampgen.setChannelizerFifoSync()
+        
+        #ext ramp
+        elif ci==1:
+        #int ramp
+            self.rampgen.setIsSync(1)
+            self.rampgen.setSyncSource(0)
+            self.rampgen.setChannelizerFifoSync()
+
+
+        else:
+            self.rampgen.setIsSync(1)
+            self.rampgen.setSyncSource(1)
+            self.setRampSpecs()
+            ##self.rampgen.setChannelizerFifoSync()
+        
+  

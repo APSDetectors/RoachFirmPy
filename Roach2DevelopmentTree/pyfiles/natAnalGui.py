@@ -1,21 +1,23 @@
 import sys, os, random, math, array, fractions
-from PySide.QtCore import *
-from PySide.QtGui import *
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
  
+import thread
 
 import socket
 import matplotlib, time, struct, numpy
-from bitstring import BitArray
+#from bitstring import BitArray
+
 import matplotlib.pyplot as mpl
-mpl.rcParams['backend.qt4']='PySide'
+mpl.rcParams['backend.qt4']='PyQt4'
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d import Axes3D
 import h5py
 
-
+import Queue
 
 #from tables import *
 #from lib import iqsweep
@@ -37,6 +39,7 @@ execfile('mkidMeasure.py')
 
 
 execfile('sim928.py')
+execfile('roachEpics.py')
 
 #from fftAnalyzerR2 import *
 
@@ -44,13 +47,6 @@ execfile('sim928.py')
 #from katcpNc import *
 
 
-
-global is_use_multiprocess
-
-try:
-    is_use_multiprocess
-except:
-    is_use_multiprocess=0
 
 
 #name of firmware in /boffiles/ on the roach board.
@@ -66,13 +62,104 @@ except:
 #new- seems to work well
 
 
-#!!fwnames=['networkanalyzer_2014_Jun_25_1330.bof' , 'fftanalyzerd_2014_Jun_26_1427.bof' ]
-#!!fwnames=['networkanalyzer_2014_Jun_25_1330.bof' , 'fftanalyzerdfast_2014_Sep_23_1725.bof' ]
 
-#fwnames=[
-#'networkanalyzer_2014_Jun_25_1330.bof' , 
-# 'fftanalyzeri_2015_Feb_04_1632.bof']
 
+def shutdownEverything():
+
+    
+  
+    roachlock.acquire();
+   
+    
+
+    try: fa.capture.shut()
+    except: pass
+
+
+    try: fa.an.shut()
+    except: pass
+
+    try: roach.closeFiles()
+    except: pass
+
+
+    roachlock.release()
+    form.message_timer.stop()
+    
+
+
+roach_fast_setup = 0
+
+def setupEverything(ip = '192.168.0.70'):
+
+    global roach
+    global fit
+    global fa
+    global na
+    global measure
+    global sim
+    global hdf
+    global roachlock
+    
+     
+    roachlock.acquire();
+   
+    
+
+    try:
+    
+       
+        form.message_timer.start()
+
+        
+        roach=katcpNc(ipaddr = ip)
+        roach.startNc()
+        
+        if roach_fast_setup==0:
+            fa = fftAnalyzerR2(roach)
+        else:
+            fa = fftAnalyzerR2(
+                roach_ = roach,
+                is_loadFW=False,
+                is_calqdr=False,
+                is_powerup=False)
+#        fa = fftAnalyzerR2(
+#            roach_=roach,
+#            is_powerup=True,
+#            is_loadFW=True, 
+#            is_calqdr=False,
+#            is_anritsu_lo_ = True,
+#            is_anritsu_clk_=True, 
+#            is_datacap_=False)
+#
+     
+        
+        na = fa
+        fit=fitters();
+        measure = mkidMeasure()
+        fa.sourceCapture([10e6],20000)
+        time.sleep(.5)
+        fa.stopCapture()
+
+        hdf=hdfSerdes()
+        status = 0
+        
+        sim = simNULL()
+        
+    except:
+        print "Error w/ setupEverything"
+        status = 1
+        traceback.print_exc()
+
+    
+    roachlock.release()
+    return(status)
+
+
+is_epics_running = False
+
+
+temp_ip='192.168.0.70'
 
 fwnames=[
 'networkanalyzer_2014_Jun_25_1330.bof' , 
@@ -127,9 +214,13 @@ class AppForm(QMainWindow):
 
         signal_plot=Signal()
 
-        self.connect(SIGNAL('signal_plot()'), self.updatePlot)
+        #self.connect(SIGNAL('signal_plot()'), self.updatePlot)
+        self.connect(self,SIGNAL('signal_plot()'), self.updatePlot)
 
-
+     
+            
+        self.signal_store_text = 'hello'
+        
         #true to add a resonance freq on plot click
         self.is_addres_onclick=False
 
@@ -168,8 +259,17 @@ class AppForm(QMainWindow):
         self.gui_settings_file='roachpref.py'
 
         self.fftreslist=[]
-
-        self.timer=QTimer()    
+    
+        global message_queue 
+        message_queue = Queue.Queue()
+        
+        self.message_timer=QTimer()    
+        
+        self.message_timer.timeout.connect(self.readMessageQueue)    
+        self.message_timer.start(500)
+        self.timer_count = 0
+        #self.pool=QThreadPool()
+        #self.pool.setMaxThreadCount(10)
    
 #    def get_fit_queue(self):
 #        stat=getMkidFitQueue()
@@ -189,95 +289,301 @@ class AppForm(QMainWindow):
 #    if stat==0:
 #        self.is_fits_mp_running=1
 #
+  
+        
+
+    def readMessageQueue(self):
+    
+        self.timer_count = self.timer_count + 1
+        try:
+            while True:
+
+                self.signal_dict = message_queue.get_nowait()
+                if (is_epics_running):
+                    epics_queue_fromroach.put(self.signal_dict)
+
+
+                for kk in self.signal_dict.keys():
+   
+                    if kk=='LOFreq':
+                        lo = self.signal_dict[kk]
+                        messx = 'LO = %f'%lo
+                        self.status_text.setText(messx)
+
+                    elif kk=='status_string':
+
+                        self.status_text.setText(self.signal_dict[kk])
+
+                    elif kk == 'signalPlot':
+                        self.plottype = self.signal_dict[kk]   
+                        self.signalPlot()
+                        roachlock.acquire()
+                        try:
+                            iqdata = ccopy.deepcopy(fa.iqdata)
+                            freqs_sweep=ccopy.deepcopy(fa.freqs_sweep)
+                            iqdata_raw = ccopy.deepcopy(fa.iqdata_raw)
+                            iqp =fa.dataread.RectToPolar(fa.iqdata)
+                        except:
+                            print "problem copying data from fa"
+
+                        roachlock.release()
+                        chan = 192
+                        try:
+                            if is_epics_running:
+                                epics_queue_fromroach.put( {'FreqSweepMag':iqp[0]} )
+                                epics_queue_fromroach.put( {'FreqSweepPhase':iqp[1]} )
+                                epics_queue_fromroach.put( {'FreqSweepI':iqdata[0]} )
+                                epics_queue_fromroach.put( {'FreqSweepQ':iqdata[1]} )
+                                epics_queue_fromroach.put( {'SweepFreqs':freqs_sweep} )
+                                epics_queue_fromroach.put( {'TimeStamps':iqdata_raw[chan]['timestamps']} )
+                                epics_queue_fromroach.put( {'RawNoiseMag':iqdata_raw[chan]['stream_mag']} )
+                                epics_queue_fromroach.put( {'RawNoisePhase':iqdata_raw[chan]['stream_phase']} )
+                                epics_queue_fromroach.put( {'FluxRampPhase':iqdata_raw[chan]['flux_ramp_phase_unwrap']} )
+
+                                reslist_str = mkidList2Str()
+                                epics_queue_fromroach.put( {'ResListText':reslist_str} )
+
+
+                        except:
+                            print "problem sending iqdata to epicsQ"
+
+
+        except:
+            pass
+            
+            
+    
+        try:
+            #this will run as long as there is stuff in epics_queue_toroach. the get no wait will throw exception and
+            #exit while loop if the wueue is empty. generally it will just throw... if many things in q then it gets all of them
+            while (is_epics_running):                     
+                self.epicsmessage_dict = epics_queue_toroach.get_nowait()
+                print 'got epics message'
+                
+                message = self.epicsmessage_dict['message']
+                value = self.epicsmessage_dict['value']
+
+                print "qt got %s"%(message)
+                
+                if message=='form.openClient':
+                    if self.epicsmessage_dict['value']==1:
+                        self.openClient()
+                if message=='form.reOpenClient':
+                    if self.epicsmessage_dict['value']==1:
+                        self.reOpenClient()
+                elif message=='form.closeClient':
+                    if self.epicsmessage_dict['value']==1:
+                        self.closeClient()
+                elif message=='form.startSweep':
+                    if self.epicsmessage_dict['value']==1:
+                        self.startSweep()
+                elif message=='form.runStop':
+                    if self.epicsmessage_dict['value']==1:
+                        self.runStop()
+                        
+                elif message=='form.spinbox_SpanFreq':
+                    value =  self.epicsmessage_dict['value']
+                    self.spinbox_SpanFreq.setValue(value)           
+                elif message=='form.spinbox_CenterFreq':
+                    value =  self.epicsmessage_dict['value']
+                    self.spinbox_CenterFreq.setValue(value)           
+                elif message=='form.spinbox_numSwPts':
+                    value =  self.epicsmessage_dict['value']
+                    self.spinbox_numSwPts.setValue(value)     
+                    
+                    
+                elif message=='form.extractRes':
+                    if self.epicsmessage_dict['value']==1:
+                        self.extractRes()
+                        reslist_str = mkidList2Str()
+                        epics_queue_fromroach.put( {'ResListText':reslist_str} )
+                     
+                elif message=='form.clearResList':
+                    if self.epicsmessage_dict['value']==1:
+                        self.clearResList()
+                        reslist_str = mkidList2Str()
+                        epics_queue_fromroach.put( {'ResListText':reslist_str} )
+                       
+                elif message=='form.savePlot2':
+                    if self.epicsmessage_dict['value']==1:
+                        self.savePlot2()
+                
+                elif message=='form.loadSweepPlot2':
+                    if self.epicsmessage_dict['value']==1:
+                        self.loadSweepPlot2()
+                        sweepCallback()
+                
+                elif message=='form.temp_sweep_fname':                    
+                    self.temp_sweep_fname = self.epicsmessage_dict['char_value']
+
+                elif message=='form.signalPlot':
+                    if self.epicsmessage_dict['value']==1:
+                        message_queue.put({'signalPlot':1})   
+   
+                elif message=='form.checkbox_BBLoopback':                  
+                    form.checkbox_BBLoopback.setChecked(
+                        self.epicsmessage_dict['value'])
+ 
+                elif message=='form.checkbox_RFLoopback':                  
+                    form.checkbox_RFLoopback.setChecked(
+                        self.epicsmessage_dict['value'])
+
+                elif message=='form.checkbox_FPGALoopback':                  
+                    form.checkbox_FPGALoopback.setChecked(
+                        self.epicsmessage_dict['value'])
+
+                elif message=='form.checkbox_extClk':                  
+                    form.checkbox_extClk.setChecked(
+                        self.epicsmessage_dict['value'])
+                elif message=='form.spinbox_AttOut0':
+                    value =  self.epicsmessage_dict['value']
+                    self.spinbox_AttOut0.setValue(value)           
+                elif message=='form.spinbox_AttOut1':
+                    value =  self.epicsmessage_dict['value']
+                    self.spinbox_AttOut1.setValue(value)           
+                elif message=='form.spinbox_AttIn0':
+                    value =  self.epicsmessage_dict['value']
+                    self.spinbox_AttIn0.setValue(value)           
+ 
+                elif message=='form.calibrateIQCircles':
+                    if self.epicsmessage_dict['value']==1:
+                        self.calibrateIQCircles2()
+ 
+                elif message=='form.loadIQCircleCal2':
+                    if self.epicsmessage_dict['value']==1:
+                        self.loadIQCircleCal2() 
+ 
+ 
+                elif message=='form.saveIQCircleCal':
+                    if self.epicsmessage_dict['value']==1:
+                        self.saveIQCircleCal2() 
+ 
+ 
+                elif message=='form.temp_iqcircalfname':                    
+                    self.temp_iqcircalfname = self.epicsmessage_dict['char_value']
+
+                elif message=='form.temp_ivvoltspecs':                    
+                    self.temp_ivvoltspecs = self.epicsmessage_dict['char_value']
+                    self.textbox_ivrange.setText(self.temp_ivvoltspecs)
+                    vlisttxt = self.temp_ivvoltspecs.split(':')
+                    vlista = []
+                    for vt in vlisttxt:
+                        vlista.append( float(vt)  )
+                   
+                    vlist = numpy.arange(vlista[0], vlista[1], vlista[2])
+                    fa.iv_vlisttemp = vlist
+                    
+                    
+                elif message=='form.temp_ivfilename':                    
+                    fa.iv_fnametemp = self.epicsmessage_dict['char_value']
+                    self.textbox_ivfilename.setText(fa.iv_fnametemp)
+ 
+                elif message=='form.noisetemp_fname':                    
+                    fa.noisetemp_fname = self.epicsmessage_dict['char_value']
+ 
+ 
+                elif message=='form.combobox_str_frd':
+                    value =  self.epicsmessage_dict['value']
+                    self.combobox_str_frd.setCurrentIndex(value) 
+                    fa.temp_frdci = value         
+ 
+                elif message=='form.combobox_syncsource':
+                    value =  self.epicsmessage_dict['value']
+                    self.combobox_syncsource.setCurrentIndex(value)
+                    self.temp_combobox_syncsource  =  value
+                           
+                
+                elif message=='form.checkbox_teson':                  
+                    self.checkbox_teson.setChecked(
+                        self.epicsmessage_dict['value'])
+                    self.temp_checkbox_teson = self.epicsmessage_dict['value']
+                    
+
+                elif message=='form.textbox_flxRmpPrd':                    
+                    cvalue = self.epicsmessage_dict['char_value']
+                    self.textbox_flxRmpPrd.setText(cvalue)
+                    fa.temp_numprd = float(cvalue)
+
+                elif message=='form.noisetemp_timesec':                    
+                    cvalue = self.epicsmessage_dict['char_value']
+                    self.textbox_streamsec.setText(cvalue)
+                    self.noisetemp_timesec = float(cvalue)
+
+                         
+ 
+                elif message=='form.streamRun':
+                    if self.epicsmessage_dict['value']==1:
+                        self.streamRun2()
+                elif message=='form.sweepTesIV':
+                    if self.epicsmessage_dict['value']==1:
+                        self.sweepTesIV2()
+ 
+                      
+                else:
+                    print "Unsupported epics message %s"%message
+
+
+                    
+                    
+        except:
+            pass
+            
+              
+    
     def closeClient(self):
     
-        global roach
-        global fit
-        global fa
-        global na
-        global measure
-        
-        try: fa.capture.shut()
-        except: pass
-        
-
-        try: fa.an.shut()
-        except: pass
-
-        try: roach.closeFiles()
-        except: pass
-        
-        
-        
+        thread.start_new_thread(runShutdownEverything,())
 
     def openClient(self):
             #roach = corr.katcp_wrapper.FpgaClient(self.textbox_roachIP.text(),7147)
-
-        global roach
-        global fit
-        global fa
-        global na
-        global measure
-        global sim
-        global hdf
+        global roach_fast_setup 
         
-        ip=self.textbox_roachIP.text()
-        roach=katcpNc(ipaddr = ip)
-        roach.startNc()
-
-        self.status_text.setText('connection established')
-        print 'Connected to ',self.textbox_roachIP.text()
-
-
-        execfile(self.gui_settings_file);
-
-
-        fa = fftAnalyzerR2(roach)
-        fa.ifSetup()
+        roach_fast_setup=0
         
-        na = fa
+        ip=str(self.textbox_roachIP.text())
+        #execfile(self.gui_settings_file);
+        
+        #setupEverything(ip)
+        
+        global temp_ip
+        temp_ip = ip
 
-        fit=fitters();
-
-
-        measure = mkidMeasure(na,fit)
+        #self.status_text.setText('connection established')
+        #print 'Connected to ',self.textbox_roachIP.text()
+        thread.start_new_thread(runSetupEverything,())
         
 
-        self.button_StSweep.setEnabled(True)
-
-
-        fa.sourceCapture([10e6],20000)
-        time.sleep(.5)
-        fa.stopCapture()
-
-        if False:
-            sim=sim928()
-            sim.open()
-            sim.connport(8)
-            sim.getId()
-           
-
-      
-
-        hdf=hdfSerdes()
-
-        
-
-        #if is_use_multiprocess==1:
-        if False: 
-            startQMP();
-            #start process that gets queue items and dies fits. this runs on local system
-            #if already running then not started again..
-            startFitServeMP('')
-
-
+    def reOpenClient(self):
     
+        global roach_fast_setup 
         
-    
+        roach_fast_setup=1
+        
+        ip=str(self.textbox_roachIP.text())
+        #execfile(self.gui_settings_file);
+        
+        #setupEverything(ip)
+        
+        global temp_ip
+        temp_ip = ip
+
+        #self.status_text.setText('connection established')
+        #print 'Connected to ',self.textbox_roachIP.text()
+        thread.start_new_thread(runSetupEverything,())
+  
+    def setBiasSource(self,ci):
+        print 'setBiasSource'
+        #ci = self.combobox_biassource.currentIndex()
+        #null vsource
+        fa.temp_biassource_index=ci
+        thread.start_new_thread(runSetupBiasSource,())
+        
+                
 
 #na.setDelay(30e-9); print na.delay
     def plotPolar(self):
-        self.status_text.setText('Plotting')
+        roachlock.acquire()
+    
 
     
     
@@ -292,7 +598,7 @@ class AppForm(QMainWindow):
         if na.incrFreq_Hz<0.001:
             freqs=numpy.arange(na.memLen/8);
 
-
+        
     #na.plotFreq(iq)
 
         if self.clearplot==1:
@@ -312,6 +618,7 @@ class AppForm(QMainWindow):
 
         self.canvas.draw();
 
+        roachlock.release()
         print "plot done"
 
     
@@ -364,15 +671,19 @@ class AppForm(QMainWindow):
         clist=[]
 
         if len(selected)>0:
-            slist.append(selected[0].data(0,100))
-
+            #slist.append(selected[0].data(0,100))
+            slist.append(selected[0].mkid)
+            
         for row in range(wlist.topLevelItemCount()):
             item=wlist.topLevelItem(row)
             if item.checkState(0)==Qt.Checked:
-                clist.append(item.data(0,100))
-                item.data(0,100).checked=1
+                #clist.append(item.data(0,100))
+                clist.append(item.mkid)
+                #item.data(0,100).checked=1
+                item.mkid.checked=1
             else:
-                item.data(0,100).checked=0
+                #item.data(0,100).checked=0
+                item.mkid.checked=0
 
 
 
@@ -455,8 +766,9 @@ class AppForm(QMainWindow):
     #run power sweep, already setup, on calling thread
     def powersweep2(self): 
         
+        roachlock.acquire()
         measure.powerSweep()
-
+        roachlock.release()
        
     
     #setup power sweep from gui settings    
@@ -468,7 +780,6 @@ class AppForm(QMainWindow):
         
 
 
-        self.status_text.setText('Busy')       
         print "Spawn power sweep 10:0.5:30"
 
         sweep_specs = measSpecs()
@@ -495,25 +806,20 @@ class AppForm(QMainWindow):
 
         sweep_specs.mlist=  self.getMkidSelectedChecked(self.list_reslist2)[0]
 
-
+        roachlock.acquire()
         measure.powersweepSetup(sweep_specs)
-        
+        roachlock.release()
         
         if len(self.mlist)==0:
             print "No resonators selected or checked"
             return(0)
 
-        print "Sweeping %d Resonators"%(len(self.mlist))
-
-
-        #na.TpowerSweep(at_inst,at_st,at_inend,at_sweeps,mlist)
-        #self.status_text.setText('Sweeping')       
-        #self.is_sweeping=1
+      
 
 
    #calculate IQ velocity
     def IQvelocity(self):
-        print "------Calculating IQ velocity ----------"
+        print "------Calculating IQ velocity, Fit Circle ----------"
 
         #figure(111)
         #clf()
@@ -521,7 +827,8 @@ class AppForm(QMainWindow):
             fit.reslist=m.reslist
             print "Calc IQVel, MKID %fHz"%(m.getFc())
             fit.IQvelocityCalc()
-
+            print "Fit Circle %fHz"%(m.getFc())
+            fit.fitCircleCalc()
 
 
         
@@ -620,75 +927,28 @@ class AppForm(QMainWindow):
     
 
     def runIt(self):
-    
-#
-#        try:
-#            na.dbgclear()
-#        except:
-#            pass
-#
-#
-#
-#	    na.fft_num_sweep_pts = self.spinbox_num_fft_sw_pts.value()
-#
-#        gain_indx = self.combobox_fft_gain.currentIndex()
-#        fftgains=[2047,1023,511,255,127,63,31]
-#        na.roach_fft_shift=fftgains[gain_indx]
-#        na.progRoach()
+
 
         #get checked MKIDs
         self.mlist= self.getMkidSelectedChecked(self.list_reslist2)[0]
         #get checked rows in the gui, same as mkids, but row nimbers so we can remember the checked on gui
         self.checked_list_rows = self.getRowsChecked()
         self.powersweepSetup()
-#
-#        threadflag=0
 
-        #if self.check_multiprocess.isChecked():
-        #    is_use_multiprocess=1
-        #else:
-        #    is_use_multiprocess=0
+        measure.measspecs.num_noise_traces = self.spinbox_numNoise.value()
+        ntime = float(self.textbox_noisesec.text())
+        
+        measure.setNoiseTime(ntime)
 
+        measure.temp_check_powersweep = self.check_powersweep.isChecked()
+        measure.temp_check_runFits = self.check_runFits.isChecked()
+        measure.temp_check_runIQvelocity = self.check_runIQvelocity.isChecked()
+        measure.temp_check_getnoise= self.check_getnoise.isChecked()
+        measure.temp_fitmlist = self.mlist
+        
+        
+        thread.start_new_thread(runSweepResCheckedOps,())
 
-
-        if self.check_powersweep.isChecked():
-            
-         #   if is_use_multiprocess>0:        
-         #       threadflag=threadflag | 1
-         #   else:
-            self.powersweep2();
-
-            time.sleep(1.0)
-        if self.check_runFits.isChecked():
-#            if is_use_multiprocess>0:    
-#                threadflag=threadflag | 2
-#            else:   
-            self.runFits2()
-#
-        if self.check_runIQvelocity.isChecked():
-            self.IQvelocity()
-                       
-#       if is_use_multiprocess>0:    
-#                threadflag=threadflag | 4
-#            else:   
-#                self.IQvelocity()
-#
-        time.sleep(1.0)
-        if self.check_getnoise.isChecked():
-            self.runNoise()
-
-        time.sleep(1.0)
-
-#        if self.check_getnoise.isChecked():
-#            if is_use_multiprocess>0:    
-#                threadflag=threadflag | 8
-#            else:   
-#                self.runNoise()
-#
-#
-#        self.thread=QNetThread(threadflag);
-#        self.thread.start()
-#
 
 
 
@@ -718,8 +978,9 @@ class AppForm(QMainWindow):
 
             #get selected mkid
 
-            mkid=selected[0].data(100)
-
+            #mkid=selected[0].data(100)
+            mkid=selected[0].mkid
+            
             #get current trace into res data object
             res=na.getResonator()
             #add this trace to the res
@@ -756,9 +1017,9 @@ class AppForm(QMainWindow):
 
                 ap=event.ydata
 
-                measure.device_name = self.textbox_devicename.text()
+                measure.device_name = str(self.textbox_devicename.text())
                 mkid = measure.newMkid(ff)
-                mkid.chip_name = self.textbox_devicename.text()
+                mkid.chip_name = str(self.textbox_devicename.text())
                 MKID_list.append(mkid)
 
 
@@ -773,7 +1034,7 @@ class AppForm(QMainWindow):
     def extractRes(self):
         global MKID_list
         
-        measure.device_name = self.textbox_devicename.text()
+        measure.device_name = str(self.textbox_devicename.text())
         mkid = measure.newMkid(0)
         res=measure.getResonator(mkid)
         nsg=float(self.textbox_extract_thresh.text())
@@ -808,13 +1069,56 @@ class AppForm(QMainWindow):
 
 
 
+    def sweepTesIV(self):
+  
 
-
-    #load FW, sweep res and stream
-    def streamRun(self):
-    
       
+        vrangetxt =  str(self.textbox_ivrange.text()  )
+        vlisttxt = vrangetxt.split(':')
+        vlista = []
+        for vt in vlisttxt:
+            vlista.append( float(vt)  )
+            
+        
+        vlist = numpy.arange(vlista[0], vlista[1], vlista[2])
+        fname = str(self.textbox_ivfilename.text())
+        
+        
+          
+        (frd,frdci) =self.flxRampComboDecode()
+          
+        numprd = float(self.textbox_flxRmpPrd.text())
+        
+         
+        ci = self.combobox_syncsource.currentIndex()
+       
+       
+        roachlock.acquire()
+             
+   
+        fa.temp_open_or_closedloop = ci
+  
+        fa.temp_numprd =  numprd
+        fa.temp_frd = frd
+        fa.temp_frdci = frdci
+ 
+        fa.iv_vlisttemp = vlist
+        fa.iv_fnametemp = fname
+        fa.iv_bbtemp = measure.measspecs.andata_trans['fa.sram.frequency_list']
+        fa.iv_lotemp = measure.measspecs.andata_trans['fa.LO']
+        roachlock.release()
+        self.plottype = 10
+       
+        
+        #!!status=self.pool.tryStart( runnable )
+        thread.start_new_thread(runSweepTesIV,())
+        
 
+             
+  #load FW, sweep res and stream
+    def calibrateIQCircles(self):
+
+  
 
         mlist =self.getSelMkid()
         if len(mlist) == 0:
@@ -822,82 +1126,190 @@ class AppForm(QMainWindow):
             return
             
             
-        rffreqs = []
+        fa.temp_rffreqs_rough = []
         
         for mkid in mlist:
             res = mkid.reslist[0]
-            rffreqs.append(res.getFc())
+            fa.temp_rffreqs_rough.append(res.getFc())
             print res.getFc()
+
+       
+        
+        self.noisetemp_timesec =  float( self.textbox_streamsec.text()  )
+        self.noisetemp_fname = str(self.textbox_streamfilename.text())
+    
+        fa.if_board.at.atten_U6=self.spinbox_AttOut0.value()
+        fa.if_board.at.atten_U7=self.spinbox_AttOut1.value()
+
+        fa.if_board.at.atten_U28=self.spinbox_AttIn0.value()
+        
+        
+        thread.start_new_thread(runSweepProgTranslators,())
+        #fa.sweepProgTranslators(rffreqs_rough)      
+ 
+   
+    def plotTranslatorCal(self):        
+        
+        figure(1)
+        clf()
+        #print rffreqs_
+        for m in measure.measspecs.mlist_trans: 
+           m.reslist[0].plotFreq(isclf=0,is_pl_trot=False)        
             
-            
-        bbfreqs = []
-             
-        (LO, bbfreqs ) = fa.calcBBLOFromRFFreqs( numpy.array(rffreqs) )
-        
-        if len(bbfreqs)==0:
-            print "No resonators!!"
-            return
-            
-        print LO
-        print bbfreqs
-             
-        fa.setCarrier(LO)
-        
-        amp = 30000.0 * (1.0 / len(bbfreqs))
-        print amp
-        
-        fa.sourceCapture(bbfreqs, amp)
+
+
+    def saveIQCircleCal(self):
+    
         
         
+        self.temp_iqcircalfname = str(QFileDialog.getSaveFileName(
+            caption='Hdf File Name',
+            options=QFileDialog.DontConfirmOverwrite))
+    
+        self.saveIQCircleCal2()
+
+    def saveIQCircleCal2(self):
+    
+        if self.temp_iqcircalfname != '':
+            measure.saveTranslatorSweepData(self.temp_iqcircalfname)    
+   
 
 
+    def loadIQCircleCal(self):
+    
+        self.temp_iqcircalfname = QFileDialog.getOpenFileName(caption='Hdf File Name')[0]
+        self.loadIQCircleCal2()
 
+    def loadIQCircleCal2(self):
+    
 
-    def streamStop(self):
-        fa.stopCapture()
-
-        time.sleep(1.0)
-        fa.getIQ()
+        if self.temp_iqcircalfname!='':
+            measure.loadTranslatorSweepData(self.temp_iqcircalfname)    
+    
+        self.plottype = 11
+        self.signalPlot()
         
-        fa.dataread.plotStreams(nsamples=2000)
+    
+      
+    #load FW, sweep res and stream
+    def streamRun(self):
+        print "form.streamRun()"
 
+        
+        
+        timesec_ =  float( self.textbox_streamsec.text()  )
+        fname_ = str(self.textbox_streamfilename.text())
+        
+     
+        
+        
+      
+        
+        tesvolts =  float(self.textbox_tesVolts.text())
+        is_tes_on = self.checkbox_teson.isChecked()
+        
+        ci = self.combobox_syncsource.currentIndex()
+          
+        (frd,frdci) =self.flxRampComboDecode()
+          
+        numprd = float(self.textbox_flxRmpPrd.text())
+        
+        
+        rampfreq = float(self.textbox_rampfreq.text())
+        frdlen = float(self.textbox_FRDLen.text())
+        frddly = float(self.textbox_FRDDly.text())
 
+        maxfrddly = (fa.rfft.dac_clk / fa.rfft.fftLen) / rampfreq
+        if frddly>=maxfrddly:
+           frddly =  0
+           print "ERROR max sync delay too large"
+        
+        roachlock.acquire()       
+        fa.temp_is_tes_on = is_tes_on
+        fa.temp_tesvolts = tesvolts
+        #rffreqs_ = measure.measspecs.rffreqs
+     
+        fa.temp_open_or_closedloop = ci
+  
+        fa.temp_numprd =  numprd
+        fa.temp_frd = frd
+        fa.temp_frdci = frdci
+ 
+        fa.noisetemp_timesec = timesec_
+        fa.noisetemp_fname = fname_
+        
+        
+        fa.syncdelay_temp = 128* frddly
+        fa.frdlen_temp = frdlen
+        roachlock.release()
+        
+        self.plottype=5;
+        print "starting new theead"
+        thread.start_new_thread(runCaptureNoise,())
+      
 
-
-
-
-
+ 
     def saveSweep(self):
     
         hdf=hdfSerdes()
         
-        fname = QFileDialog.getSaveFileName(
+        fname = str(QFileDialog.getSaveFileName(
             caption='Hdf File Name',
-            options=QFileDialog.DontConfirmOverwrite)[0]
+            options=QFileDialog.DontConfirmOverwrite))
             
+        roachlock.acquire()
         hdf.open(fname,'a')
         gname = 'sweep_%s'%time.asctime().replace(' ','_')
-        hdf.write(fa,gname)
+        hdf.write(fa.getUsefulData(),gname)
         hdf.close()
-        
-        
+        roachlock.release()    
+  
     def savePlot(self):
-    
-        hdf=hdfSerdes()
-        
-        fname = QFileDialog.getSaveFileName(
+        self.temp_sweep_fname = str(QFileDialog.getSaveFileName(
             caption='Hdf File Name',
-            options=QFileDialog.DontConfirmOverwrite)[0]
+            options=QFileDialog.DontConfirmOverwrite))
             
-        hdf.open(fname,'a')
+        self.savePlot2()
+        
+        
+    def savePlot2(self):
+      
+        fname = self.temp_sweep_fname
+        hdf=hdfSerdes()    
+        roachlock.acquire()
+        hdf.open(fname,'w')
         gname = 'plot_%s'%time.asctime().replace(' ','_')
         iqp = fa.dataread.RectToPolar(fa.iqdata)
-        pldata = {'iqp':iqp , 'iq':fa.iqdata, 'freqs': fa.freqs_sweep }
+        pldata = fa.getUsefulData()
+        pldata['fa.iqdata_polar']=iqp     
+             
+             
         hdf.write(pldata,gname)
         hdf.close()
-        
+        roachlock.release()    
         #pickle.dump(pldata,open(fname+'.pic','wb'))
         
+        
+         
+    def loadSweepPlot(self):     
+        
+        self.temp_sweep_fname = QFileDialog.getOpenFileName(caption='Hdf File Name')[0]
+        self.loadSweepPlot2()
+        self.plottype = 1
+        self.signalPlot()
+        
+    def loadSweepPlot2(self):
+    
+        fname = self.temp_sweep_fname
+        hdf=hdfSerdes()    
+        
+        hdf.open(fname,'r')
+        dat = hdf.read()
+        hdf.close()
+        roachlock.acquire()
+        pldata = fa.setUsefulData(dat)
+        roachlock.release()    
+    
     
     def startSweep(self):
     
@@ -932,14 +1344,21 @@ class AppForm(QMainWindow):
             
         #status=self.pool.tryStart( runnable )
         npts = self.spinbox_numSwPts.value()
-        fa.sweep(span_Hz=sf*1e6, center_Hz=cf*1e6, pts=npts)
+        
+        success = roachlock.acquire()
+       
+        fa.temp_span_Hz = sf*1e6
+        fa.temp_center_Hz = cf*1e6
+        fa.temp_pts = npts
 
+        roachlock.release()
         #self.button_StSweep.setEnabled(True)
         
         
-        self.updatePlot()
         
-        print "startSw return"
+        
+        thread.start_new_thread(runIQSweep,())
+        
 
 
 
@@ -1000,30 +1419,35 @@ class AppForm(QMainWindow):
         
     def bbLoopback(self,state):
         
+        roachlock.acquire()
         if state==2:
             fa.if_board.rf.baseband_loop=1
         else:
             fa.if_board.rf.baseband_loop=0
         
         fa.if_board.progIfBoard()
-            
+        roachlock.release()   
 
 
 
 
     def extClk(self,state):
+    
+        roachlock.acquire();
         if state==2:
             fa.if_board.rf.lo_internal=0
         else:
             fa.if_board.rf.lo_internal=1
         
         fa.if_board.progIfBoard()
+        roachlock.release()
     
     #self.rfOutEn(0)    
 
 
     def rfOutEn(self,state):
     
+        roachlock.acquire()
         if state==2:
             fa.if_board.LO.rfouten=1
         else:
@@ -1031,45 +1455,53 @@ class AppForm(QMainWindow):
         
     
         fa.if_board.progIfBoard()
+        roachlock.release()
 
 
     def rfLoopback(self,state):
+        roachlock.acquire();
+        
         if state==2:
             fa.if_board.rf.rf_loopback=1
         else:
             fa.if_board.rf.rf_loopback=0
         
         fa.if_board.progIfBoard()
+        roachlock.release()
             
             
     def fpgaLoopback(self,state):
+        roachlock.acquire()
         if state==2:
             na.is_digital_loopback=1
         else:
             na.is_digital_loopback=0
+        roachlock.release()
         
         
         
         
     def setAttenuatorsOut0(self,val):
-    
+        roachlock.acquire();
         fa.if_board.at.atten_U6=val
         fa.if_board.progAtten(fa.if_board.at)
+        roachlock.release()
         
         
 
         
     def setAttenuatorsOut1(self,val):
-   
+        roachlock.acquire();
         fa.if_board.at.atten_U7=val
         fa.if_board.progAtten(fa.if_board.at)
-       
+        roachlock.release()
 
     def setAttenuatorsIn0(self,val):
    
+        roachlock.acquire();
         fa.if_board.at.atten_U28=val
         fa.if_board.progAtten(fa.if_board.at)
-       
+        roachlock.release()
     
 
     
@@ -1088,8 +1520,8 @@ class AppForm(QMainWindow):
         #mkidSaveData(randname)
 
         
-        filename = QFileDialog.getSaveFileName(
-            caption='Hdf File Name')[0]
+        filename = str(QFileDialog.getSaveFileName(
+            caption='Hdf File Name'))
             
 
 
@@ -1122,10 +1554,11 @@ class AppForm(QMainWindow):
         for m in MKID_list:
             m.reslist=[]
             
-        self.populateListWidget()
+        #self.populateListWidget()
    
   
-
+        self.signalPlot()
+        
 
     def updatePlot(self):
     
@@ -1162,16 +1595,23 @@ class AppForm(QMainWindow):
             if (self.plottype ==  9):
                     self.plotChan3D();
 
+            if self.plottype == 10:
+                self.plotIVCurves()
+            
+            if self.plottype==11:
+                self.plotTranslatorCal()                
 
         except:
         #else:
             print 'natAnalGui::updatePlot- Exception'
             print 'plot type %d, %s'%(self.plottype,self.plot_names[self.plottype])
             traceback.print_exc()
+            roachlock.release()
 
     
         self.populateListWidget()
-
+        self.updateCalResListDisplay()
+        
         #if is_thread_running>0:
         #    self.label_threadrun.setVisible(True)
         #else:
@@ -1179,22 +1619,40 @@ class AppForm(QMainWindow):
 
         
     def signalPlot(self):
-        self.signal_plot.emit()
+        self.emit(SIGNAL('signal_plot()'))
 
 
-    
+
+    def updateCalResListDisplay(self):
+        
+        try:
+            strx = ''
+            for m in measure.measspecs.mlist_trans:
+                strx = strx + '%5.2fMHz, '%(m.getFc()/1e6)
+            self.label_resListCalIQ.setText(strx)
+        except:
+            pass
+           
     def getTimestamp(self):    
        timestamp = "T".join( str( datetime.datetime.now() ).split() )
        return(timestamp)
 
     
-    
-    
+ #  self.textbox_Dly.setMaximumWidth(70)
+ #       self.textbox_Dly.textChanged.connect(self.updateXMLineDelay)
+        
+    def updateXMLineDelay(self):
+        delaysec = float(self.textbox_Dly.text()) * 1e-9
+        measure.xmission_line_delay = delaysec
     
     def getIQF(self):
-    
+        iqp = fa.dataread.RectToPolar(fa.iqdata)
+        delaysec = measure.xmission_line_delay
+        iqpdly = measure.calcLineSweepDelay2(iqp,fa.freqs_sweep,delaysec)
        
-        return([fa.iqdata,fa.freqs_sweep])
+        iqdly = fa.dataread.PolarToRect(iqpdly)
+        
+        return([iqdly,fa.freqs_sweep])
 
 
 
@@ -1203,8 +1661,7 @@ class AppForm(QMainWindow):
 
 
     def magPhasePl(self):
-        self.status_text.setText('Plotting')
-
+        
 
         #!!na.setDelay(1e-9*float(self.textbox_Dly.text()));
         iqf=self.getIQF()
@@ -1264,10 +1721,12 @@ class AppForm(QMainWindow):
             self.markerlistx=[]
 
             for m in MKID_list:
-                self.markerlistx.append(m.rough_cent_freq)
+                self.markerlistx.append(m.getFc())
 
-            ind1=find(self.markerlistx>freqs[0])
-            ind2=find(self.markerlistx<freqs[len(freqs)-1])
+         
+            
+            ind1=numpy.where(self.markerlistx>freqs[0])[0]
+            ind2=numpy.where(self.markerlistx<freqs[len(freqs)-1])[0]
             ind = list(set(ind1).intersection(set(ind2)))
 
             yvals=(0.5*(max(IQp[0]) + min(IQp[0])))*ones(len(ind))
@@ -1311,7 +1770,6 @@ class AppForm(QMainWindow):
 
 
     def IQPlots(self):
-        self.status_text.setText('Plotting')
 
 
         #!!na.setDelay(1e-9*float(self.textbox_Dly.text()));
@@ -1372,7 +1830,6 @@ class AppForm(QMainWindow):
 
         
     def fourPlots(self):
-        self.status_text.setText('Plotting')
 
 
         #!!na.setDelay(1e-9*float(self.textbox_Dly.text()));
@@ -1392,9 +1849,9 @@ class AppForm(QMainWindow):
         self.axes2 = self.fig.add_subplot(4,1,3)
         self.axes3 = self.fig.add_subplot(4,1,4)        
 
-
+        roachlock.acquire()
         IQp=na.dataread.RectToPolar(iq)
-
+        roachlock.release()
 
         if self.clearplot==1:
             self.axes0.clear()
@@ -1444,9 +1901,10 @@ class AppForm(QMainWindow):
 
 
     
+        roachlock.acquire();
         for resdata in self.fftreslist:
 
-            fbase=na.findBasebandFreq(resdata.rough_cent_freq)
+            fbase=na.findBasebandFreq(resdata.getFc())
             ts=na.extractTimeSeries(fbase)
             tsr=na.dataread.PolarToRect(ts)
             tsr_tr=fit.trans_rot3(resdata, tsr)
@@ -1463,7 +1921,7 @@ class AppForm(QMainWindow):
             #self.axes0.plot(resdata.iqdata[0], resdata.iqdata[1])
             #self.axes0.plot(tsr[0],tsr[1],'.')
 
-
+        roachlock.release()
         self.canvas.draw();
     
     def plotChan3D(self):
@@ -1477,6 +1935,7 @@ class AppForm(QMainWindow):
         k=0.0
 
         zranges=[]
+        roachlock.acquire();
         for f in na.frequency_list:
           try:
             ts = na.extractTimeSeries(f)
@@ -1494,69 +1953,164 @@ class AppForm(QMainWindow):
         self.axes0.set_zlim(bottom=zlim[0], top=zlim[1])
 
         self.canvas.draw();
+        roachlock.release()
 
 
+    def subplot(self,a,b,c):
+        if (a,b,c) in self.axislist.keys():
+            self.curaxis = self.axislist[(a,b,c)]
+        else:
+            self.curaxis = self.fig.add_subplot(a,b,c)
+            self.axislist[(a,b,c)] = self.curaxis
+        
+        self.canvas.draw();
+        
+    def clf(self):
+        self.fig.clear()
+        self.axislist = {}
+        
+        self.curaxis = None
+        
+        self.canvas.draw();
+        
+    def set_xlabel(self,st):
+        self.curaxis.set_xlabel(st)
+        
+    def set_ylabel(self,st):
+        self.curaxis.set_ylabel(st)
 
+    def plot(self,*args):
+        if self.curaxis==None:
+            self.subplot(1,1,1)
+        
+        if len(args)==1:    
+            self.curaxis.plot( args[0] )
 
+        if len(args)==2:    
+            self.curaxis.plot( args[0],args[1] )
+
+        if len(args)==3:    
+            self.curaxis.plot( args[0],args[1],args[2] )
+            
+        if len(args)==4:    
+            self.curaxis.plot( args[0],args[1],args[2],args[4] )
+
+        self.canvas.draw();
+         
+#hdf.open('superduper.h5','r')
+#aa=hdf.read()
+#aa
+#fa.iqdata_raw = aa['iqdata_raw']
+#hdf.close()
+#form.plotMultiChanMagPh()
+    def plotIVCurves(self):
     
+        roachlock.acquire()
+        if self.clearplot==1:
+            self.clf()
+            
+     
+        k=0.0
+        colorlist = ['b','g','r','c','m','y','k']
+
+
+        cind = 0
+        for k in fa.iqdata_raw.keys():
+            color = colorlist[ cind%len(colorlist) ]
+
+            frd = fa.iqdata_raw[k]['flux_ramp_phase_unwrap'][::-1]  
+            mv =   fa.iqdata_raw[k]['timestamp'][::-1]   /1000.0
+            self.plot(mv,frd,colorlist[cind])
+            cind = cind+1
+    
+        roachlock.release()
     def plotMultiChanMagPh(self):
         if self.clearplot==1:
 
-            self.fig.clear()
+            self.clf()
 
-        self.axes0 = self.fig.add_subplot(2,1,1)
-        self.axes1 = self.fig.add_subplot(2,1,2)
 
-        self.axes0.set_xlabel('Time')
-        self.axes0.set_ylabel('Mag')
-
-        self.axes1.set_xlabel('Time')
-        self.axes1.set_ylabel('Degrees')
-
-        if self.clearplot==1:
-
-            self.axes0.clear()
-
-        self.axes0.plot()
-
+        roachlock.acquire();
+      
 
         k=0.0
+        colorlist = ['b','g','c','m','y','k']
+        
+        if True:
+            cind = 0
+            for k in fa.iqdata_raw.keys():
+                color = colorlist[ cind%len(colorlist) ]
+                
+                if 'stream_mag' in fa.iqdata_raw[k].keys():
+                    ld = len(fa.iqdata_raw[k]['stream_mag'])
+                    if ld>1000: ld = 1000
 
-        try:
-            for f in na.frequency_list:
-                print 'here 1'
-                print f
-                ts = na.extractTimeSeries(f)
-                tsr=na.dataread.PolarToRect(ts)
-                ts[0] = ts[0] - median(ts[0])
-                ts[1] = ts[1] - median(ts[1])
-
-
-                stdmag=numpy.std(ts[0])
-                stdph=numpy.std(ts[1]) * (180.0/pi)
-
-
-                print 'here 2'
-                self.axes0.plot(k*stdmag +  ts[0]-median(ts[0]))
-
-                self.axes1.plot(k*stdph +   (ts[1] - median(ts[1]))*(180.0/pi))
-
-                k = k+3.0
+                    self.subplot(3,2,1)
+                    self.plot(fa.iqdata_raw[k]['stream_mag'][:ld],color)
+                    self.subplot(3,2,3)
+                    self.plot(fa.iqdata_raw[k]['stream_phase'][:ld],color)
+                
+                    self.subplot(3,2,5)
+                    self.plot(fa.iqdata_raw[k]['flux_ramp_phase_unwrap'],color)
 
 
-            self.axes0.set_ylim((-3*stdmag,k*stdmag))
-            self.axes1.set_ylim((-3*stdph,k*stdph))
+                    IQ = fa.dataread.PolarToRect(\
+                        [  fa.iqdata_raw[k]['stream_mag'][:ld],
+                        fa.iqdata_raw[k]['stream_phase'][:ld]])
 
-        except:
-            print "exception somewhere"
+                    self.subplot(1,2,2)
+                    self.plot(IQ[0],IQ[1],'%s.'%color)
+                    cind=cind+1
+                else:
+                
+                    
+                    self.plot(fa.iqdata_raw[k]['flux_ramp_phase_unwrap'],color)
 
-        self.canvas.draw();
+            if 'stream_mag' in fa.iqdata_raw[k].keys():
+                self.subplot(3,2,1)        
+                self.set_xlabel('Sample')
+                self.set_ylabel('Mag')
 
+                self.subplot(3,2,3)
+                self.set_xlabel('Sample')
+                self.set_ylabel('Radians')
+                
+                #plot red dots where events start
+                evtlen = fa.iqdata_raw[k]['event_len'][0]
+                for x in range(0,ld,evtlen):
+                    self.plot(x,fa.iqdata_raw[k]['stream_phase'][x],'ro')
+                    
+                self.subplot(3,2,5)
+                self.set_xlabel('Sample')
+                self.set_ylabel('FRD Phase')
 
+                self.subplot(1,2,2)
+
+                frdci = self.combobox_str_frd.currentIndex()
+                if frdci==0 or frdci==1:
+                    mlist = measure.measspecs.mlist_raw1
+                else:
+                    mlist = measure.measspecs.mlist_trans
+
+                cind = 0
+                for m in mlist:
+                    color = colorlist[ cind%len(colorlist) ]
+                    res = m.reslist[0]
+                    self.plot(res.iqdata[0],res.iqdata[1],color)
+                    cind = cind+1
+            else:
+                self.set_xlabel('Sample')
+                self.set_ylabel('FRD Phase')     
+
+        else:
+            print "exception form.plotMultiChanMagPh"
+
+        
+
+        roachlock.release()
     
     def plotIvQ(self):
 
-        self.status_text.setText('Plotting')
    
  
 
@@ -1602,7 +2156,8 @@ class AppForm(QMainWindow):
         selected=self.list_reslist2.selectedItems()
 
         if len(selected)>0:
-            obj=selected[0].data(0,100)
+            #obj=selected[0].data(0,100)
+            obj=selected[0].mkid
 
             if obj.__class__.__name__ == "MKID":
                 fit.reslist = obj.reslist
@@ -1617,6 +2172,29 @@ class AppForm(QMainWindow):
 
 
 
+  
+    def setResFreq(self):
+        
+    
+
+        selected=self.list_reslist2.selectedItems()
+
+        if len(selected)>0:
+            #obj=selected[0].data(0,100)
+            obj=selected[0].mkid
+
+            if obj.__class__.__name__ == "MKID":
+                resfreqMHz = float(self.textbox_manResFreq.text())
+                obj.manual_cent_freq=resfreqMHz*1.0e6
+                
+                for res in obj.reslist:
+                    res.manual_cent_freq  = resfreqMHz*1.0e6              
+
+            if obj.__class__.__name__ == "resonatorData":
+                
+                print "--ERROR --Select MKID, NOT TRACE"
+
+
 
     def medFilter(self):
         
@@ -1625,7 +2203,8 @@ class AppForm(QMainWindow):
         selected=self.list_reslist2.selectedItems()
 
         if len(selected)>0:
-            obj=selected[0].data(0,100)
+            #obj=selected[0].data(0,100)
+            obj=selected[0].mkid
 
             if obj.__class__.__name__ == "MKID":
                 fit.reslist = obj.reslist
@@ -1645,7 +2224,8 @@ class AppForm(QMainWindow):
         selected=self.list_reslist2.selectedItems()
 
         if len(selected)>0:
-            obj=selected[0].data(0,100)
+            #obj=selected[0].data(0,100)
+            obj=selected[0].mkid
 
             if obj.__class__.__name__ == "MKID":
                 fit.reslist = obj.reslist
@@ -1667,7 +2247,8 @@ class AppForm(QMainWindow):
         selected=self.list_reslist2.selectedItems()
 
         if len(selected)>0:
-            obj=selected[0].data(0,100)
+            #obj=selected[0].data(0,100)
+            obj=selected[0].mkid
 
             if obj.__class__.__name__ == "MKID":
                 for r in obj.reslist:
@@ -1686,7 +2267,8 @@ class AppForm(QMainWindow):
         selected=self.list_reslist2.selectedItems()
 
         if len(selected)>0:
-            obj=selected[0].data(0,100)
+            #obj=selected[0].data(0,100)
+            obj=selected[0].mkid
 
             if obj.__class__.__name__ == "MKID":
                 obj.clearResList()
@@ -1846,8 +2428,9 @@ class AppForm(QMainWindow):
             item=QListWidgetItem(self.list_reslist)
             #the 100 is some random number.. it is like an index for all the data objhects inside of the item.
             #calkuing item.data(100) returns the MKID obhect
-            item.setData(100,mkid)
-            item.setText('Res# %d %s fc=%4.1fMHz  Traces: %d'%(mkid.resonator_num, mkid.chip_name, mkid.rough_cent_freq/1e6,len(mkid.reslist)))
+            #!!item.setData(100,mkid)
+            item.mkid = mkid
+            item.setText('Res# %d %s fc=%4.1fMHz  Traces: %d'%(mkid.resonator_num, mkid.chip_name, mkid.getFc()/1e6,len(mkid.reslist)))
             #item.setFlags(item.flags() | Qt.ItemIsUserCheckable )
 
 
@@ -1855,11 +2438,11 @@ class AppForm(QMainWindow):
             # populate the tree view on the data tab
             #
             item2=QTreeWidgetItem(self.list_reslist2)
-            item2.setData(0,100,mkid)
-
+            #item2.setData(0,100,mkid)
+            item2.mkid = mkid
             item2.setText(0,'Res %d '%(mkid.resonator_num))
             item2.setText(2,'%s '%(mkid.chip_name))
-            item2.setText(3,'%4.2f'%(mkid.rough_cent_freq/1e6))
+            item2.setText(3,'%4.2f'%(mkid.getFc()/1e6))
             item2.setText(4,'%d'%(len(mkid.reslist)))
 
             if mkid.checked==1:    
@@ -1875,8 +2458,8 @@ class AppForm(QMainWindow):
             trcnt=0
             for trace in mkid.reslist:
                 item3=QTreeWidgetItem(item2)
-                item3.setData(0,100,trace)
-
+                #item3.setData(0,100,trace)
+                item3.mkid = trace
                 item3.setText(1,'Trc %d '%(trcnt))
                 item3.setText(5,'%3.0f'%(trace.atten_U7))
                 item3.setText(6,'%3.0f'%(trace.is_ran_fits))
@@ -1904,8 +2487,8 @@ class AppForm(QMainWindow):
 
         for ss in selected:
             #get MKID object
-            m=ss.data(100)
-
+            #m=ss.data(100)
+            m = ss.mkid
             MKID_list.remove(m)
 
         self.updatePlot()
@@ -1916,7 +2499,7 @@ class AppForm(QMainWindow):
     #
     def runPython(self):
         print "running py script"
-        exec self.textbox_Python.text()
+        exec str(self.textbox_Python.text())
   
   
   
@@ -1938,67 +2521,83 @@ class AppForm(QMainWindow):
 
   
   
-    def setRampSyncSource(self):
-          
-        
-        ci = self.combobox_syncsource.currentIndex()
-        
-        #no ramp
-        if ci==0:
-            fa.rampgen.setIsSync(0)
-            fa.rampgen.setSyncSource(0)
-            fa.rampgen.setChannelizerFifoSync()
-        
-        #ext ramp
-        elif ci==1:
-        #int ramp
-            fa.rampgen.setIsSync(1)
-            fa.rampgen.setSyncSource(0)
-            fa.rampgen.setChannelizerFifoSync()
-
-
-        else:
-            fa.rampgen.setIsSync(1)
-            fa.rampgen.setSyncSource(1)
-            self.setRampSpecs()
-            ##fa.rampgen.setChannelizerFifoSync()
-        
-  
-  
-      
-        
         
         
     def setRampSpecs(self):
+        roachlock.acquire();
         r_amp = self.spinbox_RampAmp.value() / 100.0
         r_freq = self.spinbox_RampFreq.value()
         fa.rampgen.setRamp(r_amp,r_freq)
         fa.rampgen.setChannelizerFifoSync()
+        roachlock.release()
         
+    def flxRampComboDecode(self):
+      
+        frdci = self.combobox_str_frd.currentIndex()
         
-  
-    def setFluxRampDemod(self):
-    
         frd=[0,0]
         
-        frdci = self.combobox_flxRmpDmd.currentIndex()
+        
         if frdci==0:
             frd = [0,0]
         elif frdci==1:
             frd= [1,1]
         elif frdci==2:
             frd = [1,0]
+        elif frdci==3:
+            frd = [1,2]
         else:
             frd=[0,0]
+            
+            
+        return( (frd, frdci) )
+             
+    def setFluxRampDemod(self):
+    
+       
+        (frd,frdci) =self.flxRampComboDecode()
+        
+       
         
         numprd = float(self.textbox_flxRmpPrd.text())
         
-        fa.chanzer.setFluxRampDemod(frd[0],frd[1],fa.chanzer.read_fifo_size,numprd)
+        
+        roachlock.acquire();
+        fa.temp_numprd =  numprd
+        fa.temp_frd = frd
+        fa.temp_frdci = frdci
+        
+        fa.chanzer.setFluxRampDemod(
+            fa.temp_frd[0],
+            fa.temp_frd[1],
+            fa.chanzer.read_fifo_size,
+            fa.temp_numprd)
+        roachlock.release()
+    
 
-    def refreshFRDSettings(self):
-        self.setRampSpecs()
-        self.setRampSyncSource()
-        self.setFluxRampDemod()
+    #DEPRECATE
+    def setFluxRampDemod2(self,frdci,numprd):
+    
+        frd=[0,0]
+        
+        
+        if frdci==0:
+            frd = [0,0]
+        elif frdci==1:
+            frd= [1,1]
+        elif frdci==2:
+            frd = [1,0]
+        elif frdci==3:
+            frd = [1,2]
+        else:
+            frd=[0,0]
+        
+        #numprd = float(self.textbox_flxRmpPrd.text())
+        roachlock.acquire();
+        fa.chanzer.setFluxRampDemod(frd[0],frd[1],fa.chanzer.read_fifo_size,numprd)
+        roachlock.release()
+        
+  
         
     
     def file_dialog(self):
@@ -2037,6 +2636,10 @@ class AppForm(QMainWindow):
         self.button_openClient.setMaximumWidth(120)
         self.connect(self.button_openClient, SIGNAL('clicked()'), self.openClient)
         
+        # Start connection to roach.
+        self.button_reopenClient = QPushButton("ReConnect Roach")
+        self.button_reopenClient.setMaximumWidth(120)
+        self.connect(self.button_reopenClient, SIGNAL('clicked()'), self.reOpenClient)
         
         
         # Start connection to roach.
@@ -2135,15 +2738,19 @@ class AppForm(QMainWindow):
         
 
         # Start/ Stop Sweep for Net analyzer
-        self.button_saveSweep = QPushButton("SaveAnalyzer")
-        self.button_saveSweep.setMaximumWidth(200)
-        self.connect(self.button_saveSweep, SIGNAL('clicked()'), self.saveSweep)   
+        #self.button_saveSweep = QPushButton("SaveAnalyzer")
+        #self.button_saveSweep.setMaximumWidth(200)
+        #self.connect(self.button_saveSweep, SIGNAL('clicked()'), self.saveSweep)   
 
 
   # Start/ Stop Sweep for Net analyzer
         self.button_savePlot = QPushButton("SavePlot")
         self.button_savePlot.setMaximumWidth(200)
         self.connect(self.button_savePlot, SIGNAL('clicked()'), self.savePlot)   
+
+        self.button_loadPlot = QPushButton("LoadPlot")
+        self.button_loadPlot.setMaximumWidth(200)
+        self.connect(self.button_loadPlot, SIGNAL('clicked()'), self.loadSweepPlot)   
 
 
         #adc rf and bb loopbacks as checks
@@ -2163,7 +2770,7 @@ class AppForm(QMainWindow):
 
         self.label_plottype = QLabel('Plot Type')
         self.plot_names=['FourPlots','MagPhase','I and Q','IQPolar','IvQ','MultiNoise',
-            'IQVelocity','IQCircle','ResFit','3DChannels']
+            'IQVelocity','IQCircle','ResFit','3DChannels', 'IV Curve', 'Trans Cal']
 
 
         self.combobox_plottype=QComboBox()
@@ -2207,8 +2814,8 @@ class AppForm(QMainWindow):
 
         self.textbox_Dly = QLineEdit('30')
         self.textbox_Dly.setMaximumWidth(70)
-
- 
+        self.textbox_Dly.textChanged.connect(self.updateXMLineDelay)
+        
  
 
 
@@ -2302,6 +2909,14 @@ class AppForm(QMainWindow):
         self.button_resPlots.setMaximumWidth(170)
         self.connect(self.button_resPlots, SIGNAL('clicked()'), self.resPlots)
               
+        # plotting resonators- 
+        self.button_setResFreq = QPushButton("SetResFreq")
+        self.button_setResFreq.setMaximumWidth(170)
+        self.connect(self.button_setResFreq, SIGNAL('clicked()'), self.setResFreq)
+              
+        self.textbox_manResFreq = QLineEdit('0.0')
+        
+
 
         # plotting resonators- 
         self.button_clrTrace = QPushButton("ClrTrc")
@@ -2363,8 +2978,8 @@ class AppForm(QMainWindow):
         self.label_pwrsw_atinst.setMaximumWidth(120)
  
         self.spinbox_pwrsw_atinst = QSpinBox()
-        self.spinbox_pwrsw_atinst.setRange(0,32)
-        self.spinbox_pwrsw_atinst.setValue(1)
+        self.spinbox_pwrsw_atinst.setRange(0,31)
+        self.spinbox_pwrsw_atinst.setValue(0)
         self.spinbox_pwrsw_atinst.setSingleStep(1)
         self.spinbox_pwrsw_atinst.setMaximumWidth(50)
     
@@ -2373,8 +2988,8 @@ class AppForm(QMainWindow):
         self.label_pwrsw_atst.setMaximumWidth(120)
  
         self.spinbox_pwrsw_atst = QSpinBox()
-        self.spinbox_pwrsw_atst.setRange(0,21) #Set limits based upon total attenuation
-        self.spinbox_pwrsw_atst.setValue(20)
+        self.spinbox_pwrsw_atst.setRange(0,31) #Set limits based upon total attenuation
+        self.spinbox_pwrsw_atst.setValue(0)
         self.spinbox_pwrsw_atst.setSingleStep(1)
         self.spinbox_pwrsw_atst.setMaximumWidth(50)
     
@@ -2383,8 +2998,8 @@ class AppForm(QMainWindow):
         self.label_pwrsw_atend.setMaximumWidth(120)
  
         self.spinbox_pwrsw_atend = QSpinBox()
-        self.spinbox_pwrsw_atend.setRange(0,21) #Set limits based upon total attenuation
-        self.spinbox_pwrsw_atend.setValue(20)
+        self.spinbox_pwrsw_atend.setRange(0,31) #Set limits based upon total attenuation
+        self.spinbox_pwrsw_atend.setValue(0)
         self.spinbox_pwrsw_atend.setSingleStep(1)
         self.spinbox_pwrsw_atend.setMaximumWidth(50)
 
@@ -2427,7 +3042,7 @@ class AppForm(QMainWindow):
  
         self.spinbox_pwrsw_span = QSpinBox()
         self.spinbox_pwrsw_span.setRange(1,6000)
-        self.spinbox_pwrsw_span.setValue(1)
+        self.spinbox_pwrsw_span.setValue(4)
         self.spinbox_pwrsw_span.setSingleStep(1)
         self.spinbox_pwrsw_span.setMaximumWidth(200)
 
@@ -2453,8 +3068,8 @@ class AppForm(QMainWindow):
         self.label_pwrsw_atTotal.setMaximumWidth(120)
  
         self.spinbox_pwrsw_atTotal = QSpinBox()
-        self.spinbox_pwrsw_atTotal.setRange(1,50)
-        self.spinbox_pwrsw_atTotal.setValue(31)
+        self.spinbox_pwrsw_atTotal.setRange(0,50)
+        self.spinbox_pwrsw_atTotal.setValue(0)
         self.spinbox_pwrsw_atTotal.setSingleStep(1)
         self.spinbox_pwrsw_atTotal.setMaximumWidth(50)
 
@@ -2659,95 +3274,145 @@ class AppForm(QMainWindow):
         self.textbox_snapSteps.setMaximumWidth(50)
         label_snapSteps = QLabel('* 2 msec')
 
-        # lengths of 2 ms steps to combine in a snapshot.
-        #self.textbox_longsnapSteps = QLineEdit('1')
-        #self.textbox_longsnapSteps.setMaximumWidth(50)
-        #label_longsnapSteps = QLabel('* sec')
-
-        #median
-        #self.label_median = QLabel('median: 0.0000')
-        #self.label_median.setMaximumWidth(170)
-
-        #threshold
-        #self.label_threshold = QLabel('threshold: 0.0000')
-        #self.label_threshold.setMaximumWidth(170)
-
-        #attenuation
-        #self.label_attenuation = QLabel('attenuation: 0')
-        #self.label_attenuation.setMaximumWidth(170)
-
-        #frequency
-        #self.label_frequency = QLabel('freq (GHz): 0.0000')
-        #self.label_frequency.setMaximumWidth(170)
-        
+     
         
     
         self.label_saysf = QLabel('Sweep and You Shall Find')
         
+    #####################################################################################################
 
-
-
-
-    
 
         #
         # widgets for noise/readout mode FW
         #
 
-        #acq FFTs button- will load FW if need to.
-
-
-   
-   
-   
-   
-   
     
     #run stream
         self.button_stream_run = QPushButton("StartStream")
         self.button_stream_run.setMaximumWidth(170)
         self.connect(self.button_stream_run, SIGNAL('clicked()'), self.streamRun)            
         
-    #stop FFTs
-        self.button_stream_stop = QPushButton("StopStream")
-        self.button_stream_stop.setMaximumWidth(170)
-        self.connect(self.button_stream_stop, SIGNAL('clicked()'), self.streamStop)            
+        #self.label_fa_running = QLabel('Not Running')
+        
+        self.button_stop_run = QPushButton("Stop Run")
+        self.button_stop_run.setMaximumWidth(170)
+        self.connect(self.button_stop_run, SIGNAL('clicked()'), self.runStop)            
+        
+        
+        
+        self.checkbox_teson = QCheckBox("TES BiasON")
+        self.checkbox_teson.setMaximumWidth(170)
+        
+        # lut amp
+        self.textbox_tesVolts = QLineEdit('0.8')
+        self.textbox_tesVolts.setMaximumWidth(50)
+        label_testVolts = QLabel('TES Volts')
+   
+
+        label_frdlen = QLabel('FRD Len')
+        self.textbox_FRDLen = QLineEdit('100')
+        self.textbox_FRDLen.setMaximumWidth(50)
+        
+        
+        label_rampfreq = QLabel('RmpFreq')
+        self.textbox_rampfreq = QLineEdit('40000')
+        self.textbox_rampfreq.setMaximumWidth(60)
+        
+           
+        label_FRDDly = QLabel('FRD Dly')
+        self.textbox_FRDDly = QLineEdit('4')
+        self.textbox_FRDDly.setMaximumWidth(50)
+       
+        
+        #self.textbox_flxRmpPrd.returnPressed.connect(self.setFluxRampDemod)
+
     
+        self.label_attentext = QLabel('Set Attens on Settings Tab First')
+        self.button_progtrans=QPushButton('Cal IQ Circles')
+        self.button_progtrans.setMaximumWidth(200)
+        self.connect(self.button_progtrans, SIGNAL('clicked()'), self.calibrateIQCircles)            
+        
+        self.button_savetrans=QPushButton('Save IQ Cirle Cal')
+        self.button_savetrans.setMaximumWidth(200)
+        self.connect(self.button_savetrans, SIGNAL('clicked()'), self.saveIQCircleCal)            
+
+      
+        
+        self.button_loadtrans=QPushButton('Load IQ Cirle Cal')
+        self.button_loadtrans.setMaximumWidth(200)
+        self.connect(self.button_loadtrans, SIGNAL('clicked()'), self.loadIQCircleCal)            
+
+        self.label_resListCalIQ = QLabel('No Calibrated Resonators')
+        
+        # lut amp
+        self.textbox_flxRmpPrd = QLineEdit('3.0')
+        self.textbox_flxRmpPrd.setMaximumWidth(50)
+        #self.textbox_flxRmpPrd.returnPressed.connect(self.setFluxRampDemod)
+
+        label_flxRmpPrd = QLabel('FlxRmp Periods')
+
     
+        #self.combobox_syncsource=QComboBox()
+        self.combobox_syncsource=QComboBox()
+        self.combobox_syncsource.addItem('Open Loop (no FRD)')   
+        self.combobox_syncsource.addItem('Closed Loop (FRD)')   
+        #self.combobox_syncsource.addItem('Int RampSource')   
+
+        #self.connect(self.combobox_plottype, SIGNAL('currentIndexChanged'), self.setPlotType) 
+        #self.combobox_syncsource.currentIndexChanged.connect(self.setRampSyncSource)
+
     
+         #self.combobox_syncsource=QComboBox()
+        self.combobox_biassource=QComboBox()
+        self.combobox_biassource.addItem('No Volt Source')   
+        self.combobox_biassource.addItem('sim 928')   
+       
+        self.combobox_biassource.currentIndexChanged.connect(self.setBiasSource)
+
+     
     
-   
-   
-   
-   
-   
-   
+        self.combobox_str_frd=QComboBox()
+       
+        self.combobox_str_frd.addItem('Return Raw Data')   
+        self.combobox_str_frd.addItem('Return Raw + FRD')   
+        self.combobox_str_frd.addItem('Return FRD only')   
+        self.combobox_str_frd.addItem('Return FRD + IQCentered')   
+
+       
 
         # stream file name
-        self.textbox_streamfilename = QLineEdit('0.6')
-        self.textbox_streamfilename.setMaximumWidth(400)
-        label_lut_strfilename = QLabel('Streamfilename.h5')
-
-
-        # stream file name
-        self.textbox_streamfilename = QLineEdit('/local/superduper.h5')
+        self.textbox_streamfilename = QLineEdit('superduper.h5')
         self.textbox_streamfilename.setMaximumWidth(400)
         label_lut_strfilename = QLabel('Streamfilename.h5')
 
    
         # lut amp
-        self.textbox_streamsec = QLineEdit('30')
+        self.textbox_streamsec = QLineEdit('1')
         self.textbox_streamsec.setMaximumWidth(50)
         label_streamsec = QLabel('SecondsStream')
    
 
 
    
-   
-      
     
+    #run stream
+        self.button_iv_run = QPushButton("Start TES IV Sweep")
+        self.button_iv_run.setMaximumWidth(170)
+        self.connect(self.button_iv_run, SIGNAL('clicked()'), self.sweepTesIV)            
+        
+ 
+        # stream file name
+        self.textbox_ivfilename = QLineEdit('ivdata.h5')
+        self.textbox_ivfilename.setMaximumWidth(400)
+        label_lut_ivfilename = QLabel('IVFilename.h5')
 
-    
+   
+        # lut amp
+        self.textbox_ivrange = QLineEdit('10.0 : 0.0 : -0.01')
+        self.textbox_ivrange.setMaximumWidth(200)
+        label_ivrange = QLabel('StartVolt : EndV: stepV')
+   
+    #####################################################################################################
     
     
     #stop qt event loop
@@ -2756,106 +3421,80 @@ class AppForm(QMainWindow):
         self.connect(self.button_gui_stop, SIGNAL('clicked()'), self.guiStop)            
     
     
-    #
+    ############################################################################################3
     # Ramp and sync tab
     #
     
     
  
     
-        self.combobox_syncsource=QComboBox()
+        #self.combobox_syncsource=QComboBox()
        
-        self.combobox_syncsource.addItem('No RampSource')   
-        self.combobox_syncsource.addItem('Ext RampSource')   
-        self.combobox_syncsource.addItem('Int RampSource')   
+        #self.combobox_syncsource.addItem('Open Loop (no FRD)')   
+        #self.combobox_syncsource.addItem('Closed Loop (FRD)')   
+        #self.combobox_syncsource.addItem('Int RampSource')   
 
         #self.connect(self.combobox_plottype, SIGNAL('currentIndexChanged'), self.setPlotType) 
-        self.combobox_syncsource.currentIndexChanged.connect(self.setRampSyncSource)
+        #self.combobox_syncsource.currentIndexChanged.connect(self.setRampSyncSource)
 
     
     
     
-        self.spinbox_RampAmp = QSpinBox()
-        self.spinbox_RampAmp.setRange(0,100)
-        self.spinbox_RampAmp.setValue(50)
-        self.spinbox_RampAmp.setSingleStep(1)
-        self.spinbox_RampAmp.setMaximumWidth(150)
-        self.spinbox_RampAmp.valueChanged.connect(self.setRampSpecs)
-        label_RampAmp = QLabel('Amp 0% - 100%')
+        #self.spinbox_RampAmp = QSpinBox()
+        #self.spinbox_RampAmp.setRange(0,100)
+        #self.spinbox_RampAmp.setValue(50)
+        #self.spinbox_RampAmp.setSingleStep(1)
+        #self.spinbox_RampAmp.setMaximumWidth(150)
+        #self.spinbox_RampAmp.valueChanged.connect(self.setRampSpecs)
+        #label_RampAmp = QLabel('Amp 0% - 100%')
     
     
     
     
-        self.spinbox_RampFreq = QSpinBox()
-        self.spinbox_RampFreq.setRange(1000,2000000)
-        self.spinbox_RampFreq.setValue(10000)
-        self.spinbox_RampFreq.setSingleStep(1000)
-        self.spinbox_RampFreq.setMaximumWidth(150)
-        self.spinbox_RampFreq.valueChanged.connect(self.setRampSpecs)
-        label_RampFreq = QLabel('Freq Hz 1e3-2e6')
+        #self.spinbox_RampFreq = QSpinBox()
+        #self.spinbox_RampFreq.setRange(1000,2000000)
+        #self.spinbox_RampFreq.setValue(10000)
+        #self.spinbox_RampFreq.setSingleStep(1000)
+        #self.spinbox_RampFreq.setMaximumWidth(150)
+        #self.spinbox_RampFreq.valueChanged.connect(self.setRampSpecs)
+        #label_RampFreq = QLabel('Freq Hz 1e3-2e6')
         
         
         
         
     
-        self.combobox_flxRmpDmd=QComboBox()
+        #self.combobox_flxRmpDmd=QComboBox()
        
-        self.combobox_flxRmpDmd.addItem('Raw Data')   
-        self.combobox_flxRmpDmd.addItem('Raw + FRD')   
-        self.combobox_flxRmpDmd.addItem('FRD only')   
+        #self.combobox_flxRmpDmd.addItem('Raw Data')   
+        #self.combobox_flxRmpDmd.addItem('Raw + FRD')   
+        #self.combobox_flxRmpDmd.addItem('FRD only')   
+        #self.combobox_flxRmpDmd.addItem('FRD + Trans')   
 
         #self.connect(self.combobox_plottype, SIGNAL('currentIndexChanged'), self.setPlotType) 
-        self.combobox_flxRmpDmd.currentIndexChanged.connect(self.setFluxRampDemod)
+        #self.combobox_flxRmpDmd.currentIndexChanged.connect(self.setFluxRampDemod)
 
     
         
         # lut amp
-        self.textbox_flxRmpPrd = QLineEdit('3.0')
-        self.textbox_flxRmpPrd.setMaximumWidth(50)
-        self.textbox_flxRmpPrd.returnPressed.connect(self.setFluxRampDemod)
+        #self.textbox_flxRmpPrd = QLineEdit('3.0')
+        #self.textbox_flxRmpPrd.setMaximumWidth(50)
+        #self.textbox_flxRmpPrd.returnPressed.connect(self.setFluxRampDemod)
 
-        label_flxRmpPrd = QLabel('FlxRmp Periods')
+        #label_flxRmpPrd = QLabel('FlxRmp Periods')
    
         
         
-        self.button_setupRamp = QPushButton("RefreshSettings")
-        self.button_setupRamp.setMaximumWidth(170)
-        self.connect(self.button_setupRamp, SIGNAL('clicked()'), self.refreshFRDSettings)            
+        #self.button_setupRamp = QPushButton("RefreshSettings")
+        #self.button_setupRamp.setMaximumWidth(170)
+        #self.connect(self.button_setupRamp, SIGNAL('clicked()'), self.refreshFRDSettings)            
     
-        
+        ##################################################################################################
+        ##################################################################################################
+        ##################################################################################################
 
-        gbox_sync = QVBoxLayout()
-        hbox_sync1 = QHBoxLayout()
-        hbox_sync1.addWidget(self.combobox_syncsource)
-        hbox_sync2 = QHBoxLayout()
-
-        hbox_sync2.addWidget(label_RampAmp)
-        hbox_sync2.addWidget(self.spinbox_RampAmp)
-        
-    
-        hbox_sync3 = QHBoxLayout()
-
-        hbox_sync3.addWidget(label_RampFreq)
-        hbox_sync3.addWidget(self.spinbox_RampFreq)
-        
-        
-        
-        hbox_sync4 = QHBoxLayout()
-        hbox_sync4.addWidget(self.combobox_flxRmpDmd)
-        hbox_sync4.addWidget(label_flxRmpPrd)
-        hbox_sync4.addWidget(self.textbox_flxRmpPrd)
-        
-        hbox_sync5 = QHBoxLayout()
-        hbox_sync5.addWidget(self.button_setupRamp)
-        
-        gbox_sync.addLayout(hbox_sync1)
-        gbox_sync.addLayout(hbox_sync2)
-        gbox_sync.addLayout(hbox_sync3)
-        gbox_sync.addLayout(hbox_sync4)
-        gbox_sync.addLayout(hbox_sync5)
-        
-    
-    #
+   
+      
+    #################################################################################################3
     # Settings tab
     #
     
@@ -2864,7 +3503,10 @@ class AppForm(QMainWindow):
         hbox00 = QHBoxLayout()
         hbox00.addWidget(self.textbox_roachIP)
         hbox00.addWidget(self.button_openClient)
+        hbox00.addWidget(self.button_reopenClient)
         hbox00.addWidget(self.button_closeClient)
+        
+        
         
         
         gbox0.addLayout(hbox00)
@@ -2988,7 +3630,7 @@ class AppForm(QMainWindow):
     
     
     
-    #
+    ################################################################################################
     # Sweep,ResFind
     #
     #
@@ -3043,9 +3685,10 @@ class AppForm(QMainWindow):
 
         t2_hbox01 = QHBoxLayout()
         t2_hbox01.addWidget(self.button_StSweep)
-        t2_hbox01.addWidget(self.button_saveSweep)
+        #t2_hbox01.addWidget(self.button_saveSweep)
         t2_hbox01.addWidget(self.button_savePlot)
        
+        t2_hbox01.addWidget(self.button_loadPlot)
        
         t2_gbox1.addLayout(t2_hbox01)
 
@@ -3093,7 +3736,7 @@ class AppForm(QMainWindow):
   
   
   
-      #
+      ######################################################################################
     # Stream tab
     #
   
@@ -3102,54 +3745,92 @@ class AppForm(QMainWindow):
   
         t5_gbox0 = QVBoxLayout()
 
+
+        t5_hbox03 = QHBoxLayout()
+        
+        t5_hbox03.addWidget(label_frdlen)
+        t5_hbox03.addWidget(self.textbox_FRDLen)
+        t5_hbox03.addWidget(label_rampfreq)
+        t5_hbox03.addWidget(self.textbox_rampfreq)
+        t5_hbox03.addWidget(label_FRDDly)
+        t5_hbox03.addWidget(self.textbox_FRDDly)
+        
+        t5_hbox03.addWidget(self.button_progtrans)
+        t5_hbox03.addWidget(self.button_savetrans)
+        t5_hbox03.addWidget(self.button_loadtrans)
+
+
+        t5_hbox05 = QHBoxLayout()
+        t5_hbox05.addWidget(self.label_resListCalIQ)
+        
+        t5_hbox02 = QHBoxLayout()
+
+
+
+        
+             
+        t5_hbox02.addWidget(self.combobox_str_frd)
+        #hbox_sync4 = QHBoxLayout()
+        
+        t5_hbox02.addWidget(label_flxRmpPrd)
+        t5_hbox02.addWidget(self.textbox_flxRmpPrd)
+        t5_hbox02.addWidget(self.combobox_syncsource)
+        t5_hbox02.addWidget(self.combobox_biassource)
+        
+
         t5_hbox00 = QHBoxLayout()
-
-
         t5_hbox00.addWidget(label_lut_strfilename)
         t5_hbox00.addWidget(self.textbox_streamfilename)
 
+        
+        t5_hbox00.addWidget(label_testVolts)
+        t5_hbox00.addWidget(self.textbox_tesVolts)
+        t5_hbox00.addWidget(self.checkbox_teson)
+        
+        
+        
         t5_hbox00.addWidget(label_streamsec)
+        
         t5_hbox00.addWidget(self.textbox_streamsec)
+        
+        
+        
+        
+        
+        
+        t5_hbox00.addWidget(self.button_stream_run)
 
 
 
-        t5_gbox0.addLayout(t5_hbox00)
+        t5_hbox01 = QHBoxLayout()
+        t5_hbox01.addWidget(label_lut_ivfilename)
+        t5_hbox01.addWidget(self.textbox_ivfilename)
 
+        t5_hbox01.addWidget(label_ivrange)
+        t5_hbox01.addWidget(self.textbox_ivrange)
+        t5_hbox01.addWidget(self.button_iv_run)
 
-
-
-    
-
-
-
-        t5_hbox4 = QHBoxLayout()
-
+        t5_hbox04 = QHBoxLayout()
+        #t5_hbox04.addWidget(self.label_fa_running)
+        t5_hbox04.addWidget(self.button_stop_run)
         
 
-       
 
 
 
 
-        t5_gbox0.addLayout(t5_hbox4)
 
 
-        t5_hbox3 = QHBoxLayout()
-        t5_hbox3.addWidget(self.button_stream_run)
-        t5_hbox3.addWidget(self.button_stream_stop)
-       
-
-        t5_gbox0.addLayout(t5_hbox3)
-
-    
+        t5_gbox0.addLayout(t5_hbox03)
+        t5_gbox0.addLayout(t5_hbox05)
+        t5_gbox0.addLayout(t5_hbox02)
+        t5_gbox0.addLayout(t5_hbox01)
+        t5_gbox0.addLayout(t5_hbox00)
+        t5_gbox0.addLayout(t5_hbox04)
     
     
   
-  
-  
-  
-  
-    #
+    #############################################################################################3
     # ResData
     #
     #
@@ -3255,8 +3936,11 @@ class AppForm(QMainWindow):
         t3_hbox14.addWidget(self.button_resPlots)
         t3_hbox14.addWidget(self.button_clrTrace)
         t3_hbox14.addWidget(self.button_clrNoise)
-        t3_hbox14.addWidget(self.button_medFilter)
-        t3_hbox14.addWidget(self.button_lowpassFilter)
+        #t3_hbox14.addWidget(self.button_medFilter)
+        #t3_hbox14.addWidget(self.button_lowpassFilter)
+        t3_hbox14.addWidget(self.button_setResFreq)
+        t3_hbox14.addWidget(self.textbox_manResFreq)
+        
 
     
 
@@ -3295,9 +3979,9 @@ class AppForm(QMainWindow):
 
 
 
-        tab4=QWidget()
-        tab4_layout=QVBoxLayout(tab4)
-        tab4_layout.addLayout(gbox_sync)
+        #tab4=QWidget()
+        #tab4_layout=QVBoxLayout(tab4)
+        #tab4_layout.addLayout(gbox_sync)
        
 
         tab5=QWidget()
@@ -3307,11 +3991,12 @@ class AppForm(QMainWindow):
 
         tab_widget.addTab(tab1,"Settings")
         tab_widget.addTab(tab2,"Sweep")
-        tab_widget.addTab(tab4,"FlxRamp")
-        tab_widget.addTab(tab5,"Stream")
+        #tab_widget.addTab(tab4,"FlxRamp")
+        
 
         tab_widget.addTab(tab3,"ResData")
-    
+        tab_widget.addTab(tab5,"Noise/IV")
+        
         vbox = QVBoxLayout()
         vbox.addWidget(self.canvas)
         vbox.addWidget(self.mpl_toolbar)
@@ -3324,7 +4009,7 @@ class AppForm(QMainWindow):
         self.setCentralWidget(self.main_frame)
   
     def create_status_bar(self):
-        self.status_text = QLabel("Awaiting orders.")
+        self.status_text = QLabel("Roach is Shutdown")
         self.statusBar().addWidget(self.status_text, 1)
         
     def create_menu(self):        
@@ -3379,124 +4064,330 @@ class AppForm(QMainWindow):
    
 
   
-   
-
-class QNetThread (QThread):
-    def __init__(self, which_function):
-        QThread.__init__(self)
-        self.which_function = which_function
+    def runStop(self):
+        fa.is_running= False
         
+
+def runCaptureNoise():
+  
+    success = roachlock.acquire(False);
+    if not success: return
+           
+    try:
+        #form.signalMessageText("Noise Running")
+        message_queue.put({'status_string':'Noise Running'})
+        print 'Capture Noise start on thread'            
+        
+        fa.setTESBias(fa.temp_is_tes_on,fa.temp_tesvolts)       
+        fa.progTranslatorsFromIQCircles(measure.iqcenterdata)              
+        fa.setRampSyncSource(fa.temp_open_or_closedloop)
+        fa.chanzer.setSyncDelay(fa.syncdelay_temp)
+        fa.chanzer.setFluxRampDemod(
+            fa.temp_frd[0],
+            fa.temp_frd[1],
+            fa.frdlen_temp,
+            fa.temp_numprd)    
+            
+                     
+        fa.setCarrier(
+            measure.measspecs.andata_trans['fa.carrierfreq'])
+      
+        fa.captureNoise(
+            timesec=fa.noisetemp_timesec,
+            fname = fa.noisetemp_fname,
+            BB=measure.measspecs.andata_trans['fa.sram.frequency_list'],
+            LO=measure.measspecs.andata_trans['fa.LO'],
+            amp = measure.measspecs.andata_trans['fa.sram.amplist'][0],
+            lock= roachlock)                    
+        print 'Done Noise'
+      
+        #form.signalMessageText("Not Running")
+        message_queue.put({'status_string':'Not Running'})
+    except:
+        #form.signalMessageText("Not Running- Detected Error in Noise") 
+        message_queue.put({'status_string':'Not Running- Detected Error in Noise'})
+        traceback.print_exc()
     
+    fa.is_running = False
+
+    roachlock.release()   
+    #enqueue a message to update plot on main window. 1 is plot tupe in form.updatePlot
+    message_queue.put({'signalPlot':5})
+
+  
+def voltSweepCallback():
+    strx = 'Voltage=%5.2fV'%fa.temp_volts    
+    message_queue.put({'status_string':strx})
     
-    def run(self):
-    
-        global is_thread_running
-    
+def runSweepTesIV():  
+ 
      
-        global fit_put_q_count
-        global fit_get_q_count
-        is_thread_running=is_thread_running+1
+    success = roachlock.acquire(False);
+    if not success: return
+           
     
-        sweepCallback()
-    
-    
-        
+    try:
+        #form.signalMessageText("IV Sweep Running")
+        message_queue.put({'status_string':'IV Sweep Running'})
+        print 'String voltSweep on thread'
+       
+       
+       
+        fa.progTranslatorsFromIQCircles(measure.iqcenterdata)
 
+        
+        fa.setRampSyncSource(fa.temp_open_or_closedloop)
+        fa.chanzer.setFluxRampDemod(
+            fa.temp_frd[0],
+            fa.temp_frd[1],
+            fa.chanzer.read_fifo_size,
+            fa.temp_numprd)             
+        fa.setCarrier(
+            measure.measspecs.andata_trans['fa.carrierfreq'])
+        fa.voltSweep(
+            fa.iv_vlisttemp,
+            [5100e6],2000,
+            fa.iv_fnametemp,
+            fa.iv_bbtemp,
+            fa.iv_lotemp,
+            lock=roachlock,
+            callback = voltSweepCallback);
+            
+        print 'Done IV Sweep'
+       
+        
+        #form.signalMessageText("Not Running")
+        message_queue.put({'status_string':'Not Running'})
+    except:
+        #form.signalMessageText("Not Running- Detected Error in IV Sweep") 
+        message_queue.put({'status_string':'Not Running- Detected Error in IV Sweep'})
+        traceback.print_exc()
+        
+    
+    fa.is_running = False
+    roachlock.release()
+    #enqueue a message to update plot on main window. 1 is plot tupe in form.updatePlot
+    message_queue.put({'signalPlot':10})
+
+ 
+
+
+def runSetupEverything():
+
+    message_queue.put({'status_string':'Setting up'})
+    #form.signalMessageText("Setting up")
+    try:
+        print 'runSetupEverything on thread'
+        stat = setupEverything(temp_ip)
+        if not stat:
+            message_queue.put({'status_string':'Setup Done- Ready'})
+            
+            if not fa.qdr_cal_good:
+                message_queue.put({'status_string':'Problem with QDR cal, type fa.calQDR()'})
+            #form.signalMessageText("Setup Done- Ready ") 
+        else:
+            message_queue.put({'status_string':'Detected Error in runSetupEverything'})
+            #form.signalMessageText("Detected Error in runSetupEverything")   
+           
+    except:
+        #form.signalMessageText("Detected Error in runSetupEverything") 
+        
+        message_queue.put({'status_string':'Detected Error in runSetupEverything'})
+        traceback.print_exc()
+    try:
+        roachlock.release()
+    except:
+        pass
+
+
+
+def runSweepProgTranslators():
+ 
+    message_queue.put({'status_string':'Sweep/Prog Translators'})
+    success = roachlock.acquire(False);
+    if not success: return
+           
+    
+    try:
+    
+    
+    
+        #form.signalMessageText("IQ Sweep Running")
+        print 'Sweep/Prog Translators on thread'
    
-        if (self.which_function&1) >0:
-        
-            print "Start Sweeping on Thread==============" 
-            #runs on this thread
-            form.is_saveres=True
-            form.powersweep2()
-            #power sweep is now done.
-
-        if (self.which_function&2)>0:
-        
-            print "Starting Fits Thread =================" 
-            #run on this thread
-                #form.runFits2()
-            #run multiproess
-            form.runFits4()
-
-               #here all the mkids are queued to fit quieue
-            # now we wait until all the mkids return ....
-
-
-            stat=getMkidFitQueue()
-
-            while(stat!=2):
-                if stat==1:
-                    form.signalPlot()
-
-
-                stat=getMkidFitQueue()
-
-                #other thrad can set to 0 to terminate this thread
-                if (is_thread_running==0):
-                    stat=2
-
-
-                if (stat!=2):
-                    time.sleep(5)    
-
-
-
-        if (self.which_function&4) >0:
-            print "thread iq vel"
-            form.IQvelocity()
-
-
-        if (self.which_function&8) >0:
-
-            print "starting NOISE on thread=================="
-            form.runNoise()
-
-
-        if (is_thread_running>0):
-            is_thread_running=is_thread_running-1
-
-
-        form.hdfResSave()
-
-        sweepCallback()
-        #set these to 0 in case we did a stop process... it makes sure it keeps working...
-        fit_put_q_count=0;
-        fit_get_q_count=0;
-
-        form.is_saveres=False
-        print "Exiting Thread"    
-
-
-
-class QRunFit (QRunnable):
-    def __init__(self, res):
-        QRunnable.__init__(self)
-        self.resonator = res
-        
-    
-    
-    def run(self):
-        myfit=fitters()
-        myfit.addRes(self.resonator)
-        myfit.fitResonators()
-
-
-
-
-
-class QRunPyThread (QRunnable):
-    def __init__(self, pystring_):
-        QRunnable.__init__(self)
-        self.pystring = pystring_
-        
-    
-    
-    def run(self):
-        exec(self.pystring)
-
+        fa.if_board.progAtten(fa.if_board.at)
    
+        fa.rampgen.setIsSync(0)
+        fa.rampgen.setSyncSource(0)
+        fa.rampgen.setChannelizerFifoSync()
 
+        fa.sweepProgTranslators(
+            fa.temp_rffreqs_rough,
+            lock_=roachlock,
+            callback_=sweepCallback2)      
+            
+        print 'Sweep/Prog Translators'
+       
+        message_queue.put({'status_string':'Done Sweep/Prog Translators'})
+
+        #form.signalMessageText("Not Running")
+    except:
+        #form.signalMessageText("Not Running- Detected Error in IQ Sweep") 
+        message_queue.put({'status_string':'Error Running Sweep/Prog Translators, Not running'})
+        traceback.print_exc()
+    
+    fa.is_running = False
+    roachlock.release()
+    #enqueue a message to update plot on main window. 1 is plot tupe in form.updatePlot
+    message_queue.put({'signalPlot':11})
+  
+      
+        
+def runSweepResCheckedOps():
+    message_queue.put({'status_string':'Running Resonators'})
+    success = roachlock.acquire(False);
+    if not success: return
+    measure.lock = roachlock       
+    measure.setSweepCallback(sweepCallback)
+    measure.setSweepCallback2(sweepCallback2)
+    measure.setLock(roachlock)
+    
+    try:
+        if (measure.temp_check_powersweep):
+            message_queue.put({'status_string':'Running PowerSweep'})
+            print "power sweep running" 
+                       
+            measure.powerSweep()    
+            
+            print "power sweep done"
+            
+         
+        if measure.temp_check_runIQvelocity:   
+            print "------Calculating IQ velocity, Fit Circle ----------"
+            message_queue.put({'status_string':'Running IQVelocity'})
+            for m in measure.temp_fitmlist: #loops through list of resonators
+                fit.reslist=m.reslist
+                print "Calc IQVel, MKID %fHz"%(m.getFc())
+                fit.IQvelocityCalc()
+                print "Fit Circle %fHz"%(m.getFc())
+                fit.fitCircleCalc()
+
+    
+        if measure.temp_check_runFits:
+            message_queue.put({'status_string':'Running Fits'})
+            for m in measure.temp_fitmlist:
+                print "------------Fitting Resonator %d----------"%(m.resonator_num)
+                fit.reslist = m.reslist
+                fit.fitResonators()
+     
+       
+        if measure.temp_check_getnoise:
+            message_queue.put({'status_string':'Running Noise'})
+            print "running res noise"
+            measure.runNoise()
+            
+        message_queue.put({'status_string':'Done running resonators'})
+        #form.signalMessageText("Not Running")
+    except:
+        #form.signalMessageText("Not Running- Detected Error in IQ Sweep") 
+        message_queue.put({'status_string':'Error Running Resonators, Not running'})
+        traceback.print_exc()
+    
+    fa.is_running = False
+    roachlock.release()
+    measure.lock =None   
+    #enqueue a message to update plot on main window. 1 is plot tupe in form.updatePlot
+    message_queue.put({'signalPlot':1})
+  
+
+
+
+def runIQSweep():  
+   
+    message_queue.put({'status_string':'Running IQSweep'})
+    success = roachlock.acquire(False);
+    if not success: return
+           
+    
+    try:
+        #form.signalMessageText("IQ Sweep Running")
+        print 'Sweep on thread'
+   
+        fa.sweep(
+            span_Hz=fa.temp_span_Hz, 
+            center_Hz=fa.temp_center_Hz, 
+            pts=fa.temp_pts,
+            lock=roachlock,
+            callback=sweepCallback2)
+            
+        print 'Done IQ Sweep'
+       
+        message_queue.put({'status_string':'Done Running IQSweep'})
+
+        #form.signalMessageText("Not Running")
+    except:
+        #form.signalMessageText("Not Running- Detected Error in IQ Sweep") 
+        message_queue.put({'status_string':'Error Running IQSweep, Not running'})
+        traceback.print_exc()
+    
+    fa.is_running = False
+    roachlock.release()
+    #enqueue a message to update plot on main window. 1 is plot tupe in form.updatePlot
+    message_queue.put({'signalPlot':1})
+  
+def runSetupBiasSource():
+    global sim
+    
+
+    if fa.temp_biassource_index==0:  
+        
+        try: 
+            sim.close()
+        except: 
+            print "Did not close sim928"
+
+        sim = simNULL()
+        message_queue.put({'status_string':'Open NULL Volt Source'})
+
+    #sim928    
+    elif fa.temp_biassource_index==1:
+
+        try: sim.close()
+        except: print "Did not close sim928"
+
+        message_queue.put({'status_string':'Waiting for Sim928 on comport'})
+        sim = sim928()
+        sim.open()
+        
+        idstr = sim.getId()
+        print idstr
+        message_queue.put({'status_string':idstr})
+
+
+
+
+def runShutdownEverything():
+   
+    #form.signalMessageText('Shutting down up')
+    message_queue.put({'status_string':'Shutting down'})
+   
+    try:
+        print 'runShutdownEverything on thread'
+        shutdownEverything()
+        #form.signalMessageText("Roach is Shutdown ") 
+        message_queue.put({'status_string':'Roach is Shutdown'})
+
+    except:
+        #form.signalMessageText("Detected Error in runShutdownEverything") 
+        message_queue.put({'status_string':'Detected Error in runShutdownEverything'})
+        
+    try:
+        roachlock.release()
+    except:
+        pass
+    
+
+    
 global app
 global form
 
@@ -3504,12 +4395,22 @@ global form
 def main():
     global app
     global form
-    print 'hello'
+    global roachlock
+    print 'making lock and app'
+    
+           
+
+    if 'roachlock' not in globals():
+        roachlock = threading.RLock()
+
+    
     if app==None:
         app = QApplication(sys.argv)
     
     form = AppForm()
     form.show()
+    
+    
     app.exec_()
 
 
@@ -3536,18 +4437,17 @@ except:
     
 def gui():app.exec_()
 
-def sweepCallback():
-    global form
-    print "natAnalGui::sweepCallback"
-    try:
-        form.signalPlot()    
-        if form.is_saveres:
-            randname='powersweep_backup.h5'
-        if rand()>0.9:
-            mkidSaveData(randname)
-    except:
-        pass
-    
+
+#run by Roach DAQ Threads
+def sweepCallback():    
+    print 'natAnalgui.sweepCallback'    
+    message_queue.put({'signalPlot':1})
+     
+#run by Roach DAQ Threads
+def sweepCallback2():
+    message_queue.put({'LOFreq':fa.carrierfreq})
+
+
 
 try:
     sim.close()
@@ -3555,9 +4455,15 @@ except:
     pass
     
 
-#sim=sim928()
-#sim.open()
-#sim.connport(8)
-#sim.getId()
+sim = None
 
+if False:
+    try:
+        sim=sim928()
+        sim.open()
+        sim.connport(8)
+        sim.getId()
+    except:
+        sim=None
+        print "Problem w. sim 928"
 

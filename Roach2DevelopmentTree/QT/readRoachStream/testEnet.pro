@@ -12,7 +12,8 @@ TARGET = testEnet
 TEMPLATE = app
 
 INCLUDEPATH +=../qcustomplot-source
-
+INCLUDEPATH +=/home/beams0/TMADDEN/swWork/hdf5/hdf5-1.8.7-linux-x86_64-static/include
+LIBS +=-L/home/beams0/TMADDEN/swWork/hdf5/hdf5-1.8.7-linux-x86_64-static/lib -lhdf5 -lsz -lz
 SOURCES += main.cpp\
         mainwindow.cpp \
     guisettings.cpp \
@@ -26,7 +27,9 @@ SOURCES += main.cpp\
     ../roachUDPBuffer/pipereader.cpp \
     textcommander.cpp \
     argparse.cpp \
-    filesaver.cpp
+    filesaver.cpp \
+    hdffilesaver.cpp \
+    epicsv4support.cpp
 
 HEADERS  += mainwindow.h \
     guisettings.h \
@@ -40,7 +43,9 @@ HEADERS  += mainwindow.h \
     ../roachUDPBuffer/pipereader.h \
     textcommander.h \
     argparse.h \
-    filesaver.h
+    filesaver.h \
+    hdffilesaver.h \
+    epicsv4support.h
 
 FORMS    += mainwindow.ui \
     roachscope.ui
