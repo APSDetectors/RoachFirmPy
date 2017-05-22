@@ -38,7 +38,7 @@ ten_G_device = 'enp5s0f0'
 class dataCapture:
 
     def __init__(self,                    
-        path = ROACH_DIR+'/projcts/QT/build-testEnet-Desktop-Debug/'):
+        path = ROACH_DIR+'/Roach2DevelopmentTree/QT/build-testEnet-Desktop-Debug/'):
      
         self.devnull = open(os.devnull, 'wb')
         cmd = path + 'testEnet'

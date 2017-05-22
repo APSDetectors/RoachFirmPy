@@ -4397,6 +4397,22 @@ def runShutdownEverything():
 global app
 global form
 
+def mainepics():
+    global app
+    global form
+    global roachlock
+    print 'making lock '
+    
+           
+
+    if 'roachlock' not in globals():
+        roachlock = threading.RLock()
+
+    
+    
+    form = AppForm()
+    startEpics()
+
 
 def main():
     global app
