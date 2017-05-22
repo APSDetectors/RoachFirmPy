@@ -642,8 +642,8 @@ int dbgql;
                           (*events)[chan]["timestamp"].append((float)timestamp);
                           (*events)[chan]["is_pulse"].append((float)is_pulse);
                           (*events)[chan]["bin"].append((float)bin );//!! need to look at map
-                          (*events)[chan]["event_type"].append((float)event_type );//!! need to look at map
-                          (*events)[chan]["event_len"].append((float)(outmem_datalen));//!! need to look at map
+                          (*events)[chan]["event_type"].append((float)event_type );
+                          (*events)[chan]["event_len"].append((float)(outmem_datalen));
 
                           if (is_get_raw_evt_data)
                           {

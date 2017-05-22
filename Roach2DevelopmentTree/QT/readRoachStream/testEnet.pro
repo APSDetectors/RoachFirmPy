@@ -29,7 +29,8 @@ SOURCES += main.cpp\
     argparse.cpp \
     filesaver.cpp \
     hdffilesaver.cpp \
-    epicsv4support.cpp
+    epicsv4support.cpp \
+    pulsedetect.cpp
 
 HEADERS  += mainwindow.h \
     guisettings.h \
@@ -45,7 +46,8 @@ HEADERS  += mainwindow.h \
     argparse.h \
     filesaver.h \
     hdffilesaver.h \
-    epicsv4support.h
+    epicsv4support.h \
+    pulsedetect.h
 
 FORMS    += mainwindow.ui \
     roachscope.ui

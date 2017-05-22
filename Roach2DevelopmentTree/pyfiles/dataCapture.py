@@ -30,6 +30,9 @@ except:
     ROACH_DIR='/localc/roach'
 
 
+ten_G_ipaddr = '192.168.1.102'
+ten_G_device = 'enp5s0f0'
+
 
 
 class dataCapture:
@@ -40,6 +43,8 @@ class dataCapture:
         self.devnull = open(os.devnull, 'wb')
         cmd = path + 'testEnet'
 
+
+        os.system('ifconfig %s %s up'%(ten_G_device,ten_G_ipaddr))
       #  self.streamproc = subprocess.Popen(
       #      [cmd  ], 
       #       stdin=subprocess.PIPE,stdout=self.devnull)

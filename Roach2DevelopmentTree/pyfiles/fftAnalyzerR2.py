@@ -49,30 +49,46 @@ rffreqs = mkidGetFreqs()
 fa.sram.is_mod_freq=True
 
 rsln = fa.sram.getResolution()
-fa.sourceCapture([10e6],30000)
+
+fa.sourceCapture(arange(10e6,20e6,1e6),3200)
+time.sleep(1)
+fa.stopCapture()
+
+
+fa.sourceCapture([10e6],32000)
 time.sleep(1)
 fa.stopCapture()
 
 
 aa=fa.getIQ()
-
+figure(1)
 clf()
-
+subplot(2,1,1)
 plot(aa[192]['stream_mag'][1:1000])
+subplot(2,1,2)
+plot(aa[192]['stream_phase'][1:1000])
 
-plot(aa[193]['stream_mag'][1:1000])
+fa.adcscope = roachScope(roach, 'octoscope')
 
-plot(aa[194]['stream_mag'][1:1000])
+fa.adcscopetrig()
+fa.adcplot()
+
+fa.adcplot(IQ='IQF')
+yscale('log')
 
 
-st = numpy.zeros(1000)
-for k in range(1,1000,2):
-    st[k] = aa[192]['stream_phase'][k+1]
-    st[k+1] = aa[192]['stream_phase'][k]
+hdf.open(fname,'w')
+       
+pldata = fa.getUsefulData()
+fname = '/home/beams0/TMADDEN/ROACH2/datafiles/Feb22_2017/basebandnoise.h5'
 
-plot(st)
+hdf.open(fname,'a')   
+     
+pldata = fa.getUsefulData()
+hdf.write(pldata,'rfdata300')
 
-fit = fitters()
+hdf.close()
+      
 
 
 
@@ -2071,7 +2087,10 @@ class fftAnalyzerR2:
         LO = None,
         amp=None,
         lock = None,
-        callback=None):
+        callback=None,
+        issync = 0,
+        evtsize2=100,
+        syncdelay=0):
 
         self.is_running=True
         
@@ -2083,19 +2102,22 @@ class fftAnalyzerR2:
 
         self.an.setOnOff(1)  
         #get sync from ext ramp gen.
-        self.rampgen.setSyncSource(0)
+        self.chanzer.setSyncSource(0)
         #trigger on ramp gen pulses
-        self.rampgen.setIsSync(1)
+        self.chanzer.setIsSync(issync)
         #meas sync freq, and set up event size (or flux ramp event size) number of samples.
-        self.rampgen.setChannelizerFifoSync()
-
+        #self.rampgen.setChannelizerFifoSync()
+        self.chanzer.setReadFifoSize(evtsize2)
+        
         self.phaser1.zeroPhaseIncs()
         self.phaser2.zeroPhaseIncs()
         self.phaser3.zeroPhaseIncs()
         self.phaser4.zeroPhaseIncs()
 
-        self.chanzer.setSyncDelay(self.chanzer.sync_delay_extgenerator)
-
+        
+        self.chanzer.setSyncDelay(syncdelay)
+       
+    
         time.sleep(0.5)
 
         sim.setOutOn(1)

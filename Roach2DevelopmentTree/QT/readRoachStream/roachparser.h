@@ -18,7 +18,7 @@ public:
     explicit roachParser(dataQueue *data_source_,int chanoffs = 0, QObject *parent = 0);
     
 
-    void addNewChannel(int channel);
+    virtual void addNewChannel(int channel);
 
     int getListQueueLength(void);
 

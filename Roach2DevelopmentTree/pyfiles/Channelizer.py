@@ -282,7 +282,10 @@ class Channelizer:
 #
 #
 #####################################################################################################
-
+    def setSyncDelaySamples(self,nsamp):
+        self.setSyncDelay(128*nsamp)
+        
+        
 
     def setSyncDelay(self,val):
         if fwtype=='tesd':

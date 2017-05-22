@@ -34,6 +34,8 @@ protected:
     QHash<int,QHash<QString,QList<float> > > *events;
     QString fname;
     bool is_stream;
+
+
 };
 
 #endif // FILESAVER_H

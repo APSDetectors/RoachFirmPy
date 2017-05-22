@@ -1089,13 +1089,16 @@ class AppForm(QMainWindow):
           
         numprd = float(self.textbox_flxRmpPrd.text())
         
-         
+        frdlen = float(self.textbox_FRDLen.text())
+        frddly = float(self.textbox_FRDDly.text())
         ci = self.combobox_syncsource.currentIndex()
        
        
         roachlock.acquire()
              
-   
+         
+        fa.syncdelay_temp = 128* frddly
+        fa.frdlen_temp = frdlen
         fa.temp_open_or_closedloop = ci
   
         fa.temp_numprd =  numprd
@@ -1177,7 +1180,7 @@ class AppForm(QMainWindow):
 
     def loadIQCircleCal(self):
     
-        self.temp_iqcircalfname = QFileDialog.getOpenFileName(caption='Hdf File Name')[0]
+        self.temp_iqcircalfname = str(QFileDialog.getOpenFileName(caption='Hdf File Name'))
         self.loadIQCircleCal2()
 
     def loadIQCircleCal2(self):
@@ -1219,10 +1222,10 @@ class AppForm(QMainWindow):
         frdlen = float(self.textbox_FRDLen.text())
         frddly = float(self.textbox_FRDDly.text())
 
-        maxfrddly = (fa.rfft.dac_clk / fa.rfft.fftLen) / rampfreq
-        if frddly>=maxfrddly:
-           frddly =  0
-           print "ERROR max sync delay too large"
+        #!!maxfrddly = (fa.rfft.dac_clk / fa.rfft.fftLen) / rampfreq
+        #!!if frddly>=maxfrddly:
+        #!!   frddly =  0
+        #!!   print "ERROR max sync delay too large"
         
         roachlock.acquire()       
         fa.temp_is_tes_on = is_tes_on
@@ -1540,7 +1543,7 @@ class AppForm(QMainWindow):
 
     
     def hdfResRead(self):
-        filename = QFileDialog.getOpenFileName(caption='Hdf File Name')[0]
+        filename = str(QFileDialog.getOpenFileName(caption='Hdf File Name'))
         #filename=self.textbox_HDF5ResName.text()
         mkidLoadData(filename)
         self.populateListWidget()
@@ -1548,7 +1551,7 @@ class AppForm(QMainWindow):
     def hdfResReadL(self):
 
 
-        filename = QFileDialog.getOpenFileName(caption='Hdf File Name')[0]
+        filename = str(QFileDialog.getOpenFileName(caption='Hdf File Name'))
         #filename=self.textbox_HDF5ResName.text()
         mkidLoadData(filename)
         for m in MKID_list:
@@ -4134,13 +4137,13 @@ def runSweepTesIV():
        
        
         fa.progTranslatorsFromIQCircles(measure.iqcenterdata)
-
+    
         
-        fa.setRampSyncSource(fa.temp_open_or_closedloop)
+        #fa.setRampSyncSource(fa.temp_open_or_closedloop)
         fa.chanzer.setFluxRampDemod(
             fa.temp_frd[0],
             fa.temp_frd[1],
-            fa.chanzer.read_fifo_size,
+            fa.frdlen_temp,
             fa.temp_numprd)             
         fa.setCarrier(
             measure.measspecs.andata_trans['fa.carrierfreq'])
@@ -4151,7 +4154,10 @@ def runSweepTesIV():
             fa.iv_bbtemp,
             fa.iv_lotemp,
             lock=roachlock,
-            callback = voltSweepCallback);
+            callback = voltSweepCallback,
+            issync = fa.temp_open_or_closedloop,
+            evtsize2=fa.frdlen_temp,
+            syncdelay=fa.syncdelay_temp);
             
         print 'Done IV Sweep'
        

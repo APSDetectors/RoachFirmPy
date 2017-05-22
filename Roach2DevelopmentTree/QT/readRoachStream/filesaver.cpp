@@ -1,4 +1,5 @@
 #include "filesaver.h"
+#include "unistd.h"
 /**
  * @brief fileSaver::fileSaver
  * @param parent
@@ -183,5 +184,4 @@ void fileSaver::saveNow(void)
 
 
 }
-
 

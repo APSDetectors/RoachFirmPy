@@ -20,6 +20,7 @@ epics_stdir = '/home/beams0/TMADDEN/EPICS/maddogsoftioc/iocBoot/iocmyexample'
 epics_iocdb = '/home/beams0/TMADDEN/EPICS/maddogsoftioc/db'
 epics_ioctop = '/home/beams0/TMADDEN/EPICS/maddogsoftioc'
 
+iocname = 'DP:roach1:'
 
 
 global db
@@ -83,7 +84,7 @@ def createDatabase():
     
     epics_function_map = {}
     
-    iocname = 'ROACH:'
+    
     db = []
    
          
@@ -419,58 +420,58 @@ def daemon():
                     print kk
                     if kk=='status_string':
                         print 'epics daemon got stat string'
-                        epics.caput('ROACH:RoachStatMessage',str(roach_message[kk]))
+                        epics.caput(iocname+'RoachStatMessage',str(roach_message[kk]))
                     elif kk=='FreqSweepMag': 
                         dat =  roach_message[kk]  
                         datinterp =  numpy.interp(
                             arange(0,len(dat),float(len(dat))/sweeppv_len),
                             arange(len(dat)),
                             dat)          
-                        epics.caput('ROACH:FreqSweepMag',datinterp)
+                        epics.caput(iocname+'FreqSweepMag',datinterp)
                     elif kk=='FreqSweepPhase':
                         dat =  roach_message[kk]  
                         datinterp =  numpy.interp(
                             arange(0,len(dat),float(len(dat))/sweeppv_len),
                             arange(len(dat)),
                             dat)          
-                        epics.caput('ROACH:FreqSweepPhase',datinterp)
+                        epics.caput(iocname+'FreqSweepPhase',datinterp)
                     elif kk=='FreqSweepI':
                         dat =  roach_message[kk]  
                         datinterp =  numpy.interp(
                             arange(0,len(dat),float(len(dat))/sweeppv_len),
                             arange(len(dat)),
                             dat)                             
-                        epics.caput('ROACH:FreqSweepI',datinterp)
+                        epics.caput(iocname+'FreqSweepI',datinterp)
                     elif kk=='FreqSweepQ':
                         dat =  roach_message[kk]  
                         datinterp =  numpy.interp(
                             arange(0,len(dat),float(len(dat))/sweeppv_len),
                             arange(len(dat)),
                             dat)                             
-                        epics.caput('ROACH:FreqSweepQ',datinterp)
+                        epics.caput(iocname+'FreqSweepQ',datinterp)
                     elif kk=='TimeStamps':
-                        epics.caput('ROACH:TimeStamps',roach_message[kk])
+                        epics.caput(iocname+'TimeStamps',roach_message[kk])
                     elif kk=='SweepFreqs':                    
                         dat =  roach_message[kk]  
                         datinterp =  numpy.interp(
                             arange(0,len(dat),float(len(dat))/sweeppv_len),
                             arange(len(dat)),
                             dat)                           
-                        epics.caput('ROACH:SweepFreqs',datinterp)                                       
-                        epics.caput('ROACH:SweepFreqs.HOPR',max(dat))
-                        epics.caput('ROACH:SweepFreqs.LOPR',min(dat))
+                        epics.caput(iocname+'SweepFreqs',datinterp)                                       
+                        epics.caput(iocname+'SweepFreqs.HOPR',max(dat))
+                        epics.caput(iocname+'SweepFreqs.LOPR',min(dat))
                         numsweepfreqs = len(dat)
-                        epics.caput('ROACH:NumSweepFreqs',numsweepfreqs)
+                        epics.caput(iocname+'NumSweepFreqs',numsweepfreqs)
                     elif kk=='RawNoiseMag':
-                        epics.caput('ROACH:RawNoiseMag',roach_message[kk])
+                        epics.caput(iocname+'RawNoiseMag',roach_message[kk])
                     elif kk=='RawNoisePhase':
-                        epics.caput('ROACH:RawNoisePhase',roach_message[kk])
+                        epics.caput(iocname+'RawNoisePhase',roach_message[kk])
                     elif kk=='FluxRampPhase':
-                        epics.caput('ROACH:FluxRampPhase',roach_message[kk])
+                        epics.caput(iocname+'FluxRampPhase',roach_message[kk])
 
                     elif kk=='ResListText':
                         strx = roach_message[kk]
-                        epics.caput('ROACH:ResListText',strx)
+                        epics.caput(iocname+'ResListText',strx)
 
         except:
             pass

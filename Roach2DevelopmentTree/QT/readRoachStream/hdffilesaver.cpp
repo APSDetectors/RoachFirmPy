@@ -1,5 +1,5 @@
 #if 1
-
+#include "unistd.h"
 #include "hdffilesaver.h"
 
 hdfFileSaver::hdfFileSaver(QObject *parent) :

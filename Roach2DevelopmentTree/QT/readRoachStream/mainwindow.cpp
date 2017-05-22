@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
+#include "unistd.h"
 #include <QFile>
 #include <QFileDialog>
 

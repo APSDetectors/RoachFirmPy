@@ -227,21 +227,21 @@ class katcpNc:
     def startNc(self):
     
     	try:
-	    os.system('mkfifo /local/roachkatcpfifoOut')
-	    os.system('mkfifo /local/roachkatcpfifoIn')
+	    os.system('mkfifo /localc/roachkatcpfifoOut')
+	    os.system('mkfifo /localc/roachkatcpfifoIn')
 	    
-	    os.system('sleep 9999999 > /local/roachkatcpfifoIn &')
-	    os.system('sleep 9999999 > /local/roachkatcpfifoIn &')
+	    os.system('sleep 9999999 > /localc/roachkatcpfifoIn &')
+	    os.system('sleep 9999999 > /localc/roachkatcpfifoIn &')
 	except:
 	    pass
 	    
     
-    	os.system('nc %s %d > /local/roachkatcpfifoIn < /local/roachkatcpfifoOut &'%(self.ip,self.port))
+    	os.system('nc %s %d > /localc/roachkatcpfifoIn < /localc/roachkatcpfifoOut &'%(self.ip,self.port))
 	
 	
 	
-	self.In_pipe = open('/local/roachkatcpfifoIn','r');
-	self.Out_pipe = open('/local/roachkatcpfifoOut','w');
+	self.In_pipe = open('/localc/roachkatcpfifoIn','r');
+	self.Out_pipe = open('/localc/roachkatcpfifoOut','w');
 	
 	
 	print self.In_pipe.readline()
