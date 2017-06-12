@@ -189,7 +189,14 @@ def createDatabase():
     
     db.append(
         makeCharWaveform(iocname+"ResListText",nelm=2000))
+    epics_function_map[iocname+"ResListText"] = (epicsMessage,"form.res_list_text")  
     
+
+    db.append(
+        makeCharWaveform(iocname+"ResListText_RBV",nelm=2000))
+
+
+
     db.append(
         makeCharWaveform(iocname+"SweepFilename",nelm=256))
     epics_function_map[iocname+"SweepFilename"] = (epicsMessage,"form.temp_sweep_fname")  
@@ -471,7 +478,7 @@ def daemon():
 
                     elif kk=='ResListText':
                         strx = roach_message[kk]
-                        epics.caput(iocname+'ResListText',strx)
+                        epics.caput(iocname+'ResListText_RBV',strx)
 
         except:
             pass

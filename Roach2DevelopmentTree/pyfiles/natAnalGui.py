@@ -366,19 +366,19 @@ class AppForm(QMainWindow):
                 print "qt got %s"%(message)
                 
                 if message=='form.openClient':
-                    if self.epicsmessage_dict['value']==1:
+                    if self.epicsmessage_dict['value']>0:
                         self.openClient()
                 if message=='form.reOpenClient':
-                    if self.epicsmessage_dict['value']==1:
+                    if self.epicsmessage_dict['value']>0:
                         self.reOpenClient()
                 elif message=='form.closeClient':
-                    if self.epicsmessage_dict['value']==1:
+                    if self.epicsmessage_dict['value']>0:
                         self.closeClient()
                 elif message=='form.startSweep':
-                    if self.epicsmessage_dict['value']==1:
+                    if self.epicsmessage_dict['value']>0:
                         self.startSweep()
                 elif message=='form.runStop':
-                    if self.epicsmessage_dict['value']==1:
+                    if self.epicsmessage_dict['value']>0:
                         self.runStop()
                         
                 elif message=='form.spinbox_SpanFreq':
@@ -403,6 +403,19 @@ class AppForm(QMainWindow):
                         self.clearResList()
                         reslist_str = mkidList2Str()
                         epics_queue_fromroach.put( {'ResListText':reslist_str} )
+               
+
+                elif message=='form.res_list_text':
+                    fliststr = self.epicsmessage_dict['char_value']
+                    fliststr = 'resonator_freqs = ' + fliststr
+                    print fliststr
+                    exec(fliststr)
+                    
+                    pyListToMkidList(resonator_freqs,1e6)         
+                    reslist_str = mkidList2Str()
+                    epics_queue_fromroach.put( {'ResListText':reslist_str} )
+               
+               
                        
                 elif message=='form.savePlot2':
                     if self.epicsmessage_dict['value']==1:

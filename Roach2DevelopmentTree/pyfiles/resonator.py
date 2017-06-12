@@ -33,6 +33,30 @@ random.seed()
 MKID_list=[]
 
 
+
+#
+# read a list of freqs in python [ 5e9, 5.1e9]. make MKID_list
+#
+
+def pyListToMkidList(pylist,multiplier=1.0):
+    global MKID_list
+    MKID_list = []
+    n = 0
+    for f in pylist:
+        m = MKID(N=n,fc=f*multiplier)
+        n = n+1
+        MKID_list.append(m)
+
+#
+# read a list of freqs in python resonator_freqs = [ 5e9, 5.1e9]. make MKID_list
+#
+
+
+def pyListFileToMkidList(fname):
+    execfile(fname)
+    pyListToMkidList(resonator_freqs)
+
+
 def mkidList2(mlist):
         for m in mlist:
                 print "\n--------------------------------------------------------\n"
@@ -50,14 +74,26 @@ def mkidList():
 
 
 
-def mkidList2Str():
-    k=0
-    strx = ''
+def mkidList2Str2():
+    strx = 'mdir={'
     for m in MKID_list:                
-        strx = strx+ 'Res %03d  fc %5.2fMHz  '%(m.resonator_num, m.rough_cent_freq/1e6)                    
-    if strx=='': strx='     '
+        strx = strx+ '%d:%f,'%(m.resonator_num, m.rough_cent_freq)   
+    strx = strx[:-1]  + '}'                    
     return(strx)
     
+
+
+def mkidList2Str():
+    strx = '['
+    for m in MKID_list:                
+        strx = strx+ '%5.2f,'%(m.rough_cent_freq/1e6)   
+    strx = strx[:-1]  + ']'                    
+    return(strx)
+
+    
+def mkidList2Pickle():
+    strx = pickle.dumps(MKID_list)
+    return(strx)
     
     
              
