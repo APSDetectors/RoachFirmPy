@@ -51,10 +51,11 @@ def pyListToMkidList(pylist,multiplier=1e6):
 # read a list of freqs in python resonator_freqs = [ 5e9, 5.1e9]. make MKID_list
 #
 
+resonator_freqs=[]
 
 def pyListFileToMkidList(fname):
     global resonator_freqs
-    execfile(fname)
+    execfile(fname,globals())
     print resonator_freqs
     pyListToMkidList(resonator_freqs)
 

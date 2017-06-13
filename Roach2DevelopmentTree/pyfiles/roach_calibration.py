@@ -1,8 +1,12 @@
+# preferred tone power at resonator dbm
+tone_power_at_resonator_dbm = -85.0
+
+
 
 #hard codeed, watts output for full scale sinewave. 
 dac_watts_sinewave = 0.00198
 #max amp 0p in counts outptu from dac
-dac_max_counts_0p = 32768
+dac_max_counts_0p = 32766
 
 
 
@@ -76,6 +80,8 @@ def calcRfPowerOutputDBm(
 
 
 def calcSineampAttensFromRfPower(num_tones,desired_power):
+    if num_tones==0: num_tones=1
+
     sineamp_counts = dac_max_counts_0p/num_tones
     max_ifout_dbm = calcRfPowerOutputDBm(sineamp_counts,0,0)
     if (desired_power<=max_ifout_dbm):
@@ -83,6 +89,7 @@ def calcSineampAttensFromRfPower(num_tones,desired_power):
         atten = desired_power - max_ifout_dbm
         atu6 = 0.0
         atu7 = 0.0
+        atu28 = 0.0
         if atten<if_board_attenu6_maxatt:
             atu6 = if_board_attenu6_maxatt
             atu7 = (atten - if_board_attenu6_maxatt)
@@ -90,10 +97,10 @@ def calcSineampAttensFromRfPower(num_tones,desired_power):
                 print "calcSineampAttensFromRfPower: Error too much attenuation"
                 return(None)
             
-            return( (sineamp_counts, atu6, atu7) )
+            return( (sineamp_counts, atu6, atu7,atu28) )
         else:
             atu6 = atten
-            return( (sineamp_counts, atu6, atu7) )
+            return( (sineamp_counts, atu6, atu7,atu28) )
     else:
         print "calcSineampAttensFromRfPower:  Cannot make that much power"
         return(None)
@@ -118,8 +125,11 @@ def calcSineampAttensFromResPower(num_tones,desired_power):
 
 
 
+#
+# max power we can oput on a resonator
+#
 
-
+cryo_max_res_power_dbm = calcResPowerDbm(dac_max_counts_0p,0,0)
 
 
 

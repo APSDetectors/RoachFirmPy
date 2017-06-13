@@ -514,12 +514,12 @@ fa.if_board.rf.rf_loopback=1
 fa.if_board.at.atten_U6 =5
 fa.if_board.at.atten_U6 =5
 
-fa.if_board.progAtten(fa.if_board.at)
+fa.if_board.progAtten(fa.if_board.at.
 fa.if_board.progRFSwitches(fa.if_board.rf)
 
 
 fa.if_board.at.atten_U6 = fa.if_board.at.atten_U6 + 3
-fa.if_board.progAtten(fa.if_board.at)
+fa.if_board.progAtten(fa.if_board.at.
 fa.if_board.progRFSwitches(fa.if_board.rf)
 time.sleep(0.1)
 fa.rfft.trigFFT()
@@ -816,6 +816,9 @@ execfile('hdfSerdes.py')
 
 execfile('fluxRampGen.py')
 
+execfile("roach_calibration.py")
+
+
 #from katcpNc import *
 #from roachScope import *
 #from sramLut import *
@@ -881,7 +884,7 @@ class fftAnalyzerR2:
         
         self.qdr_cal_good=False
         
-        
+        self.power_at_resonator =tone_power_at_resonator_dbm  
         
         if self.roach2 != None:
         
@@ -1036,6 +1039,7 @@ class fftAnalyzerR2:
             'fa.tes_bias_on':fa.tes_bias_on ,
             'fa.span_Hz':fa.span_Hz ,
             'fa.mainFW':fa.mainFW ,
+            'fa.power_at_resonator':fa.power_at_resonator,
             'fa.loadFW':fa.loadFW}
             
         return(dat)
@@ -1324,7 +1328,7 @@ class fftAnalyzerR2:
         is_new_settings=True,
         BB=None,
         LO = None, 
-        amp = None,
+        pwr_at_res = None,
         lock = None):
 
         print 'fftAnaluzerR2.captureNoise'
@@ -1338,11 +1342,21 @@ class fftAnalyzerR2:
             
         self.an.setOnOff(1)
         
-        if amp==None:
-            amp = self.calcAmp(len(rffreqs))
-        
         isn=is_new_settings
         
+        num_tones = len(BB);
+        if pwr_at_res==None:
+            pwr_at_res = tone_power_at_resonator_dbm 
+        
+        (amp, atu6, atu7, atu28) = calcSineampAttensFromResPower(num_tones, pwr_at_res)
+ 
+        if isn==is_new_settings: 
+            self.if_board.at.atten_U6=atu6
+            self.if_board.at.atten_U7=atu7
+            self.if_board.at.atten_U28=atu28
+            self.if_board.progAtten(self.if_board.at)
+
+
         self.sourceCapture(
             BB,
             amp,
@@ -1424,7 +1438,7 @@ class fftAnalyzerR2:
         span_Hz=100e6, 
         center_Hz=3000e6, 
         pts=2048,
-        amplitude = 20000,
+        pwr_at_res = None,
         defaultFRD=1,
         if_new_settings=True,
         lock=None,
@@ -1457,6 +1471,9 @@ class fftAnalyzerR2:
         #self.sweep_samples_per_freq=floor(65536/self.sweep_num_freqs)
 
 
+        
+ 
+
        
 
         if if_new_settings:
@@ -1467,10 +1484,20 @@ class fftAnalyzerR2:
             if type(center_Hz)==list:
                 center_Hz = numpy.array(center_Hz)
                 
+            num_tones = len(center_Hz);
+            if pwr_at_res==None:
+                pwr_at_res = tone_power_at_resonator_dbm 
+            
+            (amp, atu6, atu7, atu28) = calcSineampAttensFromResPower(num_tones, pwr_at_res)
 
+            self.if_board.at.atten_U6=atu6
+            self.if_board.at.atten_U7=atu7
+            self.if_board.at.atten_U28=atu28
+            self.if_board.progAtten(self.if_board.at)
+            
             (self.LO, self.bbfreqs) = self.calcBBLOFromRFFreqs(center_Hz)
             self.center_Hz = center_Hz
-            self.amplitude = amplitude
+            self.amplitude = amp
             self.span_Hz = span_Hz
             self.pts = pts
             
@@ -1917,6 +1944,7 @@ class fftAnalyzerR2:
     def sweepProgTranslators(
         self,
         rffreqs, 
+        pwr_at_res = None,
         sweepflags = 7,
         lock_=None,
         callback_ = None):
@@ -1938,13 +1966,14 @@ class fftAnalyzerR2:
                 evt_len=100,
                 num_cycles=2.0)
 
-            amp = self.calcAmp(len(rffreqs))
+
+
 
             self.sweep(
                 span_Hz=4e6, 
                 center_Hz=rffreqs, 
                 pts=256,
-                amplitude = amp,
+                pwr_at_res = pwr_at_res,
                 defaultFRD=0,
                 lock=lock_,
                 callback=callback_)
@@ -1981,13 +2010,12 @@ class fftAnalyzerR2:
                 is_incl_raw_trans=1, 
                 evt_len=100,
                 num_cycles=2.0)
-            amp = self.calcAmp(len(rffreqs))
 
             self.sweep(
                 span_Hz=4e6, 
                 center_Hz=measure.measspecs.rffreqs, 
                 pts=256,
-                amplitude = amp,
+                pwr_at_res = pwr_at_res,
                 defaultFRD=0,
                 lock=lock_,
                 callback=callback_)
@@ -2022,13 +2050,12 @@ class fftAnalyzerR2:
                 is_incl_raw_trans=2, 
                 evt_len=100,
                 num_cycles=2.0)
-            amp = self.calcAmp(len(rffreqs))
 
             self.sweep(
                 span_Hz=4e6, 
                 center_Hz=-1, 
                 pts=256,
-                amplitude = amp,
+                pwr_at_res = pwr_at_res,
                 defaultFRD=0,
                 if_new_settings = False,
                 lock=lock_,

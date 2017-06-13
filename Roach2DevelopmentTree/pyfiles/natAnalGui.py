@@ -448,15 +448,6 @@ class AppForm(QMainWindow):
                 elif message=='form.checkbox_extClk':                  
                     form.checkbox_extClk.setChecked(
                         self.epicsmessage_dict['value'])
-                elif message=='form.spinbox_AttOut0':
-                    value =  self.epicsmessage_dict['value']
-                    self.spinbox_AttOut0.setValue(value)           
-                elif message=='form.spinbox_AttOut1':
-                    value =  self.epicsmessage_dict['value']
-                    self.spinbox_AttOut1.setValue(value)           
-                elif message=='form.spinbox_AttIn0':
-                    value =  self.epicsmessage_dict['value']
-                    self.spinbox_AttIn0.setValue(value)           
  
                 elif message=='form.calibrateIQCircles':
                     if self.epicsmessage_dict['value']==1:
@@ -1000,16 +991,11 @@ class AppForm(QMainWindow):
         for mkid in mlist:
             fa.temp_rffreqs_rough.append(mkid.getFc())
 
-       
+        self.setAttenFromGUI()
+
         
         self.noisetemp_timesec =  float( self.textbox_streamsec.text()  )
         self.noisetemp_fname = str(self.textbox_streamfilename.text())
-    
-        fa.if_board.at.atten_U6=self.spinbox_AttOut0.value()
-        fa.if_board.at.atten_U7=self.spinbox_AttOut1.value()
-
-        fa.if_board.at.atten_U28=self.spinbox_AttIn0.value()
-        
         
         thread.start_new_thread(runSweepProgTranslators,())
         #fa.sweepProgTranslators(rffreqs_rough)      
@@ -1108,6 +1094,7 @@ class AppForm(QMainWindow):
         
         fa.syncdelay_temp = 128* frddly
         fa.frdlen_temp = frdlen
+        self.setAttenFromGUI()
         roachlock.release()
         
         self.plottype=5;
@@ -1159,8 +1146,7 @@ class AppForm(QMainWindow):
         
          
     def loadSweepPlot(self):     
-        
-        self.temp_sweep_fname = QFileDialog.getOpenFileName(caption='Hdf File Name')[0]
+        self.temp_sweep_fname = str(QFileDialog.getOpenFileName(caption='Hdf File Name'))
         self.loadSweepPlot2()
         self.plottype = 1
         self.signalPlot()
@@ -1234,54 +1220,29 @@ class AppForm(QMainWindow):
 
     def setAttenFromGUI(self):
     
-        attu6=self.spinbox_AttOut0.value()
-        attu7=self.spinbox_AttOut1.value()
-        attu28=self.spinbox_AttIn0.value()
+ 
+        pwrdbm =self.spinbox_ResPwrOut.value()
+        num_tones = len(MKID_list);
+        
+        (amp, atu6, atu7, atu28) = calcSineampAttensFromResPower(num_tones, pwrdbm)
+        self.label_AttenSets.setText("Sineamp=%5.2f, U6=%5.2f, U7=%5.2f,U28=%5.2f"%(amp, atu6, atu7, atu28))
+        
+        roachlock.acquire()
+        fa.if_board.at.atten_U6=atu6
+        fa.if_board.at.atten_U7=atu7
+        fa.if_board.at.atten_U28=atu28
+        fa.if_board.progAtten(fa.if_board.at)
+        fa.amplitude = amp
+
+        fa.power_at_resonator = pwrdbm 
+        roachlock.release()
+        
+
     
-        self.setAttenuatorsOut0(attu6)
-        self.setAttenuatorsOut1(attu7)
-        self.setAttenuatorsIn0(attu28)
 
    
     
     
-
-    def setReadoutFreq(self):
-        #cf = 1e6*self.spinbox_CenterFreq.value()
-    
-
-        readf=float(self.textbox_RdFreq.text())*1e6
-        cf=readf
-
-
-
-            #sf = 1e6*self.spinbox_SpanFreq.value()
-        sf=0;
-
-
-        self.calcFreqVals(cf,sf)
-
-
-
-        
-    
-        
-  
-
-    def stopSweep(self):
-    
-       pass
-
-  
-    def findDeletedResonators(self):
-        a=1 
- 
-    def loadCustomAtten(self):
-        a=1 
- 
-    def displayResonatorProperties(self):
-        a=1 
-        
     
         
     def bbLoopback(self,state):
@@ -1348,27 +1309,6 @@ class AppForm(QMainWindow):
         
         
         
-    def setAttenuatorsOut0(self,val):
-        roachlock.acquire();
-        fa.if_board.at.atten_U6=val
-        fa.if_board.progAtten(fa.if_board.at)
-        roachlock.release()
-        
-        
-
-        
-    def setAttenuatorsOut1(self,val):
-        roachlock.acquire();
-        fa.if_board.at.atten_U7=val
-        fa.if_board.progAtten(fa.if_board.at)
-        roachlock.release()
-
-    def setAttenuatorsIn0(self,val):
-   
-        roachlock.acquire();
-        fa.if_board.at.atten_U28=val
-        fa.if_board.progAtten(fa.if_board.at)
-        roachlock.release()
     
 
     
@@ -1405,32 +1345,6 @@ class AppForm(QMainWindow):
 
         mlist2Pylist(filename)
     
-    def hdfResSave(self):
-
-        #save a copy as a rand name, because the files get overwritten
-
-        #randname='backup_%f.h5'%(rand())
-        #mkidSaveData(randname)
-
-        
-        filename = str(QFileDialog.getSaveFileName(
-            caption='Hdf File Name'))
-            
-
-
-        #make backup files, save 5 of them
-        for n in range(4):
-            #n=0,1,2,3   nn=5,4,3,2
-            nn=5-n;   
-            #mv 4,3,2,1 to   5,4,3,2    
-            try: os.system('mv backup_%d.h5 backup_%d.h5'%(nn-1,nn))
-            except: pass
-
-        try: os.system('mv %s backup_1.h5'%(filename))
-        except: pass
-
-        mkidSaveData(filename)
-
 
     
     def textResRead(self):
@@ -1440,25 +1354,6 @@ class AppForm(QMainWindow):
         self.populateListWidget()
     
 
-    def hdfResRead(self):
-        filename = str(QFileDialog.getOpenFileName(caption='Hdf File Name'))
-        #filename=self.textbox_HDF5ResName.text()
-        mkidLoadData(filename)
-        self.populateListWidget()
-
-    def hdfResReadL(self):
-
-
-        filename = str(QFileDialog.getOpenFileName(caption='Hdf File Name'))
-        #filename=self.textbox_HDF5ResName.text()
-        mkidLoadData(filename)
-        for m in MKID_list:
-            m.reslist=[]
-            
-        #self.populateListWidget()
-   
-  
-        self.signalPlot()
         
 
     def updatePlot(self):
@@ -2081,73 +1976,6 @@ class AppForm(QMainWindow):
 
 
 
-    def checkAllList(self):
-        global MKID_list
-    
-    for mkid in MKID_list:
-        mkid.checked=1
-
-        self.populateListWidget()
-
-        self.setRowsAllChecked()
-        self.checked_list_rows = self.getRowsChecked()
-
-
-
-
-    def unCheckAllList(self):
-        global MKID_list
-    
-        for mkid in MKID_list:
-            mkid.checked=0
-
-        self.populateListWidget()
-
-        self.setRowsAllUnChecked()
-        self.checked_list_rows = self.getRowsChecked()
-
-
-
-
-     
-
-
-    
-    #
-#    
-#    
-#    #set up and test pulse detecotr
-#        self.button_progpulsedet = QPushButton("ProgPulseDet")
-#    self.button_progpulsedet.setMaximumWidth(170)
-#        self.connect(self.button_progpulsedet, SIGNAL('clicked()'), self.progPulseDet)            
-#        
-#    label_tevtrate = QLabel('EventRate')
-#    self.label_test_event_rate = QLabel('0')
-#    
-##
-#    
-#    #set up and test pulse detecotr
-#        self.button_pulsedetmeasmeans = QPushButton("MeasMeans")
-#    self.button_pulsedetmeasmeans.setMaximumWidth(170)
-#        self.connect(self.button_pulsedetmeasmeans, SIGNAL('clicked()'), self.measPulseMeans)            
-#        
-
-
-
-#
-#
-#
-#    def enablePulseDetAvg(self,state):
-#        
-#    if state==0:
-#      fa.recordEvents(0)
-#      na.calcMeans(self,1)
-#    else:
-#      na.calcMeans(self,0)
-#      fa.recordEvents(1)
-#    
-#        
-
 
 
 #
@@ -2549,38 +2377,24 @@ class AppForm(QMainWindow):
         #
         # Frequency entries for sweeping net analuyzer
         #
-        self.label_AttOut0 = QLabel('AttenOutU6')
-        self.label_AttOut0.setMaximumWidth(120)
+        self.label_AttenSets = QLabel('OutAtten= 0 + 0 = 0, InAtten = 0')
+        self.label_AttenSets.setMaximumWidth(250)
     
  
-        self.label_AttOut1 = QLabel('AttenOutU7')
-        self.label_AttOut1.setMaximumWidth(120)
+        self.label_ResPwrOut = QLabel('PwrAtResDBM')
+        self.label_ResPwrOut.setMaximumWidth(120)
  
-        self.label_AttIn0 = QLabel('AttenInU28')
-        self.label_AttIn0.setMaximumWidth(120)
  
  
     
-        self.spinbox_AttOut0 = QSpinBox()
-        self.spinbox_AttOut0.setRange(0,32)
-        self.spinbox_AttOut0.setValue(10)
-        self.spinbox_AttOut0.setSingleStep(1)
-        self.spinbox_AttOut0.setMaximumWidth(50)
-        self.spinbox_AttOut0.valueChanged.connect(self.setAttenuatorsOut0)
 
-        self.spinbox_AttOut1 = QSpinBox()
-        self.spinbox_AttOut1.setRange(0,32)
-        self.spinbox_AttOut1.setValue(10)
-        self.spinbox_AttOut1.setSingleStep(1)
-        self.spinbox_AttOut1.setMaximumWidth(50)
-        self.spinbox_AttOut1.valueChanged.connect(self.setAttenuatorsOut1)
+        self.spinbox_ResPwrOut = QSpinBox()
+        self.spinbox_ResPwrOut.setRange(-180,cryo_max_res_power_dbm)
+        self.spinbox_ResPwrOut.setValue(cryo_max_res_power_dbm-20)
+        self.spinbox_ResPwrOut.setSingleStep(1)
+        self.spinbox_ResPwrOut.setMaximumWidth(50)
+        self.spinbox_ResPwrOut.valueChanged.connect(self.setAttenFromGUI)
 
-        self.spinbox_AttIn0 = QSpinBox()
-        self.spinbox_AttIn0.setRange(0,32)
-        self.spinbox_AttIn0.setValue(10)
-        self.spinbox_AttIn0.setSingleStep(1)
-        self.spinbox_AttIn0.setMaximumWidth(50)
-        self.spinbox_AttIn0.valueChanged.connect(self.setAttenuatorsIn0)
 
 
 
@@ -2941,77 +2755,6 @@ class AppForm(QMainWindow):
         self.connect(self.button_gui_stop, SIGNAL('clicked()'), self.guiStop)            
     
     
-    ############################################################################################3
-    # Ramp and sync tab
-    #
-    
-    
- 
-    
-        #self.combobox_syncsource=QComboBox()
-       
-        #self.combobox_syncsource.addItem('Open Loop (no FRD)')   
-        #self.combobox_syncsource.addItem('Closed Loop (FRD)')   
-        #self.combobox_syncsource.addItem('Int RampSource')   
-
-        #self.connect(self.combobox_plottype, SIGNAL('currentIndexChanged'), self.setPlotType) 
-        #self.combobox_syncsource.currentIndexChanged.connect(self.setRampSyncSource)
-
-    
-    
-    
-        #self.spinbox_RampAmp = QSpinBox()
-        #self.spinbox_RampAmp.setRange(0,100)
-        #self.spinbox_RampAmp.setValue(50)
-        #self.spinbox_RampAmp.setSingleStep(1)
-        #self.spinbox_RampAmp.setMaximumWidth(150)
-        #self.spinbox_RampAmp.valueChanged.connect(self.setRampSpecs)
-        #label_RampAmp = QLabel('Amp 0% - 100%')
-    
-    
-    
-    
-        #self.spinbox_RampFreq = QSpinBox()
-        #self.spinbox_RampFreq.setRange(1000,2000000)
-        #self.spinbox_RampFreq.setValue(10000)
-        #self.spinbox_RampFreq.setSingleStep(1000)
-        #self.spinbox_RampFreq.setMaximumWidth(150)
-        #self.spinbox_RampFreq.valueChanged.connect(self.setRampSpecs)
-        #label_RampFreq = QLabel('Freq Hz 1e3-2e6')
-        
-        
-        
-        
-    
-        #self.combobox_flxRmpDmd=QComboBox()
-       
-        #self.combobox_flxRmpDmd.addItem('Raw Data')   
-        #self.combobox_flxRmpDmd.addItem('Raw + FRD')   
-        #self.combobox_flxRmpDmd.addItem('FRD only')   
-        #self.combobox_flxRmpDmd.addItem('FRD + Trans')   
-
-        #self.connect(self.combobox_plottype, SIGNAL('currentIndexChanged'), self.setPlotType) 
-        #self.combobox_flxRmpDmd.currentIndexChanged.connect(self.setFluxRampDemod)
-
-    
-        
-        # lut amp
-        #self.textbox_flxRmpPrd = QLineEdit('3.0')
-        #self.textbox_flxRmpPrd.setMaximumWidth(50)
-        #self.textbox_flxRmpPrd.returnPressed.connect(self.setFluxRampDemod)
-
-        #label_flxRmpPrd = QLabel('FlxRmp Periods')
-   
-        
-        
-        #self.button_setupRamp = QPushButton("RefreshSettings")
-        #self.button_setupRamp.setMaximumWidth(170)
-        #self.connect(self.button_setupRamp, SIGNAL('clicked()'), self.refreshFRDSettings)            
-    
-        ##################################################################################################
-        ##################################################################################################
-        ##################################################################################################
-
    
       
     #################################################################################################3
@@ -3075,16 +2818,11 @@ class AppForm(QMainWindow):
         hbox21 = QHBoxLayout()
     
 
-        hbox21.addWidget(self.label_AttOut0)
-        hbox21.addWidget(self.spinbox_AttOut0)
-        hbox21.addWidget(self.label_AttOut1)
-        hbox21.addWidget(self.spinbox_AttOut1)
-        hbox21.addWidget(self.label_AttIn0)
-        hbox21.addWidget(self.spinbox_AttIn0)
+        hbox21.addWidget(self.label_AttenSets)
+        hbox21.addWidget(self.label_ResPwrOut)
+        hbox21.addWidget(self.spinbox_ResPwrOut)
        
 
-    
-    
     
         #hbox21.addWidget(self.textbox_Python)
         #hbox21.addWidget(self.button_Python)
@@ -3498,7 +3236,7 @@ def runCaptureNoise():
             fname = fa.noisetemp_fname,
             BB=measure.measspecs.andata_trans['fa.sram.frequency_list'],
             LO=measure.measspecs.andata_trans['fa.LO'],
-            amp = measure.measspecs.andata_trans['fa.sram.amplist'][0],
+            pwr_at_res = measure.measspecs.andata_trans['fa.power_at_resonator'],
             lock= roachlock)                    
         print 'Done Noise'
       
@@ -3627,6 +3365,7 @@ def runSweepProgTranslators():
 
         fa.sweepProgTranslators(
             fa.temp_rffreqs_rough,
+            pwr_at_res = fa.power_at_resonator,
             lock_=roachlock,
             callback_=sweepCallback2)      
             
