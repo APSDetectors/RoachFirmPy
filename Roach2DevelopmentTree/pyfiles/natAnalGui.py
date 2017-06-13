@@ -667,9 +667,6 @@ class AppForm(QMainWindow):
     def snapshot(self):       
         a=1 
     
-  
-    def getSelMkid(self):
-        return(self.getMkidSelectedChecked(self.list_reslist2)[0])
       
   
     #get selected or checked MKID obhects in the gui list
@@ -704,64 +701,12 @@ class AppForm(QMainWindow):
         return([clist,slist])
 
     #get list of ints, the rows, of the checked items in gui list
-    def getRowsChecked(self):
-
-
-        #checked list
-        clist=[]
-        wlist = self.list_reslist2
-
-        for row in range(wlist.topLevelItemCount()):
-            item=wlist.topLevelItem(row)
-            if item.checkState(0)==Qt.Checked:
-                clist.append(row)
-
-
-        return(clist)
 
 
 
     #get list of ints, the rows, of the checked items in gui list
-    def setRowsChecked(self,clist):
-        
-   
-        #checked list
-
-        wlist = self.list_reslist2
-        #uncheck all     
-        for row in range(wlist.topLevelItemCount()):
-            item=wlist.topLevelItem(row)
-            item.setCheckState(0,Qt.Unchecked)
-        #check the req rows
-        for row in clist:
-            item=wlist.topLevelItem(row)
-            item.setCheckState(0,Qt.Checked)
-
-     
-    #get list of ints, the rows, of the checked items in gui list
-    def setRowsAllChecked(self):
-        
-
-        #checked list
-
-        wlist = self.list_reslist2
-        #uncheck all     
-        for row in range(wlist.topLevelItemCount()):
-            item=wlist.topLevelItem(row)
-            item.setCheckState(0,Qt.Checked)
 
 
-    #get list of ints, the rows, of the checked items in gui list
-    def setRowsAllUnChecked(self):
-        
-
-        #checked list
-
-        wlist = self.list_reslist2
-        #uncheck all     
-        for row in range(wlist.topLevelItemCount()):
-            item=wlist.topLevelItem(row)
-            item.setCheckState(0,Qt.Unchecked)
 
 
     def runNoise(self):
@@ -776,59 +721,10 @@ class AppForm(QMainWindow):
         measure.runNoise()
 
 
-    #run power sweep, already setup, on calling thread
-    def powersweep2(self): 
-        
-        roachlock.acquire()
-        measure.powerSweep()
-        roachlock.release()
        
     
     #setup power sweep from gui settings    
  
-    def powersweepSetup(self): 
-
-   
-        
-        
-
-
-        print "Spawn power sweep 10:0.5:30"
-
-        sweep_specs = measSpecs()
-        #self.at_inst=self.spinbox_pwrsw_atinst.value()
-        sweep_specs.attStart=self.spinbox_pwrsw_atst.value()
-        #self.at_inst=self.spinbox_pwrsw_atTotal.value() - 10 -self.spinbox_pwrsw_atst.value()
-        sweep_specs.attInStart=self.spinbox_pwrsw_atinst.value()
-        sweep_specs.attEnd=self.spinbox_pwrsw_atend.value()
-        sweep_specs.numSweeps=self.spinbox_pwrsw_atsweeps.value()
-        sweep_specs.resonator_span = 1.0e6*self.spinbox_pwrsw_span.value()
-        sweep_specs.attIncr = self.spinbox_pwrsw_atstep.value()
-
-
-
-        sweep_specs.num_res_freq_points = self.spinbox_nswfreqs.value()
-
-        #copy and clear the markerlist so it plots correctly
-        sweep_specs.atU6=self.spinbox_pwrsw_atTotal.value() ;
-      
-
-    #see if something is selected, power sweep that,else power sweep checked items.
-    
-    
-
-        sweep_specs.mlist=  self.getMkidSelectedChecked(self.list_reslist2)[0]
-
-        roachlock.acquire()
-        measure.powersweepSetup(sweep_specs)
-        roachlock.release()
-        
-        if len(self.mlist)==0:
-            print "No resonators selected or checked"
-            return(0)
-
-      
-
 
    #calculate IQ velocity
     def IQvelocity(self):
@@ -921,16 +817,6 @@ class AppForm(QMainWindow):
             startFitServeMP('')
     
     
-    
-    def repeatRunIt(self):
-        self.button_runbyhour.setStyleSheet("background-color: red")
-        self.runIt()
-        self.timer=QTimer()    
-        self.timer.timeout.connect(self.runIt)    
-
-        minutes = float(self.textbox_repeatmin.text())
-        self.timer.start(1000*60*minutes)
-
 
 
 
@@ -939,41 +825,10 @@ class AppForm(QMainWindow):
         self.button_runbyhour.setStyleSheet("background-color: grey")
     
 
-    def runIt(self):
-
-
-        #get checked MKIDs
-        self.mlist= self.getMkidSelectedChecked(self.list_reslist2)[0]
-        #get checked rows in the gui, same as mkids, but row nimbers so we can remember the checked on gui
-        self.checked_list_rows = self.getRowsChecked()
-        self.powersweepSetup()
-
-        measure.measspecs.num_noise_traces = self.spinbox_numNoise.value()
-        ntime = float(self.textbox_noisesec.text())
-        
-        measure.setNoiseTime(ntime)
-
-        measure.temp_check_powersweep = self.check_powersweep.isChecked()
-        measure.temp_check_runFits = self.check_runFits.isChecked()
-        measure.temp_check_runIQvelocity = self.check_runIQvelocity.isChecked()
-        measure.temp_check_getnoise= self.check_getnoise.isChecked()
-        measure.temp_fitmlist = self.mlist
-        
-        
-        thread.start_new_thread(runSweepResCheckedOps,())
-
-
 
 
     def stopIt(self):
         #tell processes to stop fits. we may have several cpus connected, so we should send several times.
-        stopFitsMP()
-        stopFitsMP()
-        stopFitsMP()
-        stopFitsMP()
-        stopFitsMP()
-        stopFitsMP()
-        stopFitsMP()
 
         #stop polling thread. stops polling for fit quque, finished fits. also stops power sweep thread
         global is_thread_running
@@ -1136,18 +991,14 @@ class AppForm(QMainWindow):
 
   
 
-        mlist =self.getSelMkid()
-        if len(mlist) == 0:
-            print "no selected resonators"
-            return
+        mlist = MKID_list
+
             
             
         fa.temp_rffreqs_rough = []
         
         for mkid in mlist:
-            res = mkid.reslist[0]
-            fa.temp_rffreqs_rough.append(res.getFc())
-            print res.getFc()
+            fa.temp_rffreqs_rough.append(mkid.getFc())
 
        
         
@@ -1528,6 +1379,32 @@ class AppForm(QMainWindow):
     
     
     
+    def textResSave(self):
+
+        #save a copy as a rand name, because the files get overwritten
+
+        #randname='backup_%f.h5'%(rand())
+        #mkidSaveData(randname)
+
+        
+        filename = str(QFileDialog.getSaveFileName(
+            caption='Hdf File Name'))
+            
+
+
+        #make backup files, save 5 of them
+        for n in range(4):
+            #n=0,1,2,3   nn=5,4,3,2
+            nn=5-n;   
+            #mv 4,3,2,1 to   5,4,3,2    
+            try: os.system('mv backup_%d.h5 backup_%d.h5'%(nn-1,nn))
+            except: pass
+
+        try: os.system('mv %s backup_1.h5'%(filename))
+        except: pass
+
+        mlist2Pylist(filename)
+    
     def hdfResSave(self):
 
         #save a copy as a rand name, because the files get overwritten
@@ -1554,7 +1431,15 @@ class AppForm(QMainWindow):
 
         mkidSaveData(filename)
 
+
     
+    def textResRead(self):
+        filename = str(QFileDialog.getOpenFileName(caption='Hdf File Name'))
+        #filename=self.textbox_HDF5ResName.text()
+        pyListFileToMkidList(filename)
+        self.populateListWidget()
+    
+
     def hdfResRead(self):
         filename = str(QFileDialog.getOpenFileName(caption='Hdf File Name'))
         #filename=self.textbox_HDF5ResName.text()
@@ -2162,134 +2047,10 @@ class AppForm(QMainWindow):
     #        self.timer.setSingleShot(True)
     #        self.timer.start(1000)
 
-
   
-  
-    def resPlots(self):
-        
-    
-
-        selected=self.list_reslist2.selectedItems()
-
-        if len(selected)>0:
-            #obj=selected[0].data(0,100)
-            obj=selected[0].mkid
-
-            if obj.__class__.__name__ == "MKID":
-                fit.reslist = obj.reslist
-                fit.plotResonators()    
-
-            if obj.__class__.__name__ == "resonatorData":
-                obj.info()
-                obj.plotFreq() #this function exists in both netAnalyzer.py and fitters.py? This seems to call the fitters.py version
-                if obj.is_ran_fits==1 and obj.is_fit_error==0:
-                    fit.resonator=obj
-                    fit.lorentzPlots()
-
 
 
   
-    def setResFreq(self):
-        
-    
-
-        selected=self.list_reslist2.selectedItems()
-
-        if len(selected)>0:
-            #obj=selected[0].data(0,100)
-            obj=selected[0].mkid
-
-            if obj.__class__.__name__ == "MKID":
-                resfreqMHz = float(self.textbox_manResFreq.text())
-                obj.manual_cent_freq=resfreqMHz*1.0e6
-                
-                for res in obj.reslist:
-                    res.manual_cent_freq  = resfreqMHz*1.0e6              
-
-            if obj.__class__.__name__ == "resonatorData":
-                
-                print "--ERROR --Select MKID, NOT TRACE"
-
-
-
-    def medFilter(self):
-        
-    
-
-        selected=self.list_reslist2.selectedItems()
-
-        if len(selected)>0:
-            #obj=selected[0].data(0,100)
-            obj=selected[0].mkid
-
-            if obj.__class__.__name__ == "MKID":
-                fit.reslist = obj.reslist
-                fit.medianFilter()    
-
-            if obj.__class__.__name__ == "resonatorData":
-                
-                fit.reslist = [obj]
-                fit.medianFilter()
-
-
-
-    def lowPassFilter(self):
-        
-    
-
-        selected=self.list_reslist2.selectedItems()
-
-        if len(selected)>0:
-            #obj=selected[0].data(0,100)
-            obj=selected[0].mkid
-
-            if obj.__class__.__name__ == "MKID":
-                fit.reslist = obj.reslist
-                fit.lowPassFilter()    
-
-            if obj.__class__.__name__ == "resonatorData":
-                
-                fit.reslist = [obj]
-                fit.lowPassFilter()
-
-
-  
-  
-  
-    def clearNoise(self):
-        
-    
-
-        selected=self.list_reslist2.selectedItems()
-
-        if len(selected)>0:
-            #obj=selected[0].data(0,100)
-            obj=selected[0].mkid
-
-            if obj.__class__.__name__ == "MKID":
-                for r in obj.reslist:
-                    r.clearNoise()
-
-            if obj.__class__.__name__ == "resonatorData":
-                obj.clearNoise()
-
-
-
-  
-    def clearTraces(self):
-        
-    
-
-        selected=self.list_reslist2.selectedItems()
-
-        if len(selected)>0:
-            #obj=selected[0].data(0,100)
-            obj=selected[0].mkid
-
-            if obj.__class__.__name__ == "MKID":
-                obj.clearResList()
-
-
     #
     # Edit def name
     #
@@ -2399,14 +2160,6 @@ class AppForm(QMainWindow):
 
         #preserved what is checked when list is redrawn by storing if the res is checked.
 
-    #    for row in range(self.list_reslist2.count()):
-    #        item=self.list_reslist2.item(row)
-    #        if item.checkState()==Qt.Checked:
-    #        item.data(100).checked=1
-    #        else:
-    #            item.data(100).checked=0
-
-
 
         #print form.list_reslist.item(0).data(100).chip_name
 
@@ -2414,10 +2167,6 @@ class AppForm(QMainWindow):
         #clear gui lists 
         #
         self.list_reslist.clear()
-        self.list_reslist2.clear()
-
-        self.list_reslist2.setColumnCount(9)
-        self.list_reslist2.setHeaderLabels(["Res #","Trace #", "Device", "Fc (MHz)", "N. Traces","Atten","Fits","FitErr","Noise"])
         #
         #sort res list  by center freq
         #
@@ -2450,46 +2199,6 @@ class AppForm(QMainWindow):
             #item.setFlags(item.flags() | Qt.ItemIsUserCheckable )
 
 
-            #
-            # populate the tree view on the data tab
-            #
-            item2=QTreeWidgetItem(self.list_reslist2)
-            #item2.setData(0,100,mkid)
-            item2.mkid = mkid
-            item2.setText(0,'Res %d '%(mkid.resonator_num))
-            item2.setText(2,'%s '%(mkid.chip_name))
-            item2.setText(3,'%4.2f'%(mkid.getFc()/1e6))
-            item2.setText(4,'%d'%(len(mkid.reslist)))
-
-            if mkid.checked==1:    
-                item2.setCheckState(0,Qt.Checked)
-
-            else:
-                item2.setCheckState(0,Qt.Unchecked)
-
-
-            #
-            # add traces to the tree widget
-            #
-            trcnt=0
-            for trace in mkid.reslist:
-                item3=QTreeWidgetItem(item2)
-                #item3.setData(0,100,trace)
-                item3.mkid = trace
-                item3.setText(1,'Trc %d '%(trcnt))
-                item3.setText(5,'%3.0f'%(trace.atten_U7))
-                item3.setText(6,'%3.0f'%(trace.is_ran_fits))
-                item3.setText(7,'%3.0f'%(trace.is_fit_error))
-                item3.setText(8,'%3.0f'%(trace.is_noise))
-                #item3.setText(2,'%4.2f'%(mkid.rough_cent_freq/1e6))
-                #item3.setText(3,'%d'%(len(mkid.reslist)))
-
-                trcnt=trcnt+1
-
-
-            #self.list_reslist2.addItem(item2)
-        #preserve the rows that were checked
-        self.setRowsChecked(self.checked_list_rows)
 
 
 
@@ -2761,11 +2470,9 @@ class AppForm(QMainWindow):
 
   # Start/ Stop Sweep for Net analyzer
         self.button_savePlot = QPushButton("SavePlot")
-        self.button_savePlot.setMaximumWidth(200)
         self.connect(self.button_savePlot, SIGNAL('clicked()'), self.savePlot)   
 
         self.button_loadPlot = QPushButton("LoadPlot")
-        self.button_loadPlot.setMaximumWidth(200)
         self.connect(self.button_loadPlot, SIGNAL('clicked()'), self.loadSweepPlot)   
 
 
@@ -2919,42 +2626,8 @@ class AppForm(QMainWindow):
 
 
 
-
-        # plotting resonators- 
-        self.button_resPlots = QPushButton("ResonatorPlots")
-        self.button_resPlots.setMaximumWidth(170)
-        self.connect(self.button_resPlots, SIGNAL('clicked()'), self.resPlots)
-              
-        # plotting resonators- 
-        self.button_setResFreq = QPushButton("SetResFreq")
-        self.button_setResFreq.setMaximumWidth(170)
-        self.connect(self.button_setResFreq, SIGNAL('clicked()'), self.setResFreq)
-              
-        self.textbox_manResFreq = QLineEdit('0.0')
-        
-
-
-        # plotting resonators- 
-        self.button_clrTrace = QPushButton("ClrTrc")
-        self.button_clrTrace.setMaximumWidth(100)
-        self.connect(self.button_clrTrace, SIGNAL('clicked()'), self.clearTraces)
-        
-        # plotting resonators- 
-        self.button_clrNoise = QPushButton("ClrNoiz")
-        self.button_clrNoise.setMaximumWidth(100)
-        self.connect(self.button_clrNoise, SIGNAL('clicked()'), self.clearNoise)
-        
-
-        # plotting resonators- 
-        self.button_medFilter = QPushButton("medFlt")
-        self.button_medFilter.setMaximumWidth(100)
-        self.connect(self.button_medFilter, SIGNAL('clicked()'), self.medFilter)
         
         
-        # plotting resonators- 
-        self.button_lowpassFilter = QPushButton("LPF")
-        self.button_lowpassFilter.setMaximumWidth(100)
-        self.connect(self.button_lowpassFilter, SIGNAL('clicked()'), self.lowPassFilter)
         
 
         self.label_resPlots = QLabel('ResNum')
@@ -2988,106 +2661,7 @@ class AppForm(QMainWindow):
         #self.connect(self.button_powersweep, SIGNAL('clicked()'), self.powersweep)            
         
 
-        self.check_powersweep = QCheckBox("Powersweep")
 
-        self.label_pwrsw_atinst = QLabel('AttIn Start (U28)')
-        self.label_pwrsw_atinst.setMaximumWidth(120)
- 
-        self.spinbox_pwrsw_atinst = QSpinBox()
-        self.spinbox_pwrsw_atinst.setRange(0,31)
-        self.spinbox_pwrsw_atinst.setValue(0)
-        self.spinbox_pwrsw_atinst.setSingleStep(1)
-        self.spinbox_pwrsw_atinst.setMaximumWidth(50)
-    
-    
-        self.label_pwrsw_atst = QLabel('AttOut Start (U7)')
-        self.label_pwrsw_atst.setMaximumWidth(120)
- 
-        self.spinbox_pwrsw_atst = QSpinBox()
-        self.spinbox_pwrsw_atst.setRange(0,31) #Set limits based upon total attenuation
-        self.spinbox_pwrsw_atst.setValue(0)
-        self.spinbox_pwrsw_atst.setSingleStep(1)
-        self.spinbox_pwrsw_atst.setMaximumWidth(50)
-    
-    
-        self.label_pwrsw_atend = QLabel('AttOut End (U7)')
-        self.label_pwrsw_atend.setMaximumWidth(120)
- 
-        self.spinbox_pwrsw_atend = QSpinBox()
-        self.spinbox_pwrsw_atend.setRange(0,31) #Set limits based upon total attenuation
-        self.spinbox_pwrsw_atend.setValue(0)
-        self.spinbox_pwrsw_atend.setSingleStep(1)
-        self.spinbox_pwrsw_atend.setMaximumWidth(50)
-
-        self.label_pwrsw_atstep = QLabel('AttOut Step')
-        self.label_pwrsw_atstep.setMaximumWidth(120)
- 
-        self.spinbox_pwrsw_atstep = QSpinBox()
-        self.spinbox_pwrsw_atstep.setRange(1,10)
-        self.spinbox_pwrsw_atstep.setValue(1)
-        self.spinbox_pwrsw_atstep.setSingleStep(1)
-        self.spinbox_pwrsw_atstep.setMaximumWidth(50)
-    
-    
-        self.label_pwrsw_numNoise = QLabel('NNoiseTr')
-        self.label_pwrsw_numNoise.setMaximumWidth(120)
- 
-        self.spinbox_numNoise = QSpinBox()
-        self.spinbox_numNoise.setRange(1,100)
-        self.spinbox_numNoise.setValue(1)
-        self.spinbox_numNoise.setSingleStep(1)
-        self.spinbox_numNoise.setMaximumWidth(50)
-    
-    
-    
-        
-    
-    
-        self.label_pwrsw_atsweeps = QLabel('# of Sweeps')
-        self.label_pwrsw_atsweeps.setMaximumWidth(120)
- 
-        self.spinbox_pwrsw_atsweeps = QSpinBox()
-        self.spinbox_pwrsw_atsweeps.setRange(1,1000000)
-        self.spinbox_pwrsw_atsweeps.setValue(1)
-        self.spinbox_pwrsw_atsweeps.setSingleStep(1)
-        self.spinbox_pwrsw_atsweeps.setMaximumWidth(50)
-    
-    
-        self.label_pwrsw_span = QLabel('Span (MHz)')
-        self.label_pwrsw_span.setMaximumWidth(120)
- 
-        self.spinbox_pwrsw_span = QSpinBox()
-        self.spinbox_pwrsw_span.setRange(1,6000)
-        self.spinbox_pwrsw_span.setValue(4)
-        self.spinbox_pwrsw_span.setSingleStep(1)
-        self.spinbox_pwrsw_span.setMaximumWidth(200)
-
-
-
-        self.label_nswfreqs = QLabel('NumPoints')
-        self.label_nswfreqs.setMaximumWidth(120)
- 
-        self.spinbox_nswfreqs = QSpinBox()
-        self.spinbox_nswfreqs.setRange(16,65536)
-        self.spinbox_nswfreqs.setValue(256)
-        self.spinbox_nswfreqs.setSingleStep(64)
-        self.spinbox_nswfreqs.setMaximumWidth(200)
-
-
-
-
-
-
-
-
-        self.label_pwrsw_atTotal = QLabel('U6CnstOAtt')
-        self.label_pwrsw_atTotal.setMaximumWidth(120)
- 
-        self.spinbox_pwrsw_atTotal = QSpinBox()
-        self.spinbox_pwrsw_atTotal.setRange(0,50)
-        self.spinbox_pwrsw_atTotal.setValue(0)
-        self.spinbox_pwrsw_atTotal.setSingleStep(1)
-        self.spinbox_pwrsw_atTotal.setMaximumWidth(50)
 
 
 
@@ -3122,7 +2696,6 @@ class AppForm(QMainWindow):
         # TWO copies of a List box of all resonators.
         #
         self.list_reslist = QListWidget()
-        self.list_reslist2 = QTreeWidget()
 
     #
     #delete one resonator from list
@@ -3172,33 +2745,6 @@ class AppForm(QMainWindow):
         self.label_threadrun.setVisible(False)
     
 
-    #run sweeps and fits and noise. 
-        self.button_runIt = QPushButton("RunChecked")
-        self.button_runIt.setMaximumWidth(170)
-        self.connect(self.button_runIt, SIGNAL('clicked()'), self.runIt)            
-        
-
-    #run sweeps and fits and noise. 
-        self.button_stopIt = QPushButton("StopChecked")
-        self.button_stopIt.setMaximumWidth(170)
-        self.connect(self.button_stopIt, SIGNAL('clicked()'), self.stopIt)            
-        
-
-
-    
-    #run sweeps and fits and noise. 
-        self.button_checkall = QPushButton("CheckAll")
-        self.button_checkall.setMaximumWidth(170)
-        self.connect(self.button_checkall, SIGNAL('clicked()'), self.checkAllList)            
-        
-
-
-    #run sweeps and fits and noise. 
-        self.button_uncheckall = QPushButton("UnCheckAll")
-        self.button_uncheckall.setMaximumWidth(170)
-        self.connect(self.button_uncheckall, SIGNAL('clicked()'), self.unCheckAllList)            
-        
-
 
 
 
@@ -3208,18 +2754,6 @@ class AppForm(QMainWindow):
         self.connect(self.button_hdfshell, SIGNAL('clicked()'), hdfshell)            
         
 
-
-    #run sweeps etc, every hour. 
-        self.button_runbyhour = QPushButton("runByHour")
-        self.button_runbyhour.setMaximumWidth(170)
-        self.connect(self.button_runbyhour, SIGNAL('clicked()'), self.repeatRunIt)            
-        
-
-    #stop run every hour. 
-        self.button_stoprepeat = QPushButton("stopByHour")
-        self.button_stoprepeat.setMaximumWidth(170)
-        self.connect(self.button_stoprepeat, SIGNAL('clicked()'), self.stopRepeat)            
-        
 
     # extract threshold N*sigma
         self.textbox_repeatmin = QLineEdit('60')
@@ -3242,47 +2776,17 @@ class AppForm(QMainWindow):
     
         self.check_getnoise = QCheckBox("GetNoise")
     
-
-    #
-    #Saving and loading resonator data
-    #
-    
-    
-        #self.textbox_HDF5ResName = QLineEdit('dataset')
-        #self.textbox_HDF5ResName.setMaximumWidth(400)
-
-        #self.textbox_HDF5filepath = QLineEdit('//local/datacecil')
-        #self.textbox_HDF5filepath.setMaximumWidth(400)
     
 
         self.button_HDF5ResRead = QPushButton("Load")
-        self.button_HDF5ResRead.setMaximumWidth(60)
-        self.connect(self.button_HDF5ResRead, SIGNAL('clicked()'), self.hdfResRead)
+        self.connect(self.button_HDF5ResRead, SIGNAL('clicked()'), self.textResRead)
     
 
-        self.button_HDF5ResReadL = QPushButton("LoadL")
-        self.button_HDF5ResReadL.setMaximumWidth(60)
-        self.connect(self.button_HDF5ResReadL, SIGNAL('clicked()'), self.hdfResReadL)
     
 
         self.button_HDF5ResSave = QPushButton("Save")
-        self.button_HDF5ResSave.setMaximumWidth(60)
-        self.connect(self.button_HDF5ResSave, SIGNAL('clicked()'), self.hdfResSave)
+        self.connect(self.button_HDF5ResSave, SIGNAL('clicked()'), self.textResSave)
     
-    
-    # Read pulses
-        #self.button_readPulses = QPushButton("Read pulses")
-        #self.button_readPulses.setMaximumWidth(170)
-        #self.connect(self.button_readPulses, SIGNAL('clicked()'), self.readPulses)   
-        
-        # Seconds for "read pulses."
-        #self.textbox_seconds = QLineEdit('1')
-        #self.textbox_seconds.setMaximumWidth(50)
-        
-        # lengths of 2 ms for defining thresholds.
-        #self.textbox_timeLengths = QLineEdit('10')
-        #self.textbox_timeLengths.setMaximumWidth(50)
-        #label_timeLengths = QLabel('* 2 msec       ')
 
 
         # lengths of 2 ms steps to combine in a snapshot.
@@ -3706,6 +3210,9 @@ class AppForm(QMainWindow):
        
         t2_hbox01.addWidget(self.button_loadPlot)
        
+
+        t2_hbox01.addWidget(self.button_HDF5ResRead)
+        t2_hbox01.addWidget(self.button_HDF5ResSave)
         t2_gbox1.addLayout(t2_hbox01)
 
    
@@ -3853,125 +3360,6 @@ class AppForm(QMainWindow):
     
     
     
-    
-        t3_gbox1 = QVBoxLayout()
-
-        t3_hbox10 = QHBoxLayout()
-        t3_hbox10.addWidget(self.label_pwrsw_atTotal)
-        t3_hbox10.addWidget(self.spinbox_pwrsw_atTotal)
-        t3_hbox10.addWidget(self.label_pwrsw_atinst)
-        t3_hbox10.addWidget(self.spinbox_pwrsw_atinst)
-        t3_hbox10.addWidget(self.label_pwrsw_atsweeps)
-        t3_hbox10.addWidget(self.spinbox_pwrsw_atsweeps)
-        t3_hbox10.addWidget(self.label_pwrsw_span)
-        t3_hbox10.addWidget(self.spinbox_pwrsw_span)
-        
-        t3_hbox10.addWidget(self.label_nswfreqs)
-        t3_hbox10.addWidget(self.spinbox_nswfreqs)
-        
-        
-
-
-
-
-        t3_hbox10.addStretch(1)
-        t3_gbox1.addLayout(t3_hbox10)
-
-        t3_hbox11 = QHBoxLayout()
-        t3_hbox11.addWidget(self.label_pwrsw_atst)
-        t3_hbox11.addWidget(self.spinbox_pwrsw_atst)
-        t3_hbox11.addWidget(self.label_pwrsw_atend)
-        t3_hbox11.addWidget(self.spinbox_pwrsw_atend)
-        t3_hbox11.addWidget(self.label_pwrsw_atstep)
-        t3_hbox11.addWidget(self.spinbox_pwrsw_atstep)
-        t3_hbox11.addWidget(self.label_pwrsw_numNoise)
-        t3_hbox11.addWidget(self.spinbox_numNoise)
-        
-        
- 
-        
-        
-        
-        t3_gbox1.addLayout(t3_hbox11)
-
-
-        t3_hbox12 = QHBoxLayout()
-        t3_hbox12.addWidget(self.button_checkall)
-        t3_hbox12.addWidget(self.button_uncheckall)
-        t3_hbox12.addWidget(self.button_hdfshell)
-        t3_hbox12.addWidget(self.button_runbyhour)
-        t3_hbox12.addWidget(self.button_stoprepeat)
-        t3_hbox12.addWidget(self.label_repeatmin)
-        t3_hbox12.addWidget(self.textbox_repeatmin)
-        t3_hbox12.addWidget(self.label_noisesec)
-        t3_hbox12.addWidget(self.textbox_noisesec)
-
-    
-
-
-    
-        t3_hbox12.addStretch(1)
-        t3_gbox1.addLayout(t3_hbox12)
-  
-  
-        #hbox22.addWidget(self.textbox_longsnapSteps)
-        #hbox22.addWidget(label_longsnapSteps)
-       
- 
-        t3_hbox13 = QHBoxLayout()
-
-
-
-    
-        t3_hbox13.addWidget(self.check_multiprocess)
-        t3_hbox13.addWidget(self.check_powersweep)
-
-        t3_hbox13.addWidget(self.check_runFits)
-        t3_hbox13.addWidget(self.check_getnoise)
-
-        t3_hbox13.addWidget(self.check_runIQvelocity)
-
-        t3_hbox13.addWidget(self.button_runIt)
-        t3_hbox13.addWidget(self.button_stopIt)
-        t3_hbox13.addWidget(self.label_threadrun)
-
-
-
-
-
-        t3_gbox1.addLayout(t3_hbox13)
-
-        t3_hbox14 = QHBoxLayout()
-        #t3_hbox14.addWidget(self.textbox_HDF5filepath)
-        #t3_hbox14.addWidget(self.textbox_HDF5ResName)
-
-        t3_hbox14.addWidget(self.button_HDF5ResRead)
-        t3_hbox14.addWidget(self.button_HDF5ResReadL)
-        t3_hbox14.addWidget(self.button_HDF5ResSave)
-
-        t3_hbox14.addWidget(self.button_resPlots)
-        t3_hbox14.addWidget(self.button_clrTrace)
-        t3_hbox14.addWidget(self.button_clrNoise)
-        #t3_hbox14.addWidget(self.button_medFilter)
-        #t3_hbox14.addWidget(self.button_lowpassFilter)
-        t3_hbox14.addWidget(self.button_setResFreq)
-        t3_hbox14.addWidget(self.textbox_manResFreq)
-        
-
-    
-
-
-        t3_gbox1.addLayout(t3_hbox14)
-
-        t3_gbox2 = QVBoxLayout()
-
-        t3_gbox2.addWidget(self.list_reslist2)
-
-
-        t3_hbox = QHBoxLayout()
-        t3_hbox.addLayout(t3_gbox1)
-        t3_hbox.addLayout(t3_gbox2)
-    
    
     #
     # Fill in tabs
@@ -3989,9 +3377,6 @@ class AppForm(QMainWindow):
         tab2_layout.addLayout(t2_hbox)
 
 
-        tab3=QWidget()
-        tab3_layout=QVBoxLayout(tab3)
-        tab3_layout.addLayout(t3_hbox)
 
 
 
@@ -4010,7 +3395,7 @@ class AppForm(QMainWindow):
         #tab_widget.addTab(tab4,"FlxRamp")
         
 
-        tab_widget.addTab(tab3,"ResData")
+        #tab_widget.addTab(tab3,"ResData")
         tab_widget.addTab(tab5,"Noise/IV")
         
         vbox = QVBoxLayout()
