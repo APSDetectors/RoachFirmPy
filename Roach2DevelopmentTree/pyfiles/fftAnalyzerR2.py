@@ -884,8 +884,10 @@ class fftAnalyzerR2:
         
         self.qdr_cal_good=False
         
-        self.power_at_resonator =tone_power_at_resonator_dbm  
+        self.power_at_resonator =0
         
+        self.power_at_ifboard_rfout=0;
+
         if self.roach2 != None:
         
             self.powerupFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/if_board_setup_2015_Aug_20_1511.bof'
@@ -1040,6 +1042,7 @@ class fftAnalyzerR2:
             'fa.span_Hz':fa.span_Hz ,
             'fa.mainFW':fa.mainFW ,
             'fa.power_at_resonator':fa.power_at_resonator,
+            'fa.power_at_ifboard_rfout':fa.power_at_ifboard_rfout,
             'fa.loadFW':fa.loadFW}
             
         return(dat)

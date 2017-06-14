@@ -120,9 +120,7 @@ def setupEverything(ip = '192.168.0.70'):
         else:
             fa = fftAnalyzerR2(
                 roach_ = roach,
-                is_loadFW=False,
-                is_calqdr=False,
-                is_powerup=False)
+                is_calqdr=False)
 #        fa = fftAnalyzerR2(
 #            roach_=roach,
 #            is_powerup=True,
@@ -200,6 +198,7 @@ class AppForm(QMainWindow):
 
         self.is_sweeping=0
         self.plottype=0
+        self.plotmode=0
 
         self.clearplot=1
 
@@ -1225,7 +1224,11 @@ class AppForm(QMainWindow):
         num_tones = len(MKID_list);
         
         (amp, atu6, atu7, atu28) = calcSineampAttensFromResPower(num_tones, pwrdbm)
-        self.label_AttenSets.setText("Sineamp=%5.2f, U6=%5.2f, U7=%5.2f,U28=%5.2f"%(amp, atu6, atu7, atu28))
+        rfout =calcRfPowerOutputDBm(amp,atu6,atu7)
+
+
+        self.label_AttenSets.setText("Sineamp=%5.0f, U6=%2.1f, U7=%2.1f,U28=%2.1f RF2Cryo=%2.1f RF2Res=%2.1f"%(
+                amp, atu6, atu7, atu28,rfout, pwrdbm))
         
         roachlock.acquire()
         fa.if_board.at.atten_U6=atu6
@@ -1235,6 +1238,7 @@ class AppForm(QMainWindow):
         fa.amplitude = amp
 
         fa.power_at_resonator = pwrdbm 
+        fa.power_at_ifboard_rfout=rfout
         roachlock.release()
         
 
@@ -1495,6 +1499,7 @@ class AppForm(QMainWindow):
         IQp=na.dataread.RectToPolar(iq)
 
 
+        magdbm = self.convertMagnitudePerPlotMode(IQp[0])
 
         if self.clearplot==1:
             self.axes0.clear()
@@ -1506,7 +1511,7 @@ class AppForm(QMainWindow):
         global freqs_
         IQp_=IQp
         freqs_=freqs
-        self.axes0.plot(freqs,IQp[0])
+        self.axes0.plot(freqs,magdbm)
         self.axes1.plot(freqs,IQp[1])
         self.axes0.set_ylabel('Magnitude')
         self.axes1.set_ylabel('Phase')        
@@ -1525,21 +1530,10 @@ class AppForm(QMainWindow):
             ind2=numpy.where(self.markerlistx<freqs[len(freqs)-1])[0]
             ind = list(set(ind1).intersection(set(ind2)))
 
-            yvals=(0.5*(max(IQp[0]) + min(IQp[0])))*ones(len(ind))
+            yvals=(0.5*(max(magdbm) + min(magdbm)))*ones(len(ind))
 
 
             self.axes0.plot(array(self.markerlistx)[ind],yvals,'rx')
-
-
-        if False:
-
-            #if not autoscaling, then we recover the x,y lims
-
-            if self.plot_zoom_settings["pltype"]=="magPhasePl":
-                self.axes0.set_xlim(self.plot_zoom_settings["axes0xlim"])
-                self.axes0.set_ylim(self.plot_zoom_settings["axes0ylim"])
-                self.axes1.set_xlim(self.plot_zoom_settings["axes1xlim"])
-                self.axes1.set_ylim(self.plot_zoom_settings["axes1ylim"])
 
 
         self.plot_zoom_settings={}
@@ -1645,9 +1639,10 @@ class AppForm(QMainWindow):
         self.axes2 = self.fig.add_subplot(4,1,3)
         self.axes3 = self.fig.add_subplot(4,1,4)        
 
-        roachlock.acquire()
         IQp=na.dataread.RectToPolar(iq)
-        roachlock.release()
+
+
+        magdbm = self.convertMagnitudePerPlotMode(IQp[0])
 
         if self.clearplot==1:
             self.axes0.clear()
@@ -1657,7 +1652,7 @@ class AppForm(QMainWindow):
 
             self.axes3.clear()
 
-        self.axes0.plot(freqs,IQp[0])
+        self.axes0.plot(freqs,magdbm)
 
         self.axes0.set_ylabel('Magnitude')
         self.axes1.plot(freqs,IQp[1])
@@ -2046,17 +2041,26 @@ class AppForm(QMainWindow):
 
         self.updatePlot()
 
+  
+  
+    def setPlotMode(self,indx):
+        print 'set plot mode %s'%(self.plot_modes[indx])
+        self.plotmode=indx
 
-    #
-    # Run py code
-    #
-    def runPython(self):
-        print "running py script"
-        exec str(self.textbox_Python.text())
-  
-  
-  
-  
+        self.signalPlot()
+
+    def convertMagnitudePerPlotMode(self,magdata):
+        atu28_db = fa.if_board.at.atten_U28
+
+        if  self.plotmode == 0: #dbm at hemp input
+            return(calcSignalRfInputPowerAtHemt(magdata,atu28_db))
+        if  self.plotmode == 1: #dbm at rfin input
+            return(calcSignalRfInputPowerAtIfboard(magdata,atu28_db))
+        if  self.plotmode == 2: #dbm at mixer input
+            return(calcSignalRfInputPowerAtMixer(magdata,atu28_db))
+        if  self.plotmode == 3: #raw fft coef
+            return(magdata) 
+ 
     def setPlotType(self,indx):
         print 'set plot type %s'%(self.plot_names[indx])
         self.plottype=indx
@@ -2332,7 +2336,30 @@ class AppForm(QMainWindow):
         self.combobox_plottype.currentIndexChanged.connect(self.setPlotType)
 
 
+        #
+        # plot powr mode 
+        #
 
+        self.label_plotmode = QLabel('Plot Power Mode')
+        self.plot_modes=['dBm at HEMT','dBm at RFIn','dBm at MixerIn', 'Raw FFT Coef']
+
+        self.combobox_plotmode=QComboBox()
+        for mode in self.plot_modes:
+            self.combobox_plotmode.addItem(mode)   
+
+        #self.connect(self.combobox_plotmode, SIGNAL('currentIndexChanged'), self.setPlotType) 
+        self.combobox_plotmode.currentIndexChanged.connect(self.setPlotMode)
+
+
+
+        self.button_refreshPlot1 = QPushButton("refreshPlot")
+        self.connect(self.button_refreshPlot1 , SIGNAL('clicked()'), self.updatePlot)   
+
+        self.button_refreshPlot2 = QPushButton("refreshPlot")
+        self.connect(self.button_refreshPlot2 , SIGNAL('clicked()'), self.updatePlot)   
+
+        self.button_refreshPlot3 = QPushButton("refreshPlot")
+        self.connect(self.button_refreshPlot3 , SIGNAL('clicked()'), self.updatePlot)   
 
         #checkboxes for controlling IF board loopbacks
         self.checkbox_BBLoopback=QCheckBox('BBLoop')
@@ -2378,7 +2405,7 @@ class AppForm(QMainWindow):
         # Frequency entries for sweeping net analuyzer
         #
         self.label_AttenSets = QLabel('OutAtten= 0 + 0 = 0, InAtten = 0')
-        self.label_AttenSets.setMaximumWidth(250)
+        self.label_AttenSets.setMaximumWidth(650)
     
  
         self.label_ResPwrOut = QLabel('PwrAtResDBM')
@@ -2412,17 +2439,6 @@ class AppForm(QMainWindow):
 
 
 
-    #      
-        # custom Python exe line
-        #
-    
-        self.textbox_Python = QLineEdit('print "Hello"')
-        self.textbox_Python.setMaximumWidth(400)
-
-        # Start connection to roach.
-        self.button_Python = QPushButton("RunPy")
-        self.button_Python.setMaximumWidth(60)
-        self.connect(self.button_Python, SIGNAL('clicked()'), self.runPython)
    
 
 
@@ -2769,35 +2785,23 @@ class AppForm(QMainWindow):
         hbox00.addWidget(self.button_reopenClient)
         hbox00.addWidget(self.button_closeClient)
         
-        
-        
-        
         gbox0.addLayout(hbox00)
 
-
-
-
         hbox02 = QHBoxLayout()
-        #hbox02.addWidget(self.textbox_coeffsFile)
 
         hbox02.addWidget(self.label_plottype)
         hbox02.addWidget(self.combobox_plottype)
-    
-    
-    
+        hbox02.addWidget(self.button_refreshPlot1)
+
+        hbox02.addWidget(self.label_plotmode)
+        hbox02.addWidget(self.combobox_plotmode)
+
         gbox0.addLayout(hbox02)
 
         hbox03 = QHBoxLayout()
-        #hbox03.addWidget(self.textbox_timeLengths)
-        #hbox03.addWidget(label_timeLengths)
-        #hbox03.addWidget(self.textbox_Nsigma)
-        #hbox03.addWidget(label_Nsigma)
-        #hbox03.addWidget(self.button_loadThresholds)
         gbox0.addLayout(hbox03)
         
         gbox1 = QVBoxLayout()
-        #gbox1.addWidget(label_DACfreqs)
-        #gbox1.addWidget(self.textedit_DACfreqs)
 
         gbox2 = QVBoxLayout()
         hbox20 = QHBoxLayout()
@@ -2812,67 +2816,28 @@ class AppForm(QMainWindow):
         hbox20.addWidget(self.textbox_Dly)
     
         gbox2.addLayout(hbox20)
-
-
         
         hbox21 = QHBoxLayout()
-    
-
-        hbox21.addWidget(self.label_AttenSets)
         hbox21.addWidget(self.label_ResPwrOut)
         hbox21.addWidget(self.spinbox_ResPwrOut)
-       
-
-    
-        #hbox21.addWidget(self.textbox_Python)
-        #hbox21.addWidget(self.button_Python)
+        hbox21.addWidget(self.button_gui_stop)
         gbox2.addLayout(hbox21)
-
         
         hbox215 = QHBoxLayout()
-       
         gbox2.addLayout(hbox215)
-
         hbox22 = QHBoxLayout()
        
-    #hbox22.addWidget(self.label_extract_thresh)
-    #hbox22.addWidget(self.textbox_extract_thresh)
-        #hbox22.addWidget(self.button_extractRes)
-    #hbox22.addWidget(self.button_runFits)
-        #hbox22.addWidget(self.textbox_longsnapSteps)
-        #hbox22.addWidget(label_longsnapSteps)
         gbox2.addLayout(hbox22)
-        
-    
-    #gbox2.addWidget(self.button_rmCustomThreshold)
 
         hbox23 = QHBoxLayout()
-        #hbox23.addWidget(self.label_resPlots)
-        #hbox23.addWidget(self.textbox_resPlots)
-        #hbox23.addWidget(self.button_resPlots)
        
         gbox2.addLayout(hbox23)
 
-
-
-
-
-                
         t1_hbox11 = QHBoxLayout()
-        t1_hbox11.addWidget(self.textbox_Python)
-        t1_hbox11.addWidget(self.button_Python)
-        t1_hbox11.addWidget(self.button_resetDAC)
-        t1_hbox11.addWidget(self.button_gui_stop)
+        t1_hbox11.addWidget(self.label_AttenSets)
         gbox2.addLayout(t1_hbox11)
 
-        
-
-
         gbox3 = QVBoxLayout()
-        #gbox3.addWidget(self.label_median)
-        #gbox3.addWidget(self.label_threshold)
-        #gbox3.addWidget(self.label_attenuation)
-        #gbox3.addWidget(self.label_frequency)
 
         hbox = QHBoxLayout()
         hbox.addLayout(gbox0)
@@ -2908,27 +2873,10 @@ class AppForm(QMainWindow):
         t2_gbox1.addWidget(self.label_saysf)
         t2_gbox1.addWidget(self.textbox_devicename)
         t2_gbox1.addWidget(self.spinbox_numSwPts)
-
-   
    
         t2_hbox015 = QHBoxLayout()
-    
-    
-    
-        t2_hbox015.addWidget(self.label_LO)
-        t2_hbox015.addWidget(self.textbox_LOFreq)
-        t2_hbox015.addWidget(self.label_St)
-        t2_hbox015.addWidget(self.textbox_StFreq)
-    #t2_hbox015.addWidget(self.label_Inc)
-        #t2_hbox015.addWidget(self.textbox_IncFreq)
-        t2_hbox015.addWidget(self.label_Ed)
-        t2_hbox015.addWidget(self.textbox_EdFreq)
-    
-
+        t2_hbox015.addWidget(self.button_refreshPlot2)
         t2_gbox1.addLayout(t2_hbox015)
-
-
-
 
         t2_hbox016 = QHBoxLayout()
         t2_hbox016.addWidget(self.label_Span)
@@ -2937,9 +2885,6 @@ class AppForm(QMainWindow):
         t2_hbox016.addWidget(self.spinbox_CenterFreq)
        
         t2_gbox1.addLayout(t2_hbox016)
-
-
-
 
         t2_hbox01 = QHBoxLayout()
         t2_hbox01.addWidget(self.button_StSweep)
@@ -3076,6 +3021,7 @@ class AppForm(QMainWindow):
         t5_hbox04.addWidget(self.button_stop_run)
         
 
+        t5_hbox04.addWidget(self.button_refreshPlot3)
 
 
 
