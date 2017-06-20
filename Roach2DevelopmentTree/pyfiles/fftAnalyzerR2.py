@@ -50,11 +50,13 @@ fa.sram.is_mod_freq=True
 
 rsln = fa.sram.getResolution()
 
+
 fa.sourceCapture(arange(10e6,20e6,1e6),3200)
 time.sleep(1)
 fa.stopCapture()
 
 
+fa.setCarrier(10e6+5093e6)
 fa.sourceCapture([10e6],32000)
 time.sleep(1)
 fa.stopCapture()
@@ -163,8 +165,9 @@ fa.sram.setLutSize(65536)
 
 fa.chanzer.setFluxRampDemod(1,1,100,3.0)
 
-fa.setCarrier(5100e6)
+fa.setCarrier(10e6+5093e6)
 
+fa.sourceCapture(freqs,2000)
 freqs = arange(1e6,1e6+128e6,1e6).tolist()
 freqs = freqs + arange(271e6,271e6 + 128e6,1e6).tolist()
 print len(freqs)
@@ -870,6 +873,7 @@ class fftAnalyzerR2:
      
         self.roach2=roach_
         
+        self.max_event_len=255
         self.first_bbfreq=10.0e6
         self.tes_bias=0.0
         self.tes_bias_on = 0
@@ -881,12 +885,17 @@ class fftAnalyzerR2:
         self.bbfreqs = []
         self.LO = 0
         self.iqdata = []
-        
+        self.span_Hz =0;
         self.qdr_cal_good=False
         
         self.power_at_resonator =0
         
         self.power_at_ifboard_rfout=0;
+        
+        self.is_ramp_generator_on=0
+        self.ramp_generator_freq = 0
+        self.ramp_generator_voltage = 0
+
 
         if self.roach2 != None:
         
@@ -1040,6 +1049,9 @@ class fftAnalyzerR2:
             'fa.tes_bias':fa.tes_bias ,
             'fa.tes_bias_on':fa.tes_bias_on ,
             'fa.span_Hz':fa.span_Hz ,
+            'fa.is_ramp_generator_on':self.is_ramp_generator_on ,
+            'fa.ramp_generator_freq':self.ramp_generator_freq ,
+            'fa.ramp_generator_voltage':self.ramp_generator_voltage ,
             'fa.mainFW':fa.mainFW ,
             'fa.power_at_resonator':fa.power_at_resonator,
             'fa.power_at_ifboard_rfout':fa.power_at_ifboard_rfout,
@@ -1354,9 +1366,9 @@ class fftAnalyzerR2:
         (amp, atu6, atu7, atu28) = calcSineampAttensFromResPower(num_tones, pwr_at_res)
  
         if isn==is_new_settings: 
-            self.if_board.at.atten_U6=atu6
-            self.if_board.at.atten_U7=atu7
-            self.if_board.at.atten_U28=atu28
+            self.if_board.at.atten_U6=-atu6
+            self.if_board.at.atten_U7=-atu7
+            self.if_board.at.atten_U28=-atu28
             self.if_board.progAtten(self.if_board.at)
 
 
@@ -1491,13 +1503,17 @@ class fftAnalyzerR2:
             if pwr_at_res==None:
                 pwr_at_res = tone_power_at_resonator_dbm 
             
+
             (amp, atu6, atu7, atu28) = calcSineampAttensFromResPower(num_tones, pwr_at_res)
 
-            self.if_board.at.atten_U6=atu6
-            self.if_board.at.atten_U7=atu7
-            self.if_board.at.atten_U28=atu28
+            print 'fa.sweep: pr %5.2f, a %5.2f, u6 %5.2f,u7 %5.2f,u28 %5.2f'%(
+                pwr_at_res,amp,atu6,atu7,atu28)
+            self.if_board.at.atten_U6= -atu6
+            self.if_board.at.atten_U7= -atu7
+            self.if_board.at.atten_U28= -atu28
             self.if_board.progAtten(self.if_board.at)
-            
+            self.if_board.at.report()
+
             (self.LO, self.bbfreqs) = self.calcBBLOFromRFFreqs(center_Hz)
             self.center_Hz = center_Hz
             self.amplitude = amp
@@ -1881,7 +1897,17 @@ class fftAnalyzerR2:
             clf();
             #plot(P - max(P))
             plot(abs(FF))
-    
+   
+    def setRampGenerator(self, is_on, freq, voltage):
+        self.is_ramp_generator_on  = is_on
+        self.ramp_generator_freq = freq;
+        self.ramp_generator_voltage = voltage;
+
+        agt.setRamp()
+        agt.setVolts(self.ramp_generator_voltage)
+        agt.setFreq(self.ramp_generator_freq)
+        agt.setOutOn(self.is_ramp_generator_on)
+ 
 
     def setTESBias(self,is_on,vbias,callback = None):
     

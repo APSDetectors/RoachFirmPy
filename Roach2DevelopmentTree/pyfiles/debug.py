@@ -71,8 +71,26 @@ execfile('debug.py')
 
 '''
 
+def sweepAtten():
+    for aa in numpy.arange(0.0,31.0,0.5):
+        fa.if_board.at.attenU6 = int(0.0-aa)
+        fa.if_board.at.attenU7 = 0
+        fa.if_board.progAtten(fa.if_board.at)
+        #fa.if_board.progRFSwitches(fa.if_board.rf)
+        #fa.if_board.progIfBoard()
 
+        print 'Atten u6 = %f'%aa
+        time.sleep(.5)
+  
 
+def setAtten(aa):
+        fa.if_board.at.attenU6 = aa
+        fa.if_board.at.attenU7 = 0
+        fa.if_board.progAtten(fa.if_board.at)
+        #fa.if_board.progRFSwitches(fa.if_board.rf)
+        #fa.if_board.progIfBoard()
+
+  
 
 def voltSweepT(
     vlist=None,

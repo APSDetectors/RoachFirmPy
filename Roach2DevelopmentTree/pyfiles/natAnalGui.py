@@ -39,6 +39,8 @@ execfile('mkidMeasure.py')
 
 
 execfile('sim928.py')
+
+execfile('agt33250A.py')
 execfile('roachEpics.py')
 
 #from fftAnalyzerR2 import *
@@ -172,6 +174,7 @@ class AppForm(QMainWindow):
         self.create_main_frame()
         self.create_status_bar()
 
+        self.is_multitone=False
 
     #list of ints. which rows in gui are checked in the mkid list on resData tab
         self.checked_list_rows=[]
@@ -223,7 +226,9 @@ class AppForm(QMainWindow):
         #true to add a resonance freq on plot click
         self.is_addres_onclick=False
 
-
+        self.selectwave_points=[-1000,-1000]
+        self.selectwave_onclick=True
+        self.selectwave_counter = 0
 
         #true to add a marker, 'x'  on plot click
         self.is_addmark_onclick=False
@@ -582,7 +587,14 @@ class AppForm(QMainWindow):
         thread.start_new_thread(runSetupBiasSource,())
         
                 
-
+  
+    def setRampGenerator(self,ci):
+        print 'setRampGenerator'
+        #ci = self.combobox_biassource.currentIndex()
+        #null vsource
+        fa.temp_rampgenerator_index=ci
+        thread.start_new_thread(runSetupRampGenerator,())
+        
 #na.setDelay(30e-9); print na.delay
     def plotPolar(self):
         roachlock.acquire()
@@ -863,7 +875,7 @@ class AppForm(QMainWindow):
  
     def plotClick(self,event):
     
-        print 'x %f y %f'%(event.xdata,event.ydata)
+        print 'xdata %f ydata %f but %d '%(event.xdata,event.ydata,event.button)
     
         if self.is_addres_onclick:
             print "Adding Resonator"
@@ -887,7 +899,39 @@ class AppForm(QMainWindow):
             else:
                 print "Cant add resonance on this plot"
 
-        
+        if  self.selectwave_onclick and self.plottype ==  12 and event.button==2:
+            if self.selectwave_counter%3==0:
+                print "select 1st point %f"%event.xdata
+                self.selectwave_points[0] = event.xdata
+            elif self.selectwave_counter%3==1:
+                print "select 2nd point %f"%event.xdata
+                self.selectwave_points[1] = event.xdata
+                # self.selectwave_onclick=False
+                self.updatePlot()
+            else:
+                print "no selection"
+                self.selectwave_points =[-1000,-1000] 
+                self.updatePlot()
+
+            self.selectwave_counter=self.selectwave_counter+1 
+
+        if self.selectwave_points[0]>=0 and self.selectwave_points[1]>=0:
+            k = fa.iqdata_raw.keys()[0]
+            evtlen = fa.iqdata_raw[k]['event_len'][0]
+ 
+            sel_len = int(round(abs(self.selectwave_points[1] - self.selectwave_points[0]  )))
+            if sel_len > fa.max_event_len:
+                sel_len = fa.max_event_len
+
+            sel_start = int(round(min( self.selectwave_points[0], self.selectwave_points[1])))
+            sel_delay = sel_start%evtlen
+            print 'sel_len %d sel_start  %d sel_delay  %d'%(sel_len ,sel_start ,sel_delay )
+            self.textbox_FRDLen.setText('%d'%(sel_len)) 
+            self.textbox_FRDDly.setText('%d'%(sel_delay)) 
+            self.updatePlot()
+
+
+
 
     def extractRes(self):
         global MKID_list
@@ -1042,12 +1086,13 @@ class AppForm(QMainWindow):
         self.signalPlot()
         
     
+    
       
     #load FW, sweep res and stream
     def streamRun(self):
         print "form.streamRun()"
-
-        
+        #calc amps for multuitones on MKID list
+        self.is_multitone=True    
         
         timesec_ =  float( self.textbox_streamsec.text()  )
         fname_ = str(self.textbox_streamfilename.text())
@@ -1065,9 +1110,12 @@ class AppForm(QMainWindow):
         (frd,frdci) =self.flxRampComboDecode()
           
         numprd = float(self.textbox_flxRmpPrd.text())
-        
+        rampon = self.checkbox_rampon.isChecked()
+        rampvolts =  float(self.textbox_rampvolts.text())       
         
         rampfreq = float(self.textbox_rampfreq.text())
+
+
         frdlen = float(self.textbox_FRDLen.text())
         frddly = float(self.textbox_FRDDly.text())
 
@@ -1086,7 +1134,10 @@ class AppForm(QMainWindow):
         fa.temp_numprd =  numprd
         fa.temp_frd = frd
         fa.temp_frdci = frdci
- 
+        fa.temp_rampon = rampon
+        fa.temp_rampvolts = rampvolts
+        fa.temp_rampfreq = rampfreq 
+
         fa.noisetemp_timesec = timesec_
         fa.noisetemp_fname = fname_
         
@@ -1166,34 +1217,14 @@ class AppForm(QMainWindow):
     def startSweep(self):
     
         cf = self.spinbox_CenterFreq.value()
-    
+        self.is_multitone=False
     
         sf = self.spinbox_SpanFreq.value()
 
         st = cf - sf/2
         ed = cf + sf/2
         
-        self.textbox_LOFreq.clear()
-        self.textbox_LOFreq.insert('%1.3e'%(cf+10))
-
-        self.textbox_StFreq.clear()
-        self.textbox_StFreq.insert('%1.3e'% (st))
-
-        self.textbox_EdFreq.clear()
-        self.textbox_EdFreq.insert('%1.3e'%ed)
-     
-        #self.button_StSweep.setEnabled(False)
-
-
-        #self.pool=QThreadPool()
-        #self.pool.setMaxThreadCount(10)
-        
-        #pystring = 'fa.sweep(span_Hz=%f*1e6, center_Hz=%f*1e6, pts=2048)\n'%(sf,cf)
-        #pystring = pystring + 'form.signalPlot()\n'
-        
-        #runnable = QRunPyThread( pystring)
-            
-            
+        self.setAttenFromGUI()     
         #status=self.pool.tryStart( runnable )
         npts = self.spinbox_numSwPts.value()
         
@@ -1215,25 +1246,31 @@ class AppForm(QMainWindow):
 
 
     
-
+    ##
+    # Called when we run Noise, Sweep, or adjust attens. When sweep, we use ONE tone. When noise we use all
+    #freqs in MKID_list. 
 
     def setAttenFromGUI(self):
     
  
         pwrdbm =self.spinbox_ResPwrOut.value()
-        num_tones = len(MKID_list);
+        if self.is_multitone:
+            num_tones = len(MKID_list);
+            if num_tones ==0: num_tones = 1
+        else:
+            num_tones = 1
         
         (amp, atu6, atu7, atu28) = calcSineampAttensFromResPower(num_tones, pwrdbm)
         rfout =calcRfPowerOutputDBm(amp,atu6,atu7)
 
 
-        self.label_AttenSets.setText("Sineamp=%5.0f, U6=%2.1f, U7=%2.1f,U28=%2.1f RF2Cryo=%2.1f RF2Res=%2.1f"%(
-                amp, atu6, atu7, atu28,rfout, pwrdbm))
+        self.label_AttenSets.setText("Amp=%5.0f, U6=%2.1f, U7=%2.1f,U28=%2.1f RF2Cryo=%2.1f RF2Res=%2.1f,Ntones=%d"%(
+                amp, atu6, atu7, atu28,rfout, pwrdbm,num_tones))
         
         roachlock.acquire()
-        fa.if_board.at.atten_U6=atu6
-        fa.if_board.at.atten_U7=atu7
-        fa.if_board.at.atten_U28=atu28
+        fa.if_board.at.atten_U6=-atu6
+        fa.if_board.at.atten_U7=-atu7
+        fa.if_board.at.atten_U28=-atu28
         fa.if_board.progAtten(fa.if_board.at)
         fa.amplitude = amp
 
@@ -1312,45 +1349,23 @@ class AppForm(QMainWindow):
         
         
         
-        
-    
-
-    
-        
-    def resetDAC(self):
-        pass
-       
-    
-    
+    ##
+    # save list of resonator freqs as a text file, in python language list
+    #
+ 
     
     def textResSave(self):
-
-        #save a copy as a rand name, because the files get overwritten
-
-        #randname='backup_%f.h5'%(rand())
-        #mkidSaveData(randname)
-
         
         filename = str(QFileDialog.getSaveFileName(
             caption='Hdf File Name'))
-            
-
-
-        #make backup files, save 5 of them
-        for n in range(4):
-            #n=0,1,2,3   nn=5,4,3,2
-            nn=5-n;   
-            #mv 4,3,2,1 to   5,4,3,2    
-            try: os.system('mv backup_%d.h5 backup_%d.h5'%(nn-1,nn))
-            except: pass
-
-        try: os.system('mv %s backup_1.h5'%(filename))
-        except: pass
 
         mlist2Pylist(filename)
     
 
     
+    ##
+    # load list of resonator freqs as a text file, in python language list
+    #
     def textResRead(self):
         filename = str(QFileDialog.getOpenFileName(caption='Hdf File Name'))
         #filename=self.textbox_HDF5ResName.text()
@@ -1359,11 +1374,13 @@ class AppForm(QMainWindow):
     
 
         
-
+    ##
+    # Main functio for calling all the plots, based on whcuh plot you want. is a slot, signal_plot() calls this
+    #
     def updatePlot(self):
     
-        try:
-    #if 1==1:
+        #try:
+        if 1==1:
 
             if (self.plottype==3):
                 self.plotPolar()
@@ -1400,9 +1417,12 @@ class AppForm(QMainWindow):
             
             if self.plottype==11:
                 self.plotTranslatorCal()                
+            
+            if self.plottype==12:
+                self.plotRampPhaseSelection()
 
-        except:
-        #else:
+        #except:
+        else:
             print 'natAnalGui::updatePlot- Exception'
             print 'plot type %d, %s'%(self.plottype,self.plot_names[self.plottype])
             traceback.print_exc()
@@ -1411,18 +1431,16 @@ class AppForm(QMainWindow):
     
         self.populateListWidget()
         self.updateCalResListDisplay()
-        
-        #if is_thread_running>0:
-        #    self.label_threadrun.setVisible(True)
-        #else:
-        #    self.label_threadrun.setVisible(False)
-
-        
+    
+    ##
+    # Emit signal to call def updatePlot
     def signalPlot(self):
         self.emit(SIGNAL('signal_plot()'))
 
 
-
+    ##
+    # print list of res freqs on the NoiseIV tab on gui.
+    #
     def updateCalResListDisplay(self):
         
         try:
@@ -1438,13 +1456,16 @@ class AppForm(QMainWindow):
        return(timestamp)
 
     
- #  self.textbox_Dly.setMaximumWidth(70)
- #       self.textbox_Dly.textChanged.connect(self.updateXMLineDelay)
-        
+       
+    ##
+    # update gui where transmission line delay in ns is printed
+    # 
     def updateXMLineDelay(self):
         delaysec = float(self.textbox_Dly.text()) * 1e-9
         measure.xmission_line_delay = delaysec
-    
+    ##
+    # get iq data from the fftAnaluzer. IQ is the sweep data. as [ I, Q] where I . Q are anumpy arrays
+    #
     def getIQF(self):
         iqp = fa.dataread.RectToPolar(fa.iqdata)
         delaysec = measure.xmission_line_delay
@@ -1459,22 +1480,16 @@ class AppForm(QMainWindow):
     
 
 
-
+    ##
+    # plit magnitude and phase
+    #
     def magPhasePl(self):
         
 
-        #!!na.setDelay(1e-9*float(self.textbox_Dly.text()));
         iqf=self.getIQF()
         iq=iqf[0]
         freqs=iqf[1]
 
-
-
-        #na.plotFreq(iq)
-
-
-        #record zoom settings before clearing or replotting
-        #self.plot_zoom_settings={"pltype":"NULL" , "autoscale":1}
         if self.plot_zoom_settings["pltype"]=="magPhasePl":
             self.plot_zoom_settings={}
             self.plot_zoom_settings["pltype"]="magPhasePl"
@@ -1548,14 +1563,6 @@ class AppForm(QMainWindow):
         self.canvas.draw();
         print "plot done"    
 
-
-
-    #    if (self.is_sweeping==1):
-    #            self.timer=QTimer()    
-    #        self.timer.timeout.connect(self.magPhasePl)
-    #        self.timer.setSingleShot(True)
-    #        self.timer.start(1000)
-    #    
 
 
 
@@ -1815,6 +1822,65 @@ class AppForm(QMainWindow):
             cind = cind+1
     
         roachlock.release()
+    ##
+    # Plot phase term from ROACH with dots where "events" begin, and if we have selected points.
+    #
+
+
+    def plotRampPhaseSelection(self):
+        if self.clearplot==1:
+
+            self.clf()
+
+
+        roachlock.acquire();
+      
+
+        k=0.0
+        colorlist = ['b','g','c','m','y','k']
+        
+        cind = 0
+        for k in fa.iqdata_raw.keys():
+            color = colorlist[ cind%len(colorlist) ]
+            
+            if 'stream_mag' in fa.iqdata_raw[k].keys():
+                ld = len(fa.iqdata_raw[k]['stream_mag'])
+                if ld>1000: ld = 1000
+
+                self.plot(fa.iqdata_raw[k]['stream_phase'][:ld],color)
+
+                cind=cind+1
+
+            if 'stream_mag' in fa.iqdata_raw[k].keys():
+
+                self.set_xlabel('Sample')
+                self.set_ylabel('Radians')
+                
+                #plot red dots where events start
+                evtlen = fa.iqdata_raw[k]['event_len'][0]
+                for x in range(0,ld,evtlen):
+                    self.plot(x,fa.iqdata_raw[k]['stream_phase'][x],'ro')
+
+
+                #if open loop noise, we can show selection of event length and delay teim
+                #!!  how to tell if openloop noise, look at one of the fields on fa.iqdata_raw.. wich one?
+                sel_evt_len =int(self.textbox_FRDLen.text())         
+                sel_evt_dly =int(self.textbox_FRDDly.text())         
+
+                for x in range(0,ld,evtlen):
+                    self.plot(
+                        range(x+sel_evt_dly,x+sel_evt_dly+sel_evt_len),
+                        fa.iqdata_raw[k]['stream_phase'][x+sel_evt_dly:x+sel_evt_dly+sel_evt_len],
+                        'r')
+
+
+
+        roachlock.release()
+
+    ##
+    # Plot on left, Mag, Phase, FluxRampDemod. On ruight , roach cal resonator curve, and noise signal on IQ curve,. 
+    #
+
     def plotMultiChanMagPh(self):
         if self.clearplot==1:
 
@@ -1865,11 +1931,6 @@ class AppForm(QMainWindow):
                 self.subplot(3,2,3)
                 self.set_xlabel('Sample')
                 self.set_ylabel('Radians')
-                
-                #plot red dots where events start
-                evtlen = fa.iqdata_raw[k]['event_len'][0]
-                for x in range(0,ld,evtlen):
-                    self.plot(x,fa.iqdata_raw[k]['stream_phase'][x],'ro')
                     
                 self.subplot(3,2,5)
                 self.set_xlabel('Sample')
@@ -2325,7 +2386,7 @@ class AppForm(QMainWindow):
 
         self.label_plottype = QLabel('Plot Type')
         self.plot_names=['FourPlots','MagPhase','I and Q','IQPolar','IvQ','MultiNoise',
-            'IQVelocity','IQCircle','ResFit','3DChannels', 'IV Curve', 'Trans Cal']
+            'IQVelocity','IQCircle','ResFit','3DChannels', 'IV Curve', 'Trans Cal', 'PhaseTriggers']
 
 
         self.combobox_plottype=QComboBox()
@@ -2473,14 +2534,6 @@ class AppForm(QMainWindow):
         self.checkbox_AddRes.setMaximumWidth(200)
         self.checkbox_AddRes.stateChanged.connect(self.addResonator)
 
-        # 
-    # reset button- resets msm, restarts DAC
-    #restarts sweep
-    #
-        self.button_resetDAC = QPushButton("Reset")
-        self.button_resetDAC.setMaximumWidth(170)
-        self.connect(self.button_resetDAC, SIGNAL('clicked()'), self.resetDAC)            
-    
    
 
     #
@@ -2564,31 +2617,7 @@ class AppForm(QMainWindow):
         #self.button_runFits.setMaximumWidth(170)
         #self.connect(self.button_runFits, SIGNAL('clicked()'), self.runFits)            
         
-        self.check_runFits = QCheckBox("runFits")
 
-        self.check_runIQvelocity = QCheckBox("run IQ velocity")
-    
-    #
-    # label that vanishes and reappears as is_thread_running is set to 1 and 0. done in update Plots
-    #
-        self.label_threadrun=QLabel("<P><b><i><FONT COLOR='#ff0000' FONT SIZE = 4>RUNNING</i></b></P></br>")
-        self.label_threadrun.setVisible(False)
-    
-
-
-
-
-    #run sweeps and fits and noise. 
-        self.button_hdfshell = QPushButton("hdfShell")
-        self.button_hdfshell.setMaximumWidth(170)
-        self.connect(self.button_hdfshell, SIGNAL('clicked()'), hdfshell)            
-        
-
-
-    # extract threshold N*sigma
-        self.textbox_repeatmin = QLineEdit('60')
-        self.textbox_repeatmin.setMaximumWidth(50)
-        self.label_repeatmin = QLabel('RepeatMin')
 
 
 
@@ -2598,13 +2627,6 @@ class AppForm(QMainWindow):
         self.label_noisesec = QLabel('NoiseSec')
 
 
-
-
-        self.check_multiprocess = QCheckBox("MultiProcess")
-        self.check_multiprocess.stateChanged.connect(self.startMPQueue)
-    
-    
-        self.check_getnoise = QCheckBox("GetNoise")
     
     
 
@@ -2636,7 +2658,9 @@ class AppForm(QMainWindow):
         # widgets for noise/readout mode FW
         #
 
-    
+   
+ 
+ 
     #run stream
         self.button_stream_run = QPushButton("StartStream")
         self.button_stream_run.setMaximumWidth(170)
@@ -2659,21 +2683,31 @@ class AppForm(QMainWindow):
         label_testVolts = QLabel('TES Volts')
    
 
+        #
+        # qwidgets for setting Flux Ramp Integration Time and length, and delay wrt Trigger pulse
+        #
         label_frdlen = QLabel('FRD Len')
         self.textbox_FRDLen = QLineEdit('100')
         self.textbox_FRDLen.setMaximumWidth(50)
         
         
+        label_rampvolts= QLabel('RmpVolts')
+        self.textbox_rampvolts= QLineEdit('3.0')
+        self.textbox_rampvolts.setMaximumWidth(60)
+        
         label_rampfreq = QLabel('RmpFreq')
         self.textbox_rampfreq = QLineEdit('40000')
         self.textbox_rampfreq.setMaximumWidth(60)
         
+        self.checkbox_rampon= QCheckBox("RampOn")
+        self.checkbox_rampon.setMaximumWidth(170)
            
         label_FRDDly = QLabel('FRD Dly')
         self.textbox_FRDDly = QLineEdit('4')
         self.textbox_FRDDly.setMaximumWidth(50)
        
         
+    #run stream
         #self.textbox_flxRmpPrd.returnPressed.connect(self.setFluxRampDemod)
 
     
@@ -2704,14 +2738,23 @@ class AppForm(QMainWindow):
     
         #self.combobox_syncsource=QComboBox()
         self.combobox_syncsource=QComboBox()
-        self.combobox_syncsource.addItem('Open Loop (no FRD)')   
-        self.combobox_syncsource.addItem('Closed Loop (FRD)')   
+        self.combobox_syncsource.addItem('Open Loop (No Trig)')   
+        self.combobox_syncsource.addItem('Closed Loop (Trig)')   
         #self.combobox_syncsource.addItem('Int RampSource')   
 
         #self.connect(self.combobox_plottype, SIGNAL('currentIndexChanged'), self.setPlotType) 
         #self.combobox_syncsource.currentIndexChanged.connect(self.setRampSyncSource)
 
     
+    
+         #self.combobox_syncsource=QComboBox()
+        self.combobox_rampgenerator=QComboBox()
+        self.combobox_rampgenerator.addItem('No Ramp Gen')   
+        self.combobox_rampgenerator.addItem('Agilent 332350A')   
+       
+        self.combobox_rampgenerator.currentIndexChanged.connect(self.setRampGenerator)
+
+     
          #self.combobox_syncsource=QComboBox()
         self.combobox_biassource=QComboBox()
         self.combobox_biassource.addItem('No Volt Source')   
@@ -2935,13 +2978,6 @@ class AppForm(QMainWindow):
         t2_hbox.addLayout(t2_gbox2)
 
 
-  
-  
-  
-  
-  
-  
-  
       ######################################################################################
     # Stream tab
     #
@@ -2954,35 +2990,36 @@ class AppForm(QMainWindow):
 
         t5_hbox03 = QHBoxLayout()
         
+        
+        t5_hbox03.addWidget(label_flxRmpPrd)
+        t5_hbox03.addWidget(self.textbox_flxRmpPrd)
+        
         t5_hbox03.addWidget(label_frdlen)
         t5_hbox03.addWidget(self.textbox_FRDLen)
-        t5_hbox03.addWidget(label_rampfreq)
-        t5_hbox03.addWidget(self.textbox_rampfreq)
         t5_hbox03.addWidget(label_FRDDly)
         t5_hbox03.addWidget(self.textbox_FRDDly)
-        
-        t5_hbox03.addWidget(self.button_progtrans)
-        t5_hbox03.addWidget(self.button_savetrans)
-        t5_hbox03.addWidget(self.button_loadtrans)
 
+        t5_hbox03.addWidget(label_rampfreq)
+        t5_hbox03.addWidget(self.textbox_rampfreq)
+        t5_hbox03.addWidget(label_rampvolts)
+        t5_hbox03.addWidget(self.textbox_rampvolts)
+        t5_hbox03.addWidget(self.checkbox_rampon)
+  
+        t5_hbox03.addWidget(self.combobox_rampgenerator)
 
         t5_hbox05 = QHBoxLayout()
         t5_hbox05.addWidget(self.label_resListCalIQ)
         
         t5_hbox02 = QHBoxLayout()
-
-
-
-        
              
         t5_hbox02.addWidget(self.combobox_str_frd)
-        #hbox_sync4 = QHBoxLayout()
-        
-        t5_hbox02.addWidget(label_flxRmpPrd)
-        t5_hbox02.addWidget(self.textbox_flxRmpPrd)
         t5_hbox02.addWidget(self.combobox_syncsource)
+
         t5_hbox02.addWidget(self.combobox_biassource)
-        
+
+        t5_hbox02.addWidget(self.button_progtrans)
+        t5_hbox02.addWidget(self.button_savetrans)
+        t5_hbox02.addWidget(self.button_loadtrans)
 
         t5_hbox00 = QHBoxLayout()
         t5_hbox00.addWidget(label_lut_strfilename)
@@ -3060,13 +3097,6 @@ class AppForm(QMainWindow):
         tab2_layout=QVBoxLayout(tab2)
         tab2_layout.addLayout(t2_hbox)
 
-
-
-
-
-        #tab4=QWidget()
-        #tab4_layout=QVBoxLayout(tab4)
-        #tab4_layout.addLayout(gbox_sync)
        
 
         tab5=QWidget()
@@ -3076,7 +3106,6 @@ class AppForm(QMainWindow):
 
         tab_widget.addTab(tab1,"Settings")
         tab_widget.addTab(tab2,"Sweep")
-        #tab_widget.addTab(tab4,"FlxRamp")
         
 
         #tab_widget.addTab(tab3,"ResData")
@@ -3162,7 +3191,7 @@ def runCaptureNoise():
         #form.signalMessageText("Noise Running")
         message_queue.put({'status_string':'Noise Running'})
         print 'Capture Noise start on thread'            
-        
+        fa.setRampGenerator(fa.temp_rampon, fa.temp_rampfreq, fa.temp_rampvolts)
         fa.setTESBias(fa.temp_is_tes_on,fa.temp_tesvolts)       
         fa.progTranslatorsFromIQCircles(measure.iqcenterdata)              
         fa.setRampSyncSource(fa.temp_open_or_closedloop)
@@ -3406,6 +3435,7 @@ def runIQSweep():
             span_Hz=fa.temp_span_Hz, 
             center_Hz=fa.temp_center_Hz, 
             pts=fa.temp_pts,
+            pwr_at_res = fa.power_at_resonator,
             lock=roachlock,
             callback=sweepCallback2)
             
@@ -3423,7 +3453,41 @@ def runIQSweep():
     roachlock.release()
     #enqueue a message to update plot on main window. 1 is plot tupe in form.updatePlot
     message_queue.put({'signalPlot':1})
-  
+ 
+
+       # fa.temp_rampgenerator_index=ci
+       # thread.start_new_thread(runSetupRampGenerator,())
+
+ 
+def runSetupRampGenerator():
+    global agt 
+    
+
+    if fa.temp_rampgenerator_index==0:  
+        
+        try: 
+            agt.close()
+        except: 
+            print "Did not close sim928"
+
+        agt = agtNULL()
+        message_queue.put({'status_string':'Open NULL Ramp Gen'})
+
+    elif fa.temp_rampgenerator_index==1:
+
+        try: agt.close()
+        except: print "Did not close agt33250A"
+
+        message_queue.put({'status_string':'Waiting for Agilent 33250A on comport'})
+        agt = agt33250A()
+        agt.open()
+        
+        idstr = agt.getId()
+        print idstr
+        message_queue.put({'status_string':idstr})
+
+
+ 
 def runSetupBiasSource():
     global sim
     

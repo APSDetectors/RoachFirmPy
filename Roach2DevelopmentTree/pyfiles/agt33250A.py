@@ -1,30 +1,26 @@
 """
-chgrp tty /dev/ttyUSB0
-chmod 777  /dev/ttyUSB0
 
-execfile('Agilent33250A.py')
+execfile('agt33250A.py')
 
-agilent=Agilent33250()
+agt=agt33250A()
 
-agilent.open()
+agt.open()
 
-agilent.write('*IDN?\n')
+agt.write('*IDN?\n')
 
-agilent.readline()
+agt.readline()
 
-agilent.setOutOn(1)
+agt.setOutOn(1)
 
-agilent.getId()
+agt.getId()
 
-agilent.setVolts(2.7)
+agt.setVolts(2.7)
 
-agilent.getVolts()
+agt.getVolts()
 
-agilent.connport(8)
 
-agilent.disconnport()
 
-agilent.close()
+agt.close()
 
 
 
@@ -33,19 +29,17 @@ agilent.close()
 import serial
 
 
-class Agilent33250:
+class agt33250A:
 
     def __init__(self):
     
         self.dev = "/dev/ttyUSB0"
         
-        
+        self.portnum = 8
         
     def open(self):
         
-        self.comport = serial.Serial(
-            port = self.dev,
-            baudrate = 115200)
+        self.comport = serial.Serial(self.dev)
         
     def getId(self):
     
@@ -54,13 +48,6 @@ class Agilent33250:
         return(self.readline())
 
         
-    def connport(self,pn):
-        self.portnum = pn
-        self.comport.write('CONN %d,"xyz"\n'%self.portnum)
-    
-    
-    def disconnport(self):
-        self.comport.write('xyz\n')
         
         
     def close(self):
@@ -78,12 +65,25 @@ class Agilent33250:
     def setOutOn(self,ison):
     
         if ison:
-            self.write('OPON\n')
+            self.write('OUTP ON\n')
         else:
-            self.write('OPOF\n')
-    
-    
-    
+            self.write('OUTP OFF\n')
+    def setRamp(self):
+        self.write('FUNC RAMP\n')
+
+    def getFunc(self):
+        self.write('FUNC? \n')
+        return(self.readline())
+
+ 
+    def setFreq(self,f):
+        self.write('FREQ %f\n'%f)
+ 
+ 
+    def getFreq(self):
+        self.write('FREQ?\n')
+        return(self.readline())
+
     def getVolts(self):
         self.write('VOLT?\n')
         v=float(self.readline())
@@ -100,7 +100,7 @@ class Agilent33250:
     
     
 
-class agilentNULL:
+class agtNULL:
 
     def __init__(self):
     
@@ -119,12 +119,21 @@ class agilentNULL:
         return('NULL Vsource')
 
         
-    def connport(self,pn):
+    def setRamp(self):
+        pass
+
+    def getFunc(self):
+        pass
+
+ 
+    def setFreq(self,f):
+        pass
+ 
+ 
+    def getFreq(self):
         pass
     
     
-    def disconnport(self):
-        pass
         
         
     def close(self):
@@ -151,3 +160,4 @@ class agilentNULL:
        
         return('')
     
+print "Loaded agt33250A.py"

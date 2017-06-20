@@ -21,7 +21,8 @@ in_mixer_desired_power_dbm = 1.0
 
 #atten in db if both output attens are set to 0dB atenuation
 # negative atten means ATTENUATION. Positive means GAIN
-if_board_minimum_outatten = -1.0 -3.0 -1.0 -0.5 - 5.5 - 3.0 - 3.0 -1.5
+if_board_out_fudge = 2
+if_board_minimum_outatten = -1.0 -3.0 -1.0 -0.5 - 5.5 - 3.0 - 3.0 -1.5 + if_board_out_fudge 
 
 #gain of inut amp+atten u28 at 0db. Gein from input to input of mixer on ifboard.
 if_board_rfin_2_mixerin = 15.0-3.0
@@ -58,8 +59,8 @@ cryo_res_nom_atten = -20
 # FFT Gain. If fft coef is 0.5 for a single sinetone, then what is rms in counts 
 #of that sinewave tin ADC couts. Units is  1/counts. The fft bins are in RMS, proportinal
 # to voltage. it is not  power spectrum
-#
-roach_fft_rms_per_adccounts= 1.0/adc_max_counts_0p
+# 2.5 is a fidge facture from measuring the fft gain. done know why...
+roach_fft_rms_per_adccounts= 2.5/adc_max_counts_0p
 
 
 
