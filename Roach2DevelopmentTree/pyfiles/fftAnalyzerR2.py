@@ -904,8 +904,9 @@ class fftAnalyzerR2:
             #this one used for most of data so far-- mar 2016
          
             #fw for testing flux ramp demod on roach
-            #self.mainFW = ROACH_DIR+'/projcts/bestBitFiles/qdrdac_2016_Nov_18_1100.bof'
             self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Feb_14_1518.bof'
+
+            #self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Jun_20_1709.bof'
 
             self.temppath = ROACH_DIR+'/temp/'
 

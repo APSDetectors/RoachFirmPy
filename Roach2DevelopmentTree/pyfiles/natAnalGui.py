@@ -1000,7 +1000,7 @@ class AppForm(QMainWindow):
         roachlock.acquire()
              
          
-        fa.syncdelay_temp = 128* frddly
+        fa.syncdelay_temp =  frddly
         fa.frdlen_temp = frdlen
         fa.temp_open_or_closedloop = ci
   
@@ -1143,7 +1143,7 @@ class AppForm(QMainWindow):
         fa.noisetemp_fname = fname_
         
         
-        fa.syncdelay_temp = 128* frddly
+        fa.syncdelay_temp =  frddly
         fa.frdlen_temp = frdlen
         self.setAttenFromGUI()
         roachlock.release()
@@ -3634,7 +3634,7 @@ except:
     
 
 sim = None
-
+agt = None
 if False:
     try:
         sim=sim928()

@@ -283,7 +283,7 @@ class Channelizer:
 #
 #####################################################################################################
     def setSyncDelaySamples(self,nsamp):
-        self.setSyncDelay(128*nsamp)
+        self.setSyncDelay(nsamp)
         
         
 
