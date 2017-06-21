@@ -319,7 +319,8 @@ class AppForm(QMainWindow):
                         self.status_text.setText(self.signal_dict[kk])
 
                     elif kk == 'signalPlot':
-                        self.plottype = self.signal_dict[kk]   
+                        if self.signal_dict[kk]>-1:
+                            self.plottype = self.signal_dict[kk]   
                         self.signalPlot()
                         roachlock.acquire()
                         try:
@@ -1932,6 +1933,11 @@ class AppForm(QMainWindow):
                 self.set_xlabel('Sample')
                 self.set_ylabel('Radians')
                     
+                #plot red dots where events start
+                evtlen = fa.iqdata_raw[k]['event_len'][0]
+                for x in range(0,ld,evtlen):
+                    self.plot(x,fa.iqdata_raw[k]['stream_phase'][x],'ro')
+                
                 self.subplot(3,2,5)
                 self.set_xlabel('Sample')
                 self.set_ylabel('FRD Phase')
@@ -2649,7 +2655,6 @@ class AppForm(QMainWindow):
      
         
     
-        self.label_saysf = QLabel('Sweep and You Shall Find')
         
     #####################################################################################################
 
@@ -2665,7 +2670,7 @@ class AppForm(QMainWindow):
         self.button_stream_run = QPushButton("StartStream")
         self.button_stream_run.setMaximumWidth(170)
         self.connect(self.button_stream_run, SIGNAL('clicked()'), self.streamRun)            
-        
+       
         #self.label_fa_running = QLabel('Not Running')
         
         self.button_stop_run = QPushButton("Stop Run")
@@ -2681,21 +2686,24 @@ class AppForm(QMainWindow):
         self.textbox_tesVolts = QLineEdit('0.8')
         self.textbox_tesVolts.setMaximumWidth(50)
         label_testVolts = QLabel('TES Volts')
-   
+        label_testVolts.setAlignment(Qt.AlignRight)
 
         #
         # qwidgets for setting Flux Ramp Integration Time and length, and delay wrt Trigger pulse
         #
         label_frdlen = QLabel('FRD Len')
+        label_frdlen.setAlignment(Qt.AlignRight)
         self.textbox_FRDLen = QLineEdit('100')
         self.textbox_FRDLen.setMaximumWidth(50)
         
         
         label_rampvolts= QLabel('RmpVolts')
+        label_rampvolts.setAlignment(Qt.AlignRight)
         self.textbox_rampvolts= QLineEdit('3.0')
         self.textbox_rampvolts.setMaximumWidth(60)
         
         label_rampfreq = QLabel('RmpFreq')
+        label_rampfreq.setAlignment(Qt.AlignRight)
         self.textbox_rampfreq = QLineEdit('40000')
         self.textbox_rampfreq.setMaximumWidth(60)
         
@@ -2703,6 +2711,7 @@ class AppForm(QMainWindow):
         self.checkbox_rampon.setMaximumWidth(170)
            
         label_FRDDly = QLabel('FRD Dly')
+        label_FRDDly.setAlignment(Qt.AlignRight)
         self.textbox_FRDDly = QLineEdit('4')
         self.textbox_FRDDly.setMaximumWidth(50)
        
@@ -2735,6 +2744,7 @@ class AppForm(QMainWindow):
 
         label_flxRmpPrd = QLabel('FlxRmp Periods')
 
+        label_flxRmpPrd.setAlignment(Qt.AlignRight)
     
         #self.combobox_syncsource=QComboBox()
         self.combobox_syncsource=QComboBox()
@@ -2913,7 +2923,6 @@ class AppForm(QMainWindow):
         t2_gbox1 = QVBoxLayout()
 
    
-        t2_gbox1.addWidget(self.label_saysf)
         t2_gbox1.addWidget(self.textbox_devicename)
         t2_gbox1.addWidget(self.spinbox_numSwPts)
    
