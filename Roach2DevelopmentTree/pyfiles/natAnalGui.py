@@ -670,225 +670,6 @@ class AppForm(QMainWindow):
 
     
 
-    
-#    if (self.is_sweeping==1):    
-#        self.timer=QTimer()    
-#        self.timer.timeout.connect(self.plotPolar)
-#        self.timer.setSingleShot(True)
-#        self.timer.start(1000)
-                
-     
-    def find_nearest(self, array, value):
-        idx=(numpy.abs(array-value)).argmin()
-        return idx
-
-    def loadCustomThresholds(self):
-        a=1 
- 
-    def rmCustomThreshold(self):
-        a=1 
- 
-    def setCustomThreshold(self,event):
-        a=1 
- 
-    def loadThresholds(self):
-        a=1 
- 
-
-    def loadSingleThreshold(self,ch):
-        a=1 
-        
-    def snapshot(self):       
-        a=1 
-    
-      
-  
-    #get selected or checked MKID obhects in the gui list
-    def getMkidSelectedChecked(self,wlist):
-        
-     
-
-        selected=wlist.selectedItems()
-        #selected list
-        slist=[]
-        #checked list
-        clist=[]
-
-        if len(selected)>0:
-            #slist.append(selected[0].data(0,100))
-            slist.append(selected[0].mkid)
-            
-        for row in range(wlist.topLevelItemCount()):
-            item=wlist.topLevelItem(row)
-            if item.checkState(0)==Qt.Checked:
-                #clist.append(item.data(0,100))
-                clist.append(item.mkid)
-                #item.data(0,100).checked=1
-                item.mkid.checked=1
-            else:
-                #item.data(0,100).checked=0
-                item.mkid.checked=0
-
-
-
-
-        return([clist,slist])
-
-    #get list of ints, the rows, of the checked items in gui list
-
-
-
-    #get list of ints, the rows, of the checked items in gui list
-
-
-
-
-    def runNoise(self):
-         
-
-        #runs on THIS thread
-        #na.powerSweep(self.at_inst,self.at_st,self.at_inend,self.at_step,self.at_sweeps,self.resonator_span,self.mlist)
-        measure.measspecs.num_noise_traces = self.spinbox_numNoise.value()
-        ntime = float(self.textbox_noisesec.text())
-        
-        measure.setNoiseTime(ntime)
-        measure.runNoise()
-
-
-       
-    
-    #setup power sweep from gui settings    
- 
-
-   #calculate IQ velocity
-    def IQvelocity(self):
-        print "------Calculating IQ velocity, Fit Circle ----------"
-
-        #figure(111)
-        #clf()
-        for m in self.mlist: #loops through list of resonators
-            fit.reslist=m.reslist
-            print "Calc IQVel, MKID %fHz"%(m.getFc())
-            fit.IQvelocityCalc()
-            print "Fit Circle %fHz"%(m.getFc())
-            fit.fitCircleCalc()
-
-
-        
-
-
-   
-    #run fits on gui thread
-
-    def runFits2(self):
-        
-        for m in self.mlist:
-
-            print "------------Fitting Resonator %d----------"%(m.resonator_num)
-
-            fit.reslist = m.reslist
-
-            fit.fitResonators()
-
-    #run fits on a group of threads
-
-    def runFits3(self):
-    
-        pool=QThreadPool()
-        pool.setMaxThreadCount(10)
-
-
-        for m in self.mlist:
-
-            print "------------Fitting Resonator %d----------"%(m.resonator_num)
-
-            #fit.reslist = m.reslist
-
-            #fit.fitResonators()
-
-            for res in m.reslist:
-                runnable=QRunFit(res)
-                status=pool.tryStart(runnable)
-                while status==False:
-                    print "Out of threads- wait and try again"
-                    time.sleep(10)
-                    status=pool.tryStart(runnable)
-
-
-                print "Started thread for resonator"
-
-
-        while pool.waitForDone(5000)==False:
-            print "\n\n---Still Running fits---\n\n"
-
-
-    #run fits on separate processes, 
-    def runFits4(self):        
-    #on controlscripts.py, starts Queue that any computer can get to via tcp 
-    #if queue is already running it won't start it again.
-        startQMP();
-    #start process that gets queue items and dies fits. this runs on local system
-    #if already running then not started again..
-        startFitServeMP('')
-
-    #send the selected resonators to the fitting quque for multiproc fitting
-        putMkidFitQueue(self.mlist)
-    
-
-
-
-    def startMPQueue(self,state):
-        global is_use_multiprocess
-        is_use_multiprocess=0
-    
-        #!!
-        #!!if state>0:
-        if False:
-            is_use_multiprocess=1
-            print "Using Queue and  fit server"
-            startQMP()
-            time.sleep(2)
-            startFitServeMP('')
-    
-    
-
-
-
-    def stopRepeat(self):
-        self.timer.stop()
-        self.button_runbyhour.setStyleSheet("background-color: grey")
-    
-
-
-
-    def stopIt(self):
-        #tell processes to stop fits. we may have several cpus connected, so we should send several times.
-
-        #stop polling thread. stops polling for fit quque, finished fits. also stops power sweep thread
-        global is_thread_running
-        is_thread_running=0
-        na.thread_running=0
-        self.is_saveres=False
-
-
-    def naTrace2ResTrace(self):
-        
-        global MKID_list
-        selected=self.list_reslist.selectedItems()
-    
-        if len(selected)>0:
-
-            #get selected mkid
-
-            #mkid=selected[0].data(100)
-            mkid=selected[0].mkid
-            
-            #get current trace into res data object
-            res=na.getResonator()
-            #add this trace to the res
-            mkid.addRes(res)    
-            self.updatePlot()
-
         
                 
   
@@ -900,10 +681,6 @@ class AppForm(QMainWindow):
 
 
 
-
-    def addMark(self,state):
-        pass;
-    
  
     def plotClick(self,event):
     
@@ -984,24 +761,6 @@ class AppForm(QMainWindow):
         self.updatePlot()
        
 
-  
-    def channelInc(self):
-        a=1 
-        
-    def toggleDAC(self):
-        a=1 
-  
-    def loadIQcenters(self):
-        a=1 
-  
-    def select_bins(self, readout_freqs):
-        a=1 
-  
-    def loadLUTs(self):
-        a=1 
-   
-    def importFreqs(self):
-        a=1
 
 
 
@@ -1735,41 +1494,46 @@ class AppForm(QMainWindow):
 
     def plotIQCircle(self):    
     
-
-        if self.clearplot==1:
-
-            self.fig.clear()
-
-
-            self.axes0 = self.fig.add_subplot(1,1,1)
-            self.axes0.set_xlabel('I')
-            self.axes0.set_ylabel('Q')
-
-
-    
         roachlock.acquire();
-        for resdata in self.fftreslist:
+        
+        try:
 
-            fbase=na.findBasebandFreq(resdata.getFc())
-            ts=na.extractTimeSeries(fbase)
-            tsr=na.dataread.PolarToRect(ts)
-            tsr_tr=fit.trans_rot3(resdata, tsr)
+            if self.clearplot==1:
 
-
-
-            #!!self.axes0.plot(resdata.trot_xf,resdata.trot_yf)
-            self.axes0.plot(resdata.iqdata[0],resdata.iqdata[1])
-            self.axes0.plot(tsr[0],tsr[1],'.')
-            #!!self.axes0.plot(tsr_tr[0],tsr_tr[1],'.')
+                self.fig.clear()
 
 
+                self.axes0 = self.fig.add_subplot(1,1,1)
+                self.axes0.set_xlabel('I')
+                self.axes0.set_ylabel('Q')
 
-            #self.axes0.plot(resdata.iqdata[0], resdata.iqdata[1])
-            #self.axes0.plot(tsr[0],tsr[1],'.')
 
+        
+            for resdata in self.fftreslist:
+
+                fbase=na.findBasebandFreq(resdata.getFc())
+                ts=na.extractTimeSeries(fbase)
+                tsr=na.dataread.PolarToRect(ts)
+                tsr_tr=fit.trans_rot3(resdata, tsr)
+
+
+
+                #!!self.axes0.plot(resdata.trot_xf,resdata.trot_yf)
+                self.axes0.plot(resdata.iqdata[0],resdata.iqdata[1])
+                self.axes0.plot(tsr[0],tsr[1],'.')
+                #!!self.axes0.plot(tsr_tr[0],tsr_tr[1],'.')
+
+
+
+                #self.axes0.plot(resdata.iqdata[0], resdata.iqdata[1])
+                #self.axes0.plot(tsr[0],tsr[1],'.')
+
+            self.canvas.draw();
+        except:
+            print "Problem in plotIQCircle"
+ 
         roachlock.release()
-        self.canvas.draw();
-    
+
     def plotChan3D(self):
 
         if self.clearplot==1:
@@ -1842,36 +1606,37 @@ class AppForm(QMainWindow):
             self.curaxis.plot( args[0],args[1],args[2],args[4] )
 
         self.canvas.draw();
-         
-#hdf.open('superduper.h5','r')
-#aa=hdf.read()
-#aa
-#fa.iqdata_raw = aa['iqdata_raw']
-#hdf.close()
-#form.plotMultiChanMagPh()
+    
+
+
+
+     
     def plotIVCurves(self):
     
         roachlock.acquire()
-        if self.clearplot==1:
-            self.clf()
-            
-     
-        k=0.0
-        colorlist = ['b','g','r','c','m','y','k']
+        try:
+            if self.clearplot==1:
+                self.clf()
+                
+         
+            k=0.0
+            colorlist = ['b','g','r','c','m','y','k']
 
 
-        cind = 0
-        for k in fa.iqdata_raw.keys():
-            color = colorlist[ cind%len(colorlist) ]
-            if 'ivcurve' in fa.iqdata_raw[k].keys():
-                frd = fa.iqdata_raw[k]['ivcurve'][::-1]  
-                mv =   fa.iqdata_raw[k]['vlist'][::-1]   /1000.0
-            else:
-                frd = fa.iqdata_raw[k]['flux_ramp_phase_unwrap'][::-1]  
-                mv =   fa.iqdata_raw[k]['timestamp'][::-1]   /1000.0
-            self.plot(mv,frd,colorlist[cind])
-            cind = cind+1
-    
+            cind = 0
+            for k in fa.iqdata_raw.keys():
+                color = colorlist[ cind%len(colorlist) ]
+                if 'ivcurve' in fa.iqdata_raw[k].keys():
+                    frd = fa.iqdata_raw[k]['ivcurve'][::-1]  
+                    mv =   fa.iqdata_raw[k]['vlist'][::-1]   /1000.0
+                else:
+                    frd = fa.iqdata_raw[k]['flux_ramp_phase_unwrap'][::-1]  
+                    mv =   fa.iqdata_raw[k]['timestamp'][::-1]   /1000.0
+                self.plot(mv,frd,colorlist[cind])
+                cind = cind+1
+        except:
+            print "Problem in plotIVCurves"
+ 
         roachlock.release()
     ##
     # Plot phase term from ROACH with dots where "events" begin, and if we have selected points.
@@ -1940,80 +1705,83 @@ class AppForm(QMainWindow):
 
         roachlock.acquire();
       
+        try:
 
-        k=0.0
-        colorlist = ['b','g','c','m','y','k']
-        
-        if True:
-            cind = 0
-            for k in fa.iqdata_raw.keys():
-                color = colorlist[ cind%len(colorlist) ]
-                
+            k=0.0
+            colorlist = ['b','g','c','m','y','k']
+            
+            if True:
+                cind = 0
+                for k in fa.iqdata_raw.keys():
+                    color = colorlist[ cind%len(colorlist) ]
+                    
+                    if 'stream_mag' in fa.iqdata_raw[k].keys():
+                        ld = len(fa.iqdata_raw[k]['stream_mag'])
+                        if ld>1000: ld = 1000
+
+                        self.subplot(3,2,1)
+                        self.plot(fa.iqdata_raw[k]['stream_mag'][:ld],color)
+                        self.subplot(3,2,3)
+                        self.plot(fa.iqdata_raw[k]['stream_phase'][:ld],color)
+                    
+                        self.subplot(3,2,5)
+                        self.plot(fa.iqdata_raw[k]['flux_ramp_phase_unwrap'],color)
+
+
+                        IQ = fa.dataread.PolarToRect(\
+                            [  fa.iqdata_raw[k]['stream_mag'][:ld],
+                            fa.iqdata_raw[k]['stream_phase'][:ld]])
+
+                        self.subplot(1,2,2)
+                        self.plot(IQ[0],IQ[1],'%s.'%color)
+                        cind=cind+1
+                    else:
+                    
+                        
+                        self.plot(fa.iqdata_raw[k]['flux_ramp_phase_unwrap'],color)
+
                 if 'stream_mag' in fa.iqdata_raw[k].keys():
-                    ld = len(fa.iqdata_raw[k]['stream_mag'])
-                    if ld>1000: ld = 1000
+                    self.subplot(3,2,1)        
+                    self.set_xlabel('Sample')
+                    self.set_ylabel('Mag')
 
-                    self.subplot(3,2,1)
-                    self.plot(fa.iqdata_raw[k]['stream_mag'][:ld],color)
                     self.subplot(3,2,3)
-                    self.plot(fa.iqdata_raw[k]['stream_phase'][:ld],color)
-                
+                    self.set_xlabel('Sample')
+                    self.set_ylabel('Radians')
+                        
+                    #plot red dots where events start
+                    evtlen = fa.iqdata_raw[k]['event_len'][0]
+                    for x in range(0,ld,evtlen):
+                        self.plot(x,fa.iqdata_raw[k]['stream_phase'][x],'ro')
+                    
                     self.subplot(3,2,5)
-                    self.plot(fa.iqdata_raw[k]['flux_ramp_phase_unwrap'],color)
-
-
-                    IQ = fa.dataread.PolarToRect(\
-                        [  fa.iqdata_raw[k]['stream_mag'][:ld],
-                        fa.iqdata_raw[k]['stream_phase'][:ld]])
+                    self.set_xlabel('Sample')
+                    self.set_ylabel('FRD Phase')
 
                     self.subplot(1,2,2)
-                    self.plot(IQ[0],IQ[1],'%s.'%color)
-                    cind=cind+1
+
+                    frdci = self.combobox_str_frd.currentIndex()
+                    if frdci==0 or frdci==1:
+                        mlist = measure.measspecs.mlist_raw1
+                    else:
+                        mlist = measure.measspecs.mlist_trans
+
+                    cind = 0
+                    for m in mlist:
+                        color = colorlist[ cind%len(colorlist) ]
+                        res = m.reslist[0]
+                        self.plot(res.iqdata[0],res.iqdata[1],color)
+                        cind = cind+1
                 else:
-                
-                    
-                    self.plot(fa.iqdata_raw[k]['flux_ramp_phase_unwrap'],color)
+                    self.set_xlabel('Sample')
+                    self.set_ylabel('FRD Phase')     
 
-            if 'stream_mag' in fa.iqdata_raw[k].keys():
-                self.subplot(3,2,1)        
-                self.set_xlabel('Sample')
-                self.set_ylabel('Mag')
-
-                self.subplot(3,2,3)
-                self.set_xlabel('Sample')
-                self.set_ylabel('Radians')
-                    
-                #plot red dots where events start
-                evtlen = fa.iqdata_raw[k]['event_len'][0]
-                for x in range(0,ld,evtlen):
-                    self.plot(x,fa.iqdata_raw[k]['stream_phase'][x],'ro')
-                
-                self.subplot(3,2,5)
-                self.set_xlabel('Sample')
-                self.set_ylabel('FRD Phase')
-
-                self.subplot(1,2,2)
-
-                frdci = self.combobox_str_frd.currentIndex()
-                if frdci==0 or frdci==1:
-                    mlist = measure.measspecs.mlist_raw1
-                else:
-                    mlist = measure.measspecs.mlist_trans
-
-                cind = 0
-                for m in mlist:
-                    color = colorlist[ cind%len(colorlist) ]
-                    res = m.reslist[0]
-                    self.plot(res.iqdata[0],res.iqdata[1],color)
-                    cind = cind+1
             else:
-                self.set_xlabel('Sample')
-                self.set_ylabel('FRD Phase')     
+                print "exception form.plotMultiChanMagPh"
 
-        else:
-            print "exception form.plotMultiChanMagPh"
-
-        
+           
+        except:
+            print "Probme in plotMultiChanMagPh" 
 
         roachlock.release()
     
@@ -2272,16 +2040,6 @@ class AppForm(QMainWindow):
         roachlock.release()
         
   
-        
-    
-    def file_dialog(self):
-        print 'add dialog box here'
-        #self.newdatadir = QFileDialog.getExistingDirectory(self, str("Choose SaveDirectory"), "",QFileDialog.ShowDirsOnly)
-         #if len(self.newdatadir) > 0:
-          #   self.datadir = self.newdatadir
-           #  print self.datadir
-             #self.ui.data_directory_lineEdit.setText(self.datadir) #put new path name in line edit
-            # self.button_saveDir.setText(str(self.datadir))
              
     def create_main_frame(self):
         self.main_frame = QWidget()
@@ -2546,14 +2304,6 @@ class AppForm(QMainWindow):
 
 
 
-
-        #
-        # For adding resonator markers on plot
-        #
-        self.checkbox_AddMark=QCheckBox('Mark')
-        self.checkbox_AddMark.setMaximumWidth(200)
-        self.checkbox_AddMark.stateChanged.connect(self.addMark)
-
         self.label_resPlots = QLabel('ResNum')
         self.label_resPlots.setMaximumWidth(30)
 
@@ -2620,15 +2370,6 @@ class AppForm(QMainWindow):
         self.button_delResonator = QPushButton("DelRes")
         self.button_delResonator.setMaximumWidth(170)
         self.connect(self.button_delResonator, SIGNAL('clicked()'), self.delResonator)            
-    
-    
-        #
-    #add current trace to selected resonator
-        #
-        self.button_addResTrace = QPushButton("addTrace")
-        self.button_addResTrace.setMaximumWidth(170)
-        self.connect(self.button_addResTrace, SIGNAL('clicked()'), self.naTrace2ResTrace)            
-    
     
     
     
@@ -2993,7 +2734,6 @@ class AppForm(QMainWindow):
         t2_hbox02.addWidget(self.checkbox_AddRes)
         t2_hbox02.addWidget(self.button_clearResList)
         t2_hbox02.addWidget(self.button_delResonator)
-        t2_hbox02.addWidget(self.button_addResTrace)
 
     
     
@@ -3001,13 +2741,6 @@ class AppForm(QMainWindow):
     
     
     
-    
-  
-  #      t2_hbox13 = QHBoxLayout()
-#  
-#      t2_hbox13.addWidget(self.checkbox_AddMark)
-#       t2_gbox1.addLayout(t2_hbox13)
-
 
         t2_gbox2 = QVBoxLayout()
 
