@@ -896,6 +896,7 @@ class fftAnalyzerR2:
         self.ramp_generator_freq = 0
         self.ramp_generator_voltage = 0
 
+        self.cryo_temperature  = 0
 
         if self.roach2 != None:
         
@@ -904,9 +905,9 @@ class fftAnalyzerR2:
             #this one used for most of data so far-- mar 2016
          
             #fw for testing flux ramp demod on roach
-            self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Feb_14_1518.bof'
+            #self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Feb_14_1518.bof'
 
-            #self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Jun_20_1709.bof'
+            self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Jun_21_1708.bof'
 
             self.temppath = ROACH_DIR+'/temp/'
 
@@ -1019,7 +1020,7 @@ class fftAnalyzerR2:
             'fa.rfft.bin_to_srcfreq':self.rfft.bin_to_srcfreq ,
             'fa.rfft.bin_to_leg':self.rfft.bin_to_leg ,
             'fa.rfft.chan_to_bin4':self.rfft.chan_to_bin4,  
-            'fa.rfft.fft_bin_flags':fa.rfft.fft_bin_flags,         
+            'fa.rfft.fft_bin_flags':self.rfft.fft_bin_flags,         
             'fa.phaser3.phase_inc_array':self.phaser3.phase_inc_array,
             'fa.phaser4.phase_inc_array':self.phaser4.phase_inc_array,
             'fa.if_board':self.if_board,
@@ -1031,32 +1032,33 @@ class fftAnalyzerR2:
             'fa.bbfreqs':self.sram.frequency_list,
             'fa.LO':self.carrierfreq,
             'fa.freqs_sweep':self.freqs_sweep,
-            'fa.chanzer.sync_delay':fa.chanzer.sync_delay ,
-            'fa.chanzer.settings':fa.chanzer.settings ,
-            'fa.chanzer.read_fifo_size':fa.chanzer.read_fifo_size ,
-            'fa.chanzer.chan_to_translate':fa.chanzer.chan_to_translate ,
-            'fa.chanzer.b_wr_raw_data':fa.chanzer.b_wr_raw_data ,
-            'fa.chanzer.b_sync_source':fa.chanzer.b_sync_source ,
-            'fa.chanzer.b_savefluxtrans':fa.chanzer.b_savefluxtrans ,
-            'fa.chanzer.b_savefluxraw':fa.chanzer.b_savefluxraw ,
-            'fa.chanzer.b_is_look_sync':fa.chanzer.b_is_look_sync ,
-            'fa.chanzer.b_flux_demod':fa.chanzer.b_flux_demod ,
-            'fa.chanzer.b_en_int_rampgen':fa.chanzer.b_en_int_rampgen ,
-            'fa.chanzer.b_drop_all_events':fa.chanzer.b_drop_all_events ,
-            'fa.chanzer.flux_cos':fa.chanzer.flux_cos ,
-            'fa.chanzer.flux_cos_b':fa.chanzer.flux_cos_b ,
-            'fa.chanzer.flux_nsin':fa.chanzer.flux_nsin ,
-            'fa.chanzer.flux_nsin_b':fa.chanzer.flux_nsin_b,
-            'fa.tes_bias':fa.tes_bias ,
-            'fa.tes_bias_on':fa.tes_bias_on ,
-            'fa.span_Hz':fa.span_Hz ,
+            'fa.chanzer.sync_delay':self.chanzer.sync_delay ,
+            'fa.chanzer.settings':self.chanzer.settings ,
+            'fa.chanzer.read_fifo_size':self.chanzer.read_fifo_size ,
+            'fa.chanzer.chan_to_translate':self.chanzer.chan_to_translate ,
+            'fa.chanzer.b_wr_raw_data':self.chanzer.b_wr_raw_data ,
+            'fa.chanzer.b_sync_source':self.chanzer.b_sync_source ,
+            'fa.chanzer.b_savefluxtrans':self.chanzer.b_savefluxtrans ,
+            'fa.chanzer.b_savefluxraw':self.chanzer.b_savefluxraw ,
+            'fa.chanzer.b_is_look_sync':self.chanzer.b_is_look_sync ,
+            'fa.chanzer.b_flux_demod':self.chanzer.b_flux_demod ,
+            'fa.chanzer.b_en_int_rampgen':self.chanzer.b_en_int_rampgen ,
+            'fa.chanzer.b_drop_all_events':self.chanzer.b_drop_all_events ,
+            'fa.chanzer.flux_cos':self.chanzer.flux_cos ,
+            'fa.chanzer.flux_cos_b':self.chanzer.flux_cos_b ,
+            'fa.chanzer.flux_nsin':self.chanzer.flux_nsin ,
+            'fa.chanzer.flux_nsin_b':self.chanzer.flux_nsin_b,
+            'fa.tes_bias':self.tes_bias ,
+            'fa.tes_bias_on':self.tes_bias_on ,
+            'fa.span_Hz':self.span_Hz ,
             'fa.is_ramp_generator_on':self.is_ramp_generator_on ,
             'fa.ramp_generator_freq':self.ramp_generator_freq ,
             'fa.ramp_generator_voltage':self.ramp_generator_voltage ,
-            'fa.mainFW':fa.mainFW ,
-            'fa.power_at_resonator':fa.power_at_resonator,
-            'fa.power_at_ifboard_rfout':fa.power_at_ifboard_rfout,
-            'fa.loadFW':fa.loadFW}
+            'fa.mainFW':self.mainFW ,
+            'fa.power_at_resonator':self.power_at_resonator,
+            'fa.power_at_ifboard_rfout':self.power_at_ifboard_rfout,
+            'fa.cryo_temperature ':self.cryo_temperature,
+            'fa.loadFW':self.loadFW}
             
         return(dat)
 
@@ -2172,7 +2174,7 @@ class fftAnalyzerR2:
         self.phaser4.zeroPhaseIncs()
 
         
-        self.chanzer.setSyncDelay(syncdelay)
+        self.chanzer.setSyncDelaySamples(syncdelay)
        
     
         time.sleep(0.5)

@@ -1,3 +1,15 @@
+
+cal_ivstream_voltagestep_delay=1000
+
+flux_ramp_cal_settings = {
+    '10k_3V': {'frddly':111, 'freq':10000, 'volts':3.0, 'periods':3.0 , 'frdlen':153},
+    '40k_2V': {'frddly':34, 'freq':40000, 'volts':2.0, 'periods':2.0 , 'frdlen':40},
+    '40k_3V': {'frddly':34, 'freq':40000, 'volts':3.0, 'periods':3.0 , 'frdlen':39}
+    }
+
+
+
+
 # preferred tone power at resonator dbm
 tone_power_at_resonator_dbm = -85.0
 

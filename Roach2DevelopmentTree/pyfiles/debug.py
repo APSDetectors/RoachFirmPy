@@ -1,4 +1,5 @@
 import itertools
+from collections import OrderedDict
 
 '''
 
@@ -71,6 +72,65 @@ execfile('debug.py')
 
 '''
 
+
+def IVCurveAverageRawData(fname):
+
+    hdf = h5py.File(fname,'r+')
+    for chan in hdf['iqdata_raw'].keys():
+
+        alldata= {}
+        seg_phase=[]
+        vdata=[]
+
+
+        
+        #num events from file
+        numevts = len(hdf['iqdata_raw'][chan]['keystr_timestamp'])
+        #per voltage... 
+        vlist_ = hdf['iqdata_raw'][chan]['keystr_timestamp'][::100]
+        
+        #get ACTUAL unique voltages in the file. 
+        vlist = list(OrderedDict.fromkeys(vlist_).keys())
+        #actual num of voltages.
+        nvolts = len(vlist)
+        
+        #approx len of data pervioltate, 
+        datpvolts=numevts/nvolts
+        #when searching large hdf datasets, we decimate data by this to be sure we can find evetns with given voltage.
+        searchsize = datpvolts/2
+       
+        
+
+        start_volt_index=[0] * nvolts
+        last_index = 0
+        k=1
+        for v in vlist[1:]:
+            print v
+            segment = hdf['iqdata_raw'][chan]['keystr_timestamp'][last_index: (last_index + datpvolts + searchsize)]
+            next_index = where(segment==v)[0][0]
+            start_volt_index[k] = last_index + next_index
+            last_index = start_volt_index[k]
+            k = k+1
+
+        
+        ivcurve = [0.0]*nvolts
+        start_volt_index.append(numevts)
+        k=0
+        for v in vlist:
+            st = start_volt_index[k]
+            ed = start_volt_index[k+1]
+            segment_ = hdf['iqdata_raw'][chan]['keystr_flux_ramp_phase_unwrap'][st:ed]
+            segment = segment_[cal_ivstream_voltagestep_delay:]
+            ivcurve[k] = mean(segment)
+            k=k+1
+
+        hdf['iqdata_raw'][chan].create_dataset('vlist',data=vlist)
+        hdf['iqdata_raw'][chan].create_dataset('ivcurve',data=ivcurve)
+
+    hdf.flush()
+    hdf.close()
+
+            
 def sweepAtten():
     for aa in numpy.arange(0.0,31.0,0.5):
         fa.if_board.at.attenU6 = int(0.0-aa)

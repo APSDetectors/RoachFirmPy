@@ -41,6 +41,8 @@ execfile('mkidMeasure.py')
 execfile('sim928.py')
 
 execfile('agt33250A.py')
+execfile('tempread_zmq.py')
+
 execfile('roachEpics.py')
 
 #from fftAnalyzerR2 import *
@@ -62,14 +64,20 @@ execfile('roachEpics.py')
 
 
 #new- seems to work well
-
-
+global tempread
+tempread = None
 
 
 def shutdownEverything():
-
+    try:
+        form.message_timer.stop() 
+    except: pass
     
-  
+    try:
+        tempread.stopDeamon()
+        tempread.disconnect()
+    except: pass
+ 
     roachlock.acquire();
    
     
@@ -102,7 +110,11 @@ def setupEverything(ip = '192.168.0.70'):
     global sim
     global hdf
     global roachlock
-    
+    global tempread
+
+    tempread = tempread_zmq(isconn=True)
+    tempread.startDeamon()
+ 
      
     roachlock.acquire();
    
@@ -299,6 +311,13 @@ class AppForm(QMainWindow):
     def readMessageQueue(self):
     
         self.timer_count = self.timer_count + 1
+        try:
+            self.label_temperature.setText('CryoTemp=%sK'%tempread.temperature)
+            fa.cryo_temperature = tempread.temperature
+        except:
+            pass
+
+
         try:
             while True:
 
@@ -587,7 +606,19 @@ class AppForm(QMainWindow):
         fa.temp_biassource_index=ci
         thread.start_new_thread(runSetupBiasSource,())
         
-                
+    def setFluxRampDemodCalSettings(self,ci):
+        k =flux_ramp_cal_settings.keys()[ci]
+        sets = flux_ramp_cal_settings[k] 
+    #'10k_3V': {'frddly':111, 'freq':10000, 'volts':3.0, 'periods':3.0 , 'frdlen':153},
+           
+        self.textbox_flxRmpPrd.setText('%s'%(sets['periods']))
+        self.textbox_rampvolts.setText('%s'%(sets['volts']))       
+        self.textbox_rampfreq.setText('%s'%(sets['freq']))       
+        self.textbox_FRDLen.setText('%s'%(sets['frdlen']))       
+        self.textbox_FRDDly.setText('%s'%(sets['frddly']))       
+        
+
+
   
     def setRampGenerator(self,ci):
         print 'setRampGenerator'
@@ -900,7 +931,8 @@ class AppForm(QMainWindow):
             else:
                 print "Cant add resonance on this plot"
 
-        if  self.selectwave_onclick and self.plottype ==  12 and event.button==2:
+        #if  self.selectwave_onclick and self.plottype ==  12 and event.button==2:
+        if False: 
             if self.selectwave_counter%3==0:
                 print "select 1st point %f"%event.xdata
                 self.selectwave_points[0] = event.xdata
@@ -916,7 +948,8 @@ class AppForm(QMainWindow):
 
             self.selectwave_counter=self.selectwave_counter+1 
 
-        if self.selectwave_points[0]>=0 and self.selectwave_points[1]>=0:
+        #if self.selectwave_points[0]>=0 and self.selectwave_points[1]>=0:
+        if False:
             k = fa.iqdata_raw.keys()[0]
             evtlen = fa.iqdata_raw[k]['event_len'][0]
  
@@ -1283,6 +1316,20 @@ class AppForm(QMainWindow):
     
 
    
+    
+        
+    def setRampGenOn(self,state):
+        
+        roachlock.acquire()
+        if state==2: 
+            fa.is_ramp_generator_on=1
+        else:
+            fa.is_ramp_generator_on=0
+
+        if agt!=None:
+            agt.setOutOn(fa.is_ramp_generator_on)
+
+        roachlock.release()   
     
     
     
@@ -1816,9 +1863,12 @@ class AppForm(QMainWindow):
         cind = 0
         for k in fa.iqdata_raw.keys():
             color = colorlist[ cind%len(colorlist) ]
-
-            frd = fa.iqdata_raw[k]['flux_ramp_phase_unwrap'][::-1]  
-            mv =   fa.iqdata_raw[k]['timestamp'][::-1]   /1000.0
+            if 'ivcurve' in fa.iqdata_raw[k].keys():
+                frd = fa.iqdata_raw[k]['ivcurve'][::-1]  
+                mv =   fa.iqdata_raw[k]['vlist'][::-1]   /1000.0
+            else:
+                frd = fa.iqdata_raw[k]['flux_ramp_phase_unwrap'][::-1]  
+                mv =   fa.iqdata_raw[k]['timestamp'][::-1]   /1000.0
             self.plot(mv,frd,colorlist[cind])
             cind = cind+1
     
@@ -2462,6 +2512,7 @@ class AppForm(QMainWindow):
         self.textbox_Dly.textChanged.connect(self.updateXMLineDelay)
         
  
+        self.label_temperature = QLabel('CryoTemp = K')
 
 
 
@@ -2502,30 +2553,6 @@ class AppForm(QMainWindow):
         self.checkbox_AddMark=QCheckBox('Mark')
         self.checkbox_AddMark.setMaximumWidth(200)
         self.checkbox_AddMark.stateChanged.connect(self.addMark)
-
-
-
-
-   
-
-
-    #      
-        # hdf5 filename for dumping IQ data.
-        #
-    
-        # Load thresholds.
-        #self.button_loadThresholds = QPushButton("(4)load thresholds")
-        #self.button_loadThresholds.setMaximumWidth(170)
-        #self.connect(self.button_loadThresholds, SIGNAL('clicked()'), self.loadThresholds)
-
-      
-
-
-
-
-        
-        
-        
 
         self.label_resPlots = QLabel('ResNum')
         self.label_resPlots.setMaximumWidth(30)
@@ -2654,8 +2681,6 @@ class AppForm(QMainWindow):
 
      
         
-    
-        
     #####################################################################################################
 
 
@@ -2709,12 +2734,20 @@ class AppForm(QMainWindow):
         
         self.checkbox_rampon= QCheckBox("RampOn")
         self.checkbox_rampon.setMaximumWidth(170)
-           
+        self.checkbox_rampon.stateChanged.connect(self.setRampGenOn)
+
         label_FRDDly = QLabel('FRD Dly')
         label_FRDDly.setAlignment(Qt.AlignRight)
         self.textbox_FRDDly = QLineEdit('4')
         self.textbox_FRDDly.setMaximumWidth(50)
        
+         #self.combobox_syncsource=QComboBox()
+        self.combobox_frdcalsettings = QComboBox()
+        for kk in flux_ramp_cal_settings.keys():
+            self.combobox_frdcalsettings.addItem(kk)   
+       
+        self.combobox_frdcalsettings.currentIndexChanged.connect(self.setFluxRampDemodCalSettings)
+
         
     #run stream
         #self.textbox_flxRmpPrd.returnPressed.connect(self.setFluxRampDemod)
@@ -2790,7 +2823,7 @@ class AppForm(QMainWindow):
 
    
         # lut amp
-        self.textbox_streamsec = QLineEdit('1')
+        self.textbox_streamsec = QLineEdit('10')
         self.textbox_streamsec.setMaximumWidth(50)
         label_streamsec = QLabel('SecondsStream')
    
@@ -2871,6 +2904,7 @@ class AppForm(QMainWindow):
         gbox2.addLayout(hbox20)
         
         hbox21 = QHBoxLayout()
+        hbox21.addWidget(self.label_temperature)
         hbox21.addWidget(self.label_ResPwrOut)
         hbox21.addWidget(self.spinbox_ResPwrOut)
         hbox21.addWidget(self.button_gui_stop)
@@ -3000,6 +3034,7 @@ class AppForm(QMainWindow):
         t5_hbox03 = QHBoxLayout()
         
         
+        t5_hbox03.addWidget(self.combobox_frdcalsettings)
         t5_hbox03.addWidget(label_flxRmpPrd)
         t5_hbox03.addWidget(self.textbox_flxRmpPrd)
         
@@ -3204,7 +3239,7 @@ def runCaptureNoise():
         fa.setTESBias(fa.temp_is_tes_on,fa.temp_tesvolts)       
         fa.progTranslatorsFromIQCircles(measure.iqcenterdata)              
         fa.setRampSyncSource(fa.temp_open_or_closedloop)
-        fa.chanzer.setSyncDelay(fa.syncdelay_temp)
+        fa.chanzer.setSyncDelaySamples(fa.syncdelay_temp)
         fa.chanzer.setFluxRampDemod(
             fa.temp_frd[0],
             fa.temp_frd[1],
@@ -3279,9 +3314,11 @@ def runSweepTesIV():
             evtsize2=fa.frdlen_temp,
             syncdelay=fa.syncdelay_temp);
             
-        print 'Done IV Sweep'
+        print 'Averaging IV Curves'
        
         
+        measure.IVCurveAverageRawData(fa.iv_fnametemp)
+        print "Done IV"
         #form.signalMessageText("Not Running")
         message_queue.put({'status_string':'Not Running'})
     except:
@@ -3335,8 +3372,13 @@ def runSweepProgTranslators():
            
     
     try:
-    
-    
+        #turn off ramp generator output    
+        if agt!=None:
+            agt.setOutOn(0)
+ 
+        #turn off volt gen output    
+        if sim!=None:
+            sim.setOutOn(0)
     
         #form.signalMessageText("IQ Sweep Running")
         print 'Sweep/Prog Translators on thread'
