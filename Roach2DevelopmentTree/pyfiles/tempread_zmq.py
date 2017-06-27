@@ -29,39 +29,32 @@ class tempread_zmq:
          self.socket.setsockopt(zmq.SUBSCRIBE, "")
 
     def getTemp(self):
-        if not isconn:
+        if not self.isconn:
             self.connect()
 
-        self.temperature = socket.recv()            
+        self.temperature = self.socket.recv()            
 
-        if not isconn:
+        if not self.isconn:
             self.disconnect()
         
         return(self.temperature)
 
 
     def daemon(self):
+        print "Started temp deamon"
         while self.isrunning:
             self.getTemp()
+        print "stopped temp deamon"
 
-    def startDaemon(self):
+
+    def startDeamon(self):
         self.isrunning = True
+         
+        thread.start_new_thread(self.daemon,())
+
+    def stopDeamon(self):
+        self.isrunning = False
+
         
-        
 
 
-
-
- 
-
- 
-
-while(1):
-
-    message = socket.recv()
-
-    print "ADR 50mK temp: %s K" % message
-
-    time.sleep(1)
-
- 
