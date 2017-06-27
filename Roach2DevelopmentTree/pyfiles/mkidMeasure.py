@@ -23,6 +23,7 @@ measure.powerSweep()
 
 """
 
+from collections import OrderedDict
 
 execfile('katcpNc.py')
 
@@ -838,10 +839,10 @@ class mkidMeasure:
             
 
 
-    def IVCurveAverageRawData(self,fname):
+    def IVCurveAverageRawData(self,fname,is_iv_to_fa=False):
 
         hdf = h5py.File(fname,'r+')
-        try:
+        if True:
             for chan in hdf['iqdata_raw'].keys():
 
                 alldata= {}
@@ -853,7 +854,7 @@ class mkidMeasure:
                 #num events from file
                 numevts = len(hdf['iqdata_raw'][chan]['keystr_timestamp'])
                 #per voltage... 
-                vlist_ = hdf['iqdata_raw'][chan]['keystr_timestamp'][::100]
+                vlist_ = hdf['iqdata_raw'][chan]['keystr_timestamp'][::10]
                 
                 #get ACTUAL unique voltages in the file. 
                 vlist = list(OrderedDict.fromkeys(vlist_).keys())
@@ -892,7 +893,15 @@ class mkidMeasure:
 
                 hdf['iqdata_raw'][chan].create_dataset('vlist',data=vlist)
                 hdf['iqdata_raw'][chan].create_dataset('ivcurve',data=ivcurve)
-        except:
+                if is_iv_to_fa:
+                    try:
+                        chanint = int(chan.split('_')[1])
+                        fa.iqdata_raw[chanint]['vlist']=numpy.array(vlist)
+                        fa.iqdata_raw[chanint]['ivcurve']=numpy.array(ivcurve)
+                    except: print "Problem putting ivcurve in fa"
+
+ 
+        else:
             print "Problem w/ doing iv curve"
 
         hdf.flush()

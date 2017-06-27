@@ -1020,7 +1020,7 @@ class AppForm(QMainWindow):
         fname = str(self.textbox_ivfilename.text())
         
         
-          
+        self.combobox_str_frd.setCurrentIndex(2)
         (frd,frdci) =self.flxRampComboDecode()
           
         numprd = float(self.textbox_flxRmpPrd.text())
@@ -2747,7 +2747,7 @@ class AppForm(QMainWindow):
             self.combobox_frdcalsettings.addItem(kk)   
        
         self.combobox_frdcalsettings.currentIndexChanged.connect(self.setFluxRampDemodCalSettings)
-
+        
         
     #run stream
         #self.textbox_flxRmpPrd.returnPressed.connect(self.setFluxRampDemod)
@@ -3165,7 +3165,14 @@ class AppForm(QMainWindow):
         
         self.main_frame.setLayout(vbox)
         self.setCentralWidget(self.main_frame)
-  
+ 
+
+
+    #
+    # call some callbacks so widgets match the settings
+        self.setFluxRampDemodCalSettings(0)
+
+ 
     def create_status_bar(self):
         self.status_text = QLabel("Roach is Shutdown")
         self.statusBar().addWidget(self.status_text, 1)
@@ -3317,10 +3324,10 @@ def runSweepTesIV():
         print 'Averaging IV Curves'
        
         
-        measure.IVCurveAverageRawData(fa.iv_fnametemp)
+        measure.IVCurveAverageRawData(fa.iv_fnametemp,is_iv_to_fa=True)
         print "Done IV"
         #form.signalMessageText("Not Running")
-        message_queue.put({'status_string':'Not Running'})
+        message_queue.put({'status_string':'Done IV, Not Running'})
     except:
         #form.signalMessageText("Not Running- Detected Error in IV Sweep") 
         message_queue.put({'status_string':'Not Running- Detected Error in IV Sweep'})
