@@ -260,7 +260,7 @@ plot(allphsin)
     
     flr=outdata2(k);k=k+1;
     
-    flrf = double(flr)/(2^13);
+    flrf = double(flr)/(2^21);
     if flrf>=4.0
         flrf = flrf - 8.0;
     end
