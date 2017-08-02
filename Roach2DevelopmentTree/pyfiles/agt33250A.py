@@ -23,6 +23,14 @@ agt.getVolts()
 agt.close()
 
 
+In /etc/rc.local add these lines. it is supposed to make the two devices available to everyone
+#added by tim madden so roach can access the serial ports on the linux box
+chmod 777 /dev/ttyS0
+chmod 777 /dev/ttyUSB0
+
+
+
+
 
 
 """

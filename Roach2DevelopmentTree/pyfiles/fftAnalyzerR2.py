@@ -323,14 +323,14 @@ fa = fftAnalyzerR2(
     
 
 
-fa.ifSetup(rfloop=1, 
+fa.ifSetup(rfloop=0, 
         bbloop=0,
-        u28=5,
-        u6=5,
+        u28=0,
+        u6=0,
         u7=5,
         lo_src=0,
         lo_internal=0,
-        lofreq = 3500e6,
+        lofreq = 5100e6,
         lo_on = 1,
         clk_int=-1)
 
