@@ -69,6 +69,7 @@ ckeck_halffull=1;   %check fifo half full flag, or whatever flag is conn.
 
 inc_ram_addr=2;     %inc fifo read addr, that is, proceed to tryu next channel
 wait_emptyflag=3;   %wait for empty flag in fifo.
+wait_emptyflag2=11;   %wait for empty flag in fifo.
 
 aaaa=4;             %write aaaa to the header of output data.
 wr_addr=5;          %write address or channel num to out put data
@@ -239,11 +240,27 @@ else
         fifo_rden=false;
         wr_coef_big_fifo=false; 
         datapath_enable = false;
+        state = wait_emptyflag2;
+        write_data_sel=0;
+        done_event=false;
+        start_event=false;
+        read_time_stamp=false;
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5  
+    %  waut state, it takes an extra clock for empty flag to be valid.
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    case wait_emptyflag2
+        fifo_rden=false;
+        wr_coef_big_fifo=false;
+        datapath_enable = false;
         state = ckeck_halffull;
         write_data_sel=0;
         done_event=false;
         start_event=false;
         read_time_stamp=false;
+
+
 
 
 
