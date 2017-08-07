@@ -11,6 +11,12 @@
 
 #include "dataqueue.h"
 #include "roachscope.h"
+
+//define if we have newer fw in roach that gives 24 bit FRD data.
+
+#define FW_FRD_24BIT 1
+
+
 class roachParser : public QObject
 {
     Q_OBJECT
@@ -205,6 +211,22 @@ public:
         ph_nbits=16,
         ph_nfrac_bits=13
     };
+
+#ifdef FW_FRD_24BIT
+    //datatype for mag/ph data
+    enum {
+        frd_sign=1,
+        frd_nbits=24,
+        frd_nfrac_bits=22
+    };
+#else
+    //datatype for mag/ph data
+    enum {
+        frd_sign=1,
+        frd_nbits=16,
+        frd_nfrac_bits=13
+    };
+#endif
 
     enum
     {max_list_length = 10000,

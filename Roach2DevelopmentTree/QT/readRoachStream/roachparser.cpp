@@ -511,9 +511,9 @@ int dbgql;
                    convToFloat((int*)&flux_ramp_data,
                                1,
                                &flux_ramp_fl,
-                               ph_nfrac_bits,
-                               ph_nbits,
-                               ph_sign);
+                               frd_nfrac_bits,
+                               frd_nbits,
+                               frd_sign);
 
 
                     flux_ramp_fl = flux_ramp_fl * 3.141592653589793;
