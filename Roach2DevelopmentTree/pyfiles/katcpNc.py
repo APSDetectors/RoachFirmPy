@@ -8,6 +8,16 @@ Roach box       ...70
 Anritsu         ...68
 FASPAX      ...41 
 
+
+use rootsh to run
+nm-connection-editor
+
+This will allow set up of net int3erface cards.
+eth4 is 164 network
+eth5 should be 192.168.0.203, 255.255.255.0, 0.0.0.0 this is 1GB to roach box local net
+eth0 is the 10GB enet you use. set to 192.168.1.102 
+
+
 docs at
 https://github.com/ska-sa/katcp_devel/tree/master/tcpborphserver3
 

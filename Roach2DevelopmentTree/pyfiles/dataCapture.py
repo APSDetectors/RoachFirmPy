@@ -31,7 +31,7 @@ except:
 
 
 ten_G_ipaddr = '192.168.1.102'
-ten_G_device = 'enp5s0f0'
+ten_G_device = 'eth0'
 
 
 

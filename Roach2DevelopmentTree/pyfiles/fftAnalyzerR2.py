@@ -902,16 +902,15 @@ class fftAnalyzerR2:
         
             self.powerupFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/if_board_setup_2015_Aug_20_1511.bof'
 
-            #this one used for most of data so far-- mar 2016
          
-            #fw for testing flux ramp demod on roach
-            #self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Feb_14_1518.bof'
-
+            #good working FW for 2017- 16 bit frd
             self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Jun_21_1708.bof'
+            #new 24bit FRD
+            #self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Aug_04_1511.bof'
 
             self.temppath = ROACH_DIR+'/temp/'
 
-            self.anritsu_power = -5
+            self.anritsu_power = -10
             
             self.is_datacap= is_datacap_
             self.is_anritsu_lo = is_anritsu_lo_

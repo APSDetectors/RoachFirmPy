@@ -13,8 +13,8 @@
 #include "roachscope.h"
 
 //define if we have newer fw in roach that gives 24 bit FRD data.
-
-#define FW_FRD_24BIT 1
+// if not defined there is 16 bit frd data for older and more tested FW.
+//#define FW_FRD_24BIT 1
 
 
 class roachParser : public QObject

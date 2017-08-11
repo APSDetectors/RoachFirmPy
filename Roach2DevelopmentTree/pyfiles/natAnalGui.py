@@ -149,6 +149,14 @@ def setupEverything(ip = '192.168.0.70'):
         na = fa
         fit=fitters();
         measure = mkidMeasure()
+    
+        form.checkbox_RFOutEn.setCheckState(Qt.Unchecked)
+        form.checkbox_extClk.setCheckState(Qt.Checked)
+
+        form.rfOutEn(Qt.Unchecked)
+
+        form.extClk(Qt.Checked)
+
         fa.sourceCapture([10e6],20000)
         time.sleep(.5)
         fa.stopCapture()
@@ -170,12 +178,9 @@ def setupEverything(ip = '192.168.0.70'):
 
 is_epics_running = False
 
-
+#this is the IP tat the roach board has on its 1GB enet interface
 temp_ip='192.168.0.70'
 
-fwnames=[
-'networkanalyzer_2014_Jun_25_1330.bof' , 
- 'fftanalyzeri_2015_Feb_18_1436.bof']
 
 
 class AppForm(QMainWindow):
@@ -1109,6 +1114,7 @@ class AppForm(QMainWindow):
 
     def extClk(self,state):
     
+        print 'settign LO Source:  form.extClk %i'%(state)
         roachlock.acquire();
         if state==2:
             fa.if_board.rf.lo_internal=0
@@ -1122,7 +1128,8 @@ class AppForm(QMainWindow):
 
 
     def rfOutEn(self,state):
-    
+        print 'setting Int LO Osc: form.rfOutEn %i'%(state)
+ 
         roachlock.acquire()
         if state==2:
             fa.if_board.LO.rfouten=1
@@ -2252,11 +2259,13 @@ class AppForm(QMainWindow):
         self.checkbox_RFOutEn=QCheckBox('RFOutEn')
         self.checkbox_RFOutEn.setMaximumWidth(200)
         self.checkbox_RFOutEn.stateChanged.connect(self.rfOutEn)
+    
+
+
 
         self.checkbox_extClk=QCheckBox('ExtLO') #Tom renamed. I believe this is correct and not actually using the extClk.
         self.checkbox_extClk.setMaximumWidth(200)
         self.checkbox_extClk.stateChanged.connect(self.extClk)
-
 
         #
         # Transmission line delay
@@ -2904,6 +2913,9 @@ class AppForm(QMainWindow):
     #
     # call some callbacks so widgets match the settings
         self.setFluxRampDemodCalSettings(0)
+
+
+
 
  
     def create_status_bar(self):

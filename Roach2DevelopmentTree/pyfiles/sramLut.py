@@ -138,8 +138,11 @@ class sramLut:
         
         #do we use FM?
         self.is_mod_freq = False    
-        self.mod_amp= 0.1
-        self.mod_periods=4
+        # amplitude of phase modulation in radians    
+        self.mod_amp=0.1 
+        #period of modultion in samples.
+        self.mod_period=12000.0
+        #use a integration time of 190 samples, 4.0 periods
     
     
     def plotLutIQF(self):
@@ -287,7 +290,7 @@ class sramLut:
         #calc where pulse will be in the wave
 
         modfreq = self.mod_amp*numpy.sin(\
-                (self.mod_periods*2*pi*numpy.arange(len(phaseterm))) / (len(phaseterm)) )
+                (2*pi*numpy.arange(len(phaseterm))) / (self.mod_period ) )
         
         phaseterm = phaseterm + modfreq
         return(phaseterm)
