@@ -902,11 +902,15 @@ class fftAnalyzerR2:
         
             self.powerupFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/if_board_setup_2015_Aug_20_1511.bof'
 
-         
+
+ 
             #good working FW for 2017- 16 bit frd
-            self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Jun_21_1708.bof'
+            #self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Jun_21_1708.bof'
             #new 24bit FRD
             #self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Aug_04_1511.bof'
+            #new fifo 64, fifofsmph4, 16bit frd
+            self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Aug_14_1653.bof'
+            
 
             self.temppath = ROACH_DIR+'/temp/'
 
@@ -1243,6 +1247,7 @@ class fftAnalyzerR2:
         
         self.rfft.stopFFTs()
 
+        #clear any evetns or previous data stored in queues and lists in the C++ program testEnet, the data capture prog.
         if self.capture != None:
             self.capture.clearEvents()
             self.capture.capture(True)
@@ -1274,7 +1279,7 @@ class fftAnalyzerR2:
 
             
       
-       
+       #map which challens to which bins etc.. in the C++ program, give map information from py to C++
         if self.capture != None:
             self.capture.mapChannels(self.rfft)
             if stream_fname != None:
@@ -1284,19 +1289,21 @@ class fftAnalyzerR2:
             
             
        
-    
+    #time between ffts in 128MHz clock tichs. 128 mean 1MHz FFT rate
         self.rfft.fftsynctime=128
         self.rfft.roach_fft_shift=self.fft_shift
                 
-            
+            #take numffts and stop
         self.rfft.numFFTs(numffts)
         self.rfft.progRoach()
             
 
-        
+        #flush all fifos in forach.  need 3commands....
+        #flushes event fifos, severl of them in frd etc. causes fsm for fifo64 to flush, but that mught be broken... 
         self.chanzer.flushFifos()
-            
+        #clear full debug counters that tell us if we had fifo overflows         
         self.chanzer.clearFull()
+        #rewset fifo64s, this clears the fifo64s
         self.chanzer.rstFifos()
 
         self.chanzer.writeRaw(1)
