@@ -905,11 +905,11 @@ class fftAnalyzerR2:
 
  
             #good working FW for 2017- 16 bit frd
-            #self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Jun_21_1708.bof'
+            self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Jun_21_1708.bof'
             #new 24bit FRD
             #self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Aug_04_1511.bof'
             #new fifo 64, fifofsmph4, 16bit frd
-            self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Aug_14_1653.bof'
+            #self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Aug_15_1158.bof'
             
 
             self.temppath = ROACH_DIR+'/temp/'
