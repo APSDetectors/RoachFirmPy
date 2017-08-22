@@ -853,7 +853,7 @@ def loadAnalyzer(filename):
     
 
 
-    
+mainFW = 'tesd_2017_Aug_16_1733.bof'    
 
 class fftAnalyzerR2:
 
@@ -905,16 +905,16 @@ class fftAnalyzerR2:
 
  
             #good working FW for 2017- 16 bit frd
-            self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Jun_21_1708.bof'
+            #self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Jun_21_1708.bof'
             #new 24bit FRD
             #self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Aug_04_1511.bof'
-            #new fifo 64, fifofsmph4, 16bit frd
-            self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/tesd_2017_Aug_16_1507.bof'
+            #old fifo 64, fifofsmph3, 16bit frd, reads out at 3/4 full, improvement to fifofsm3 for sync mode
+            self.mainFW = ROACH_DIR+'/Roach2DevelopmentTree/bestBitFiles/'+mainFW
             
 
             self.temppath = ROACH_DIR+'/temp/'
 
-            self.anritsu_power = -10
+            self.anritsu_power = -5
             
             self.is_datacap= is_datacap_
             self.is_anritsu_lo = is_anritsu_lo_
@@ -940,8 +940,8 @@ class fftAnalyzerR2:
             #!!if self.is_anritsu_lo:
             self.an = anritsu(self.is_anritsu_lo)
             self.an.setPower(self.anritsu_power)
-            self.an.setOnOff(1)
-            self.setCarrier(5757e6)
+            self.an.setOnOff(0)
+            self.setCarrier(5100e6)
 
 
             self.is_digital_loopback=0
@@ -1136,7 +1136,7 @@ class fftAnalyzerR2:
         u7=3,
         lo_src=0,
         lo_internal=-1,
-        lofreq = 3500e6,
+        lofreq = 5100e6,
         lo_on = 1,
         clk_int=-1):
 

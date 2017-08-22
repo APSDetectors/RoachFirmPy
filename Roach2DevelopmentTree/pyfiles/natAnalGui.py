@@ -2115,7 +2115,7 @@ class AppForm(QMainWindow):
     #
         # Frequency entries for sweeping net analuyzer
         #
-        self.textbox_LOFreq = QLineEdit('3500e6')
+        self.textbox_LOFreq = QLineEdit('5100e6')
         self.textbox_LOFreq.setMaximumWidth(100)
         self.textbox_LOFreq.setEnabled(False)
        
@@ -2150,7 +2150,7 @@ class AppForm(QMainWindow):
             #
         self.spinbox_CenterFreq = QSpinBox()
         self.spinbox_CenterFreq.setRange(2200,8000)
-        self.spinbox_CenterFreq.setValue(3500)
+        self.spinbox_CenterFreq.setValue(5100)
         self.spinbox_CenterFreq.setSingleStep(50)
         self.spinbox_CenterFreq.setMaximumWidth(100)
         #self.spinbox_CenterFreq.valueChanged.connect(self.setCenterSpanFreq)

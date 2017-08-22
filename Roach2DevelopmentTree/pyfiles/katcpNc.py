@@ -1,6 +1,31 @@
 
 """
 
+This file is an APS-written implementation of the katcp protocol used by ROACH. ROACH has a katcp server on its power pc that makes a tcp connection between ROACH and linux box. Katcp is a mixed text and binary format for transmitting commands and data between roach and linux. All registers and control are done w/ katcp.  Corr is the casper implementation. We implemented our own because corr at the time did nto support iuploading the fpga programming files. It now does, but we still use katcp. It is all python, and easy to import. 
+
+The APS version of katcp uses netcat (linux nc command) as a network program that opens the TCP connection. Pthon sends and receives data to nc over named pipes on the file system. The pipes are hard-coded into katcpNc.py with this code:
+   def startNc(self):
+
+Netcat or nc is started as a separate process taking to the named pipes to get to python. Two linux sleep 99999 commands connect to write to the pipes to make sure pipes are always left open and do not close. This alloes python or nc to start and stop w.out pipes closing.
+
+Example code using katcpNC
+execfile("katcpNc.py")
+roach2=katcpNc()
+roach2.startNc()
+
+roach2.fpgaStatus()  #see fpga status
+roach2.help()
+#to send fpga prog file
+roach2.sendBof("/home/oxygen26/TMADDEN/ROACH2/projcts/bestBitFiles/tengbtest_2015_Mar_31_1055.bof")
+#list and read all registers on roach.
+roach2.listReg()
+roach2.readAllReg()
+roach2.closeFiles() #close connection to roach
+
+Setting up the 10Gb ethernet on roach box is done w/ katcp. The mac address and ip address is set.
+
+
+
 
 
 Roach linux: 192.168.0.203
@@ -301,7 +326,7 @@ class katcpNc:
 	
 	
 
-
+    #reboot roach box
     def restart(self):
 
 
@@ -319,7 +344,7 @@ class katcpNc:
 
 
 
-
+    #turn roach box off
     def shutdown(self):
 
 
@@ -359,7 +384,7 @@ class katcpNc:
 	
 	
 	
-	
+	# list all sw resigters in roach FW
     def listReg(self):
     
 	
@@ -381,7 +406,7 @@ class katcpNc:
         self.reglist = reglist
         return(reglist)
 
-
+    #read all sw registers in roach FW
     def readAllReg(self,is_print=True):
 
         reglist = self.listReg()
@@ -394,7 +419,7 @@ class katcpNc:
 
         return(regvals)
 
-
+    #send new foga file
     def sendBof(self,filename):
     
     
@@ -427,6 +452,7 @@ class katcpNc:
 	line=self.In_pipe.readline()
 	
 	
+    # write sw register as 32 bit integer.
     def write_int(self,regname, data,offset=0):
     
     	
@@ -441,6 +467,7 @@ class katcpNc:
 	#print line
 	
 	
+    #read sw register as 32 bit int
     def read_int(self,regname,offset=0):
     	
         if regname not in self.reglist:
@@ -459,7 +486,7 @@ class katcpNc:
 	
 	
 
-
+    #general write command, data is binary, regname is string.
     def write(self,regname,data,offset=0):
         #data is binary string, shoudl line up as ints
 
@@ -484,7 +511,7 @@ class katcpNc:
 
 
 
-
+    #repeated writs to large xata xfer
     def big_write(self,regname,data):
         #data is binary string, shoudl line up as ints
 
@@ -505,7 +532,7 @@ class katcpNc:
     	    self.write(regname,data[offs:(offs+partialb)],offs)
 	
 	
-
+    #general binary read to string named sw register
     def read(self,regname,count,offset = 0):
 
 
@@ -527,7 +554,7 @@ class katcpNc:
 
         return(data)
 
-	
+    #info on 10GN ethernet	
     def infoEth(self):
     
     	self.Out_pipe.write( '?tap-info\n')
@@ -544,7 +571,7 @@ class katcpNc:
 	    
 	print line
     	
-	
+	#stop 10GB enet on roach
     def stopEth(self,device):
     
     	self.Out_pipe.write('?tap-stop %s\n'%(device + '_dev'))
@@ -561,7 +588,7 @@ class katcpNc:
 	print line
 	
 
-
+    #rev bits in a array of data workds
     def reverseBits(self,data):
         data2=[]
         for d in data:
@@ -569,6 +596,7 @@ class katcpNc:
             data2.append(d2)
         return(data2)
 	
+    #setup 10GB enet
     def setupEth(self,device,ip,port,mac):
     
     
@@ -607,6 +635,7 @@ class katcpNc:
 	print line
 	
 	
+#docs on borph server from caspter that shows the katcp protocol
 """
 This is tcpborphserver, version 3. A server designed to control
 roach2s. It speaks katcp over port 7147. You should be able to
