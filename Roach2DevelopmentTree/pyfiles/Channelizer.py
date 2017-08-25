@@ -54,14 +54,18 @@ class Channelizer:
         self.read_fifo_size = 100
         self.sync_delay = 128*55
 
-        self.fullOutA=0
-        self.fullOutB=0;
-        self.fulleventA = 0
-        self.fulleventB = 0
-        self.fullmultiA = 0
-        self.fullmultiB = 0
-        self.fullmultiC = 0
-        self.fullmultiD = 0
+        self.FRD1_fullfrd  = 0
+        self.FRD1_flrampfsmst  = 0
+        self.FRD1_fulltr  = 0
+        self.SEFull  = 0
+        self.SEFull1  = 0
+        self.chanFifoFull2  = 0
+        self.chanFifoFull3  = 0
+        self.datacombine_full  = 0
+        self.gbfull1  = 0
+        self.gbfull2  = 0
+        
+
        
 
         self.fwnames={'last_read_chan':'lastReadChanA','settings':'fifoRdSettingsA_reg',
@@ -84,25 +88,35 @@ class Channelizer:
 
     def checkFull(self,is_print = True):
     
+       
+
+
+
+        self.FRD1_fullfrd  = self.roach.read_int('FRD1_fullfrd')
+        self.FRD1_flrampfsmst  = self.roach.read_int('FRD1_flrampfsmst')
+        self.FRD1_fulltr  = self.roach.read_int('FRD1_fulltr')
+        self.SEFull  = self.roach.read_int('SEFull')
+        self.SEFull1  = self.roach.read_int('SEFull1')
+        self.chanFifoFull2  = self.roach.read_int('chanFifoFull2')
+        self.chanFifoFull3  = self.roach.read_int('chanFifoFull3')
+        self.datacombine_full  = self.roach.read_int('datacombine_full')
+        self.gbfull1  = self.roach.read_int('gbfull1')
+        self.gbfull2  = self.roach.read_int('gbfull2')
         
-        self.fullOutA   =self.roach.read_int('fullOutA')
-        self.fullOutB   =self.roach.read_int('fullOutB')
-        self.fulleventA =self.roach.read_int('fulleventA')
-        self.fulleventB =self.roach.read_int('fulleventB')
-        self.fullmultiA =self.roach.read_int('fullmultiA')
-        self.fullmultiB =self.roach.read_int('fullmultiB')
-        self.fullmultiC =self.roach.read_int('fullmultiC')
-        self.fullmultiD =self.roach.read_int('fullmultiD')
+
+ 
   
         if is_print:
-            print ' %s  = %d'%('fullOutA  ' , self.fullOutA  )
-            print ' %s =  %d'%('fullOutB  ' , self.fullOutB  )
-            print ' %s  = %d'%('fulleventA' , self.fulleventA)
-            print ' %s  = %d'%('fulleventB' , self.fulleventB)
-            print ' %s  = %d'%('fullmultiA' , self.fullmultiA)
-            print ' %s  = %d'%('fullmultiB' , self.fullmultiB)
-            print ' %s  = %d'%('fullmultiC' , self.fullmultiC)
-            print ' %s  = %d'%('fullmultiD' , self.fullmultiD)
+            print ' %s  = %d'%('FRD1_fullfrd' , self.FRD1_fullfrd)
+            print ' %s  = %d'%('FRD1_flrampfsmst' , self.FRD1_flrampfsmst)
+            print ' %s  = %d'%('FRD1_fulltr' , self.FRD1_fulltr)
+            print ' %s  = %d'%('SEFull' , self.SEFull)
+            print ' %s  = %d'%('SEFull1' , self.SEFull1)
+            print ' %s  = %d'%('chanFifoFull2' , self.chanFifoFull2)
+            print ' %s  = %d'%('chanFifoFull3' , self.chanFifoFull3)
+            print ' %s  = %d'%('datacombine_full' , self.datacombine_full)
+            print ' %s  = %d'%('gbfull1' , self.gbfull1)
+            print ' %s  = %d'%('gbfull2' , self.gbfull2)
      
 
 #####################################################################################################
