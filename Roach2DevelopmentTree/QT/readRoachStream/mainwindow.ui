@@ -167,7 +167,7 @@
     <property name="geometry">
      <rect>
       <x>340</x>
-      <y>70</y>
+      <y>50</y>
       <width>67</width>
       <height>17</height>
      </rect>
@@ -179,8 +179,8 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>510</x>
-      <y>70</y>
+      <x>500</x>
+      <y>50</y>
       <width>67</width>
       <height>17</height>
      </rect>
@@ -193,9 +193,9 @@
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>90</y>
+      <y>70</y>
       <width>131</width>
-      <height>361</height>
+      <height>441</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -212,9 +212,9 @@
     <property name="geometry">
      <rect>
       <x>480</x>
-      <y>90</y>
+      <y>70</y>
       <width>131</width>
-      <height>361</height>
+      <height>441</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -250,7 +250,7 @@
     <property name="geometry">
      <rect>
       <x>340</x>
-      <y>510</y>
+      <y>560</y>
       <width>93</width>
       <height>28</height>
      </rect>
@@ -263,7 +263,7 @@
     <property name="geometry">
      <rect>
       <x>470</x>
-      <y>510</y>
+      <y>560</y>
       <width>131</width>
       <height>28</height>
      </rect>
@@ -275,7 +275,7 @@
    <widget class="QCheckBox" name="checkBox_readpipe">
     <property name="geometry">
      <rect>
-      <x>420</x>
+      <x>470</x>
       <y>20</y>
       <width>131</width>
       <height>23</height>
@@ -288,7 +288,7 @@
    <widget class="QLabel" name="label_builddate">
     <property name="geometry">
      <rect>
-      <x>290</x>
+      <x>270</x>
       <y>0</y>
       <width>291</width>
       <height>17</height>
@@ -341,7 +341,7 @@
     <property name="geometry">
      <rect>
       <x>350</x>
-      <y>480</y>
+      <y>530</y>
       <width>211</width>
       <height>23</height>
      </rect>

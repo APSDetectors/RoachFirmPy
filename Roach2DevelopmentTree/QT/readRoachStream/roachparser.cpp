@@ -34,6 +34,8 @@ roachParser::roachParser(dataQueue *data_source_, int chanoffs, QObject *parent)
     events = 0;
     phase_tracks=0;
 
+    number_events_channel=0;
+
     data_source = data_source_;
 
 
@@ -84,6 +86,13 @@ is_dump_input_dbg=false;
          pulse_thresh=1.0;
 
 
+         mean_num_evts=0.0;
+         std_num_evts=0.0;
+         maxmin_num_evts=0.0;
+         percentmaxmin_num_evts=0.0;
+
+
+            num_channels=0;
 }
 
 /**
@@ -248,6 +257,14 @@ void roachParser::clearEvents(void)
         delete phase_tracks;
         phase_tracks=0;
     }
+
+    if (number_events_channel!=0)
+    {
+        number_events_channel->clear();
+        delete number_events_channel;
+        number_events_channel=0;
+    }
+
     searches=0;
     //carryover=0;
     evtcnt=0;
@@ -302,6 +319,14 @@ void roachParser::addNewChannel(int channel)
         (*phase_tracks)[channel] = 0.0;
     }
 
+    if (number_events_channel == NULL)
+        number_events_channel = new QHash<int,float>;
+
+    if (!number_events_channel->contains(channel))
+    {
+        (*number_events_channel)[channel] = 0.0;
+    }
+
     if (events==NULL)
         events = new QHash<int,QHash<QString,QList<float> > >;
 
@@ -342,6 +367,7 @@ void roachParser::addNewChannel(int channel)
         // for delay phase change due to RF cabling. 30ns etc... in radians for each channel
         (*events)[channel]["phase_delay"]= QList<float>();
         (*events)[channel]["phase_delay"].append(0.0);
+
 
 
     }
@@ -408,10 +434,50 @@ void roachParser::queueEvents(void)
     if (events!=0)
     {
 
-
+        calculateDataStats();
         pushEventList(events);
     }
     events = 0;
+}
+
+
+void roachParser::calculateDataStats(void)
+{
+    //exant channels are the keys.
+    QList<int> keys = number_events_channel->keys();
+
+    int len=keys.length();
+
+    float sum;
+    float sumsq;
+    float minval = 1e9;
+    float maxval=0.0;
+    float nevts;
+    float lenf = (float)len;
+
+    // go thru each channel ang det n events
+    for (int k=0; k<len;k++)
+    {
+        //look up num evetns for each channel
+        nevts =(*number_events_channel)[keys[k]];
+        if (nevts>maxval)
+            maxval = nevts;
+
+        if (nevts<minval)
+            minval = nevts;
+
+        sum+=nevts;
+        sumsq+=nevts*nevts;
+
+
+    }
+    this->mean_num_evts = sum/lenf;
+    this->std_num_evts =sqrt( sumsq/lenf );
+    this->maxmin_num_evts = maxval-minval;
+    this->percentmaxmin_num_evts = this->maxmin_num_evts/this->mean_num_evts;
+    this->num_channels = len;
+
+
 }
 
 void roachParser::parseStream(void)
@@ -644,6 +710,7 @@ int dbgql;
                           (*events)[chan]["bin"].append((float)bin );//!! need to look at map
                           (*events)[chan]["event_type"].append((float)event_type );
                           (*events)[chan]["event_len"].append((float)(outmem_datalen));
+                          (*number_events_channel)[chan]+=1.0;
 
                           if (is_get_raw_evt_data)
                           {

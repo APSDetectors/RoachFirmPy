@@ -92,6 +92,17 @@ hdf.write(pldata,'rfdata300')
 hdf.close()
       
 
+fa.chanzer.setFluxRampDemod(
+    is_demod=0,
+    is_incl_raw_trans=0, 
+    evt_len=100,
+    num_cycles=2.0)
+
+
+
+fa.sourceCapture(arange(10e6,100e6,10e6),320)
+
+fa.stopCapture()
 
 
 fa.chanzer.setFluxRampDemod(
@@ -852,8 +863,7 @@ def loadAnalyzer(filename):
     hdf.close()
     
 
-
-mainFW = 'tesd_2017_Aug_16_1733.bof'    
+mainFW = 'tesd_2017_Aug_25_1447.bof'    
 
 class fftAnalyzerR2:
 

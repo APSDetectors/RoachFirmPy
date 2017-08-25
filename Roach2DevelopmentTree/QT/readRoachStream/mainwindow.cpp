@@ -73,6 +73,12 @@ void MainWindow::updateGui(void)
         txt = txt +  QString("ndone_parse:\n%1\n").arg(parsers[0]->ndone_parse);
         txt = txt +  QString("Queued Lists:\n%1\n").arg(parsers[0]->getListQueueLength());
         txt = txt +  QString("Pulses:\n%1\n").arg(parsers[0]->pulse_counter);
+        txt = txt +  QString("MeanNEvents:\n%1\n").arg(parsers[0]->mean_num_evts);
+        txt = txt +  QString("MaxEv-MinEv:\n%1\n").arg(parsers[0]->maxmin_num_evts);
+        txt = txt +  QString("(MaxEv-MinEv)/mean:\n%1\n").arg(parsers[0]->percentmaxmin_num_evts);
+        txt = txt +  QString("Num Chans:\n%1\n").arg(parsers[0]->num_channels);
+
+
 
         ui->label_parserA->setText(txt);
 
@@ -87,6 +93,10 @@ void MainWindow::updateGui(void)
         txt = txt +  QString("ndone_parse:\n%1\n").arg(parsers[1]->ndone_parse);
         txt = txt +  QString("Queued Lists:\n%1\n").arg(parsers[1]->getListQueueLength());
         txt = txt +  QString("Pulses:\n%1\n").arg(parsers[1]->pulse_counter);
+        txt = txt +  QString("MeanNEvents:\n%1\n").arg(parsers[1]->mean_num_evts);
+        txt = txt +  QString("MaxEv-MinEv:\n%1\n").arg(parsers[1]->maxmin_num_evts);
+        txt = txt +  QString("(MaxEv-MinEv)/mean:\n%1\n").arg(parsers[1]->percentmaxmin_num_evts);
+        txt = txt +  QString("Num Chans:\n%1\n").arg(parsers[1]->num_channels);
 
         ui->label_parserB->setText(txt);
 

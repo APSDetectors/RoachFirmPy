@@ -41,7 +41,7 @@ public:
 
     bool pulseDetectRaw(int chan, double phase_sum,int outmem_datalen);
     bool pulseDetectFRD(int chan, double flux_ramp_fl);
-
+    void calculateDataStats(void);
 
     QHash<int,QHash<QString,QList<float> > >* getEventList(void);
     bool pushEventList(QHash<int,QHash<QString,QList<float> > >* events_);
@@ -49,6 +49,11 @@ public:
     roachScope *dbgscope;
 
 
+    float mean_num_evts;
+    float std_num_evts;
+    float maxmin_num_evts;
+    float percentmaxmin_num_evts;
+    int num_channels;
 
     //// calss vars
     bool is_pulse_detect;
@@ -153,6 +158,8 @@ public:
     QMutex queue_mutex;
     QQueue<QHash<int,QHash<QString,QList<float> > > *> event_queue;
     QHash<int,float> *phase_tracks;
+    QHash<int,float> *number_events_channel;
+
 
 
     float getFreqFromBin(int bin);
