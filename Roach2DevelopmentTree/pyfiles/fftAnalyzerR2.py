@@ -862,8 +862,7 @@ def loadAnalyzer(filename):
     fa = hdf.read()
     hdf.close()
     
-
-mainFW = 'tesd_2017_Aug_25_1447.bof'    
+mainFW ='tesd_2017_Aug_25_1636.bof'
 
 class fftAnalyzerR2:
 
