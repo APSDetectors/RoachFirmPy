@@ -3,6 +3,7 @@ cal_ivstream_voltagestep_delay=1000
 
 flux_ramp_cal_settings = {
     '10k_3V': {'frddly':111, 'freq':10000, 'volts':3.0, 'periods':3.0 , 'frdlen':153},
+    '10k_3.8V': {'frddly':111, 'freq':10000, 'volts':3.8, 'periods':4.0 , 'frdlen':167},
     '40k_2V': {'frddly':34, 'freq':40000, 'volts':2.0, 'periods':2.0 , 'frdlen':40},
     '40k_3V': {'frddly':34, 'freq':40000, 'volts':3.0, 'periods':3.0 , 'frdlen':39}
     }
