@@ -15,6 +15,11 @@ fa.an.shut()
 fa.an=anritsu()
 
 
+
+for f in arange(5.0,5.2,0.001):time.sleep(0.01);an.setFreq(f)
+
+
+
 """
 
 import os
@@ -53,14 +58,14 @@ class anritsu:
             self.devnull = open(os.devnull, 'wb')
 
         
-           # self.anritproc = subprocess.Popen(
-           #     [self.ANRITSUCMD ,  self.ANRITSUIP  ], 
-           #      stdin=subprocess.PIPE,stdout=self.devnull)
 
 
             self.anritproc = subprocess.Popen(
                 [self.ANRITSUCMD ,  self.ANRITSUIP  ], 
                  stdin=subprocess.PIPE,stdout=self.devnull)
+           # self.anritproc = subprocess.Popen(
+           #     [self.ANRITSUCMD ,  self.ANRITSUIP  ], 
+           #      stdin=subprocess.PIPE,stdout=subprocess.PIPE)
             
     ########################################################################
     #
