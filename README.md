@@ -1,5 +1,10 @@
 # RoachFirmPy
+
+
+**This UNSUPPORTED now!!** 
+
 Argonne Roach FW and Python development for MKID readout
+
 
 This code is for testing ddr ram for streaming ADC converters.
 * The design has a ddr ram block that streams several pipes of 16 bit 
